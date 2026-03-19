@@ -1,0 +1,44 @@
+# 데이터셋 (대용량)
+datasets/
+
+# Python 가상환경
+.venv/
+
+# HDRI 바이너리
+hdri/
+
+# 3D 지도 데이터
+map/
+
+# 학습 체크포인트 (대용량 .pt)
+results/**/*.pt
+results/**/best.pt
+results/**/last.pt
+
+# 모델 가중치
+*.pt
+*.pth
+*.ckpt
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Python 캐시
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 클로드 프로젝트 파일
+.claude/
+
+# 서버 배포 스크립트
+server_deploy/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# 환경변수
+.env
