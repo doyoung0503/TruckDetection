@@ -53,7 +53,6 @@ TRUCK_H: float = 3.3
 EPS: float = 1e-6
 
 FEAT_STRIDE: int = 8
-FEAT_SIZE:   int = 80
 
 # 데이터셋 깊이 통계 (train split 3999개 기준, m 단위)
 DEPTH_MEAN: float = 6.15
@@ -477,7 +476,8 @@ class SmokeLoss(nn.Module):
     SMOKE-style ablation 통합 손실.
 
     3방향 분리 손실 (SMOKE Eq. 9):
-        L_3d = L_orient + L_dim + L_loc
+        baseline : L_3d = L_orient + L_dim + L_loc
+        geometry : L_3d = L_orient + L_loc + L_log_dv  [DoF restriction]
 
     baseline 경로: _build_corners_baseline_3d  + _SMOKE_CODER  (단일 소스)
     geometry 경로: _build_corners_geometry_3d  (Y 고정, DoF 제한)
@@ -591,7 +591,9 @@ class SmokeLoss(nn.Module):
         stride:     int,
     ) -> torch.Tensor:
         """
-        SMOKE Eq. (9): L_3d = L_orient + L_dim + L_loc
+        SMOKE Eq. (9) 변형:
+          baseline : L_3d = L_orient + L_dim + L_loc
+          geometry : L_3d = L_orient + L_loc + L_log_dv  [DoF restriction]
 
         L_orient : GT 위치·제원  + 예측 αz → θ
         L_dim    : GT 위치·θ    + 예측 W/H/L  (baseline 계열만)
@@ -687,7 +689,7 @@ class SmokeLoss(nn.Module):
             # SMOKECoder: depth / dim / orientation (단일 소스 경로)
             Z_pred                 = self._coder.decode_depth(reg[:, 0])
             W_pred, H_pred, L_pred = self._coder.decode_dimension(reg[:, 1:4])
-            alpha_z, theta_orient  = self._coder.decode_orientation(
+            _, theta_orient         = self._coder.decode_orientation(
                 reg[:, 4:6], X_gt, Z_gt
             )
 

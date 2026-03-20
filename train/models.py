@@ -41,8 +41,8 @@ from torchvision.models import resnet34, ResNet34_Weights
 # smoke_loss 의 coder / 상수 import → inference 경로 단일화
 from train.smoke_loss import (
     _SMOKE_CODER,
-    TRUCK_H,   # geometry h_ref 계산용
-    EPS,
+    TRUCK_H, TRUCK_W, TRUCK_L,
+    DEPTH_MEAN, DEPTH_STD,
     FEAT_STRIDE,
 )
 
@@ -50,8 +50,6 @@ from train.smoke_loss import (
 # ── 전역 상수 ─────────────────────────────────────────────────────────────────
 
 FEAT_CH = 128
-TRUCK_W: float = 2.5
-TRUCK_L: float = 9.8
 
 ModelType = Literal["baseline", "geometry", "baseline_depth", "geometry_aux"]
 
@@ -199,8 +197,8 @@ class GeometryModel(nn.Module):
     [2. Strict 3-DoF Geometry Constrained] 독립 자유변수 3개만 사용.
     [DoF restriction] baseline 대비 제한:
       - dim 헤드 없음 (W/H/L 상수)
-      - depth 헤드 없음 (log_dv → Z)
-      - v-offset 없음 (v_c = cy + sign(h_ref)·exp(log_dv))
+      - depth 헤드 없음 (log_dv → Z 직접)
+      - v-offset 헤드 없음 (v 위치는 log_dv로 결정)
 
     출력 dict:
       "heatmap" : (B, 1, 80, 80)   sigmoid
@@ -336,8 +334,8 @@ def decode_predictions(
     model_type: ModelType,
     stride:     int   = FEAT_STRIDE,
     topk:       int   = 1,
-    depth_mean: float = 6.15,
-    depth_std:  float = 2.48,
+    depth_mean: float = DEPTH_MEAN,
+    depth_std:  float = DEPTH_STD,
 ) -> list[dict]:
     """
     히트맵 피크 픽셀 → 최종 3D 바운딩 박스 파라미터 변환 (외부 inference 전용).
