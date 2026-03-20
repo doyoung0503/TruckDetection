@@ -61,6 +61,7 @@ from smoke.modeling.heatmap_coder import (
     gaussian_radius as official_gaussian_radius,
     get_transfrom_matrix,
 )
+from smoke.layers.focal_loss import FocalLoss as OfficialFocalLoss
 from smoke.modeling.heads.smoke_head.loss import make_smoke_loss_evaluator
 from smoke.modeling.smoke_coder import SMOKECoder as OfficialSMOKECoder
 from smoke.structures.params_3d import ParamsList
@@ -79,7 +80,7 @@ FEAT_STRIDE: int = 4
 DEPTH_MEAN: float = 6.15
 DEPTH_STD:  float = 2.48
 OFFICIAL_REG_LOSS_WEIGHT: float = float(_OFFICIAL_SMOKE_DEFAULTS.MODEL.SMOKE_HEAD.LOSS_WEIGHT[1])
-GEOMETRY_REG_BRANCH_COUNT: float = 4.0
+OFFICIAL_MAX_OBJECTS: int = int(_OFFICIAL_SMOKE_DEFAULTS.DATASETS.MAX_OBJECTS)
 
 
 def geometry_log_dv_reference(
@@ -391,6 +392,65 @@ def _build_official_targets(batch: dict, device: torch.device) -> list[ParamsLis
         targets.append(target.to(device))
 
     return targets
+
+
+def _build_official_heatmaps(batch: dict, device: torch.device) -> torch.Tensor:
+    """
+    Build official SMOKE-style heatmap targets directly from the project batch.
+    This matches the baseline target generation path:
+      center_2d -> affine_transform
+      bbox_2d   -> affine_transform + clip
+      radius    -> official_gaussian_radius
+      draw      -> official_draw_umich_gaussian
+    """
+    image = batch["image"]
+    batch_size, _, image_h, image_w = image.shape
+    feat_h = image_h // FEAT_STRIDE
+    feat_w = image_w // FEAT_STRIDE
+
+    trans_mats = _build_trans_mats(batch_size, image_h, image_w, torch.device("cpu"))
+    heatmaps = torch.zeros((batch_size, 1, feat_h, feat_w), dtype=torch.float32)
+
+    for b in range(batch_size):
+        center_2d = batch["center_2d"][b].detach().cpu().numpy().astype(np.float32)
+        corners_2d = batch["gt_corners_2d"][b].detach().cpu().numpy().astype(np.float32)
+        bbox_2d = batch.get("bbox_2d")
+
+        point = official_affine_transform(center_2d, trans_mats[b].numpy())
+        if bbox_2d is not None:
+            bbox_np = bbox_2d[b].detach().cpu().numpy().astype(np.float32)
+        else:
+            bbox_np = np.array(
+                [
+                    float(corners_2d[:, 0].min()),
+                    float(corners_2d[:, 1].min()),
+                    float(corners_2d[:, 0].max()),
+                    float(corners_2d[:, 1].max()),
+                ],
+                dtype=np.float32,
+            )
+
+        bbox_feat = bbox_np.copy()
+        bbox_feat[:2] = official_affine_transform(bbox_feat[:2], trans_mats[b].numpy())
+        bbox_feat[2:] = official_affine_transform(bbox_feat[2:], trans_mats[b].numpy())
+        bbox_feat[[0, 2]] = np.clip(bbox_feat[[0, 2]], 0.0, feat_w - 1.0)
+        bbox_feat[[1, 3]] = np.clip(bbox_feat[[1, 3]], 0.0, feat_h - 1.0)
+        xmins, ymins, xmaxs, ymaxs = [float(v) for v in bbox_feat]
+        box_h = ymaxs - ymins
+        box_w = xmaxs - xmins
+
+        point_ok = np.isfinite(point).all() and (0.0 < point[0] < feat_w) and (0.0 < point[1] < feat_h)
+        box_ok = np.isfinite(bbox_feat).all() and box_h > 0.0 and box_w > 0.0
+        if not (point_ok and box_ok):
+            continue
+
+        point_int = point.astype("int32")
+        radius = max(0, int(official_gaussian_radius(box_h, box_w)))
+        heatmaps[b, 0] = torch.from_numpy(
+            official_draw_umich_gaussian(heatmaps[b, 0].numpy(), point_int, radius)
+        )
+
+    return heatmaps.to(device)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -857,8 +917,12 @@ class SmokeLoss(nn.Module):
         self.depth_max         = depth_max_m
         self.use_depth         = model_type in ("baseline_depth", "geometry_aux")
         self.is_geometry       = model_type in ("geometry", "geometry_aux")
-        self.geometry_reg_normalizer = OFFICIAL_REG_LOSS_WEIGHT * GEOMETRY_REG_BRANCH_COUNT
+        self.geometry_reg_normalizer = OFFICIAL_REG_LOSS_WEIGHT * OFFICIAL_MAX_OBJECTS
         self._official_loss_cache: dict[str, object] = {}
+        self._official_focal_loss = OfficialFocalLoss(
+            _OFFICIAL_SMOKE_DEFAULTS.MODEL.SMOKE_HEAD.LOSS_ALPHA,
+            _OFFICIAL_SMOKE_DEFAULTS.MODEL.SMOKE_HEAD.LOSS_BETA,
+        )
         # 기본 통계값이면 모듈 싱글턴 재사용, 커스텀이면 전용 coder 생성
         if depth_mean == DEPTH_MEAN and depth_std == DEPTH_STD:
             self._coder = _SMOKE_CODER
@@ -893,28 +957,13 @@ class SmokeLoss(nn.Module):
 
     # ── L_heat ──────────────────────────────────────────────────────────────
 
-    def _heat_loss(
+    def _heat_loss_official(
         self,
-        pred_heat:     torch.Tensor,   # (B, 1, fH, fW)
-        geo_center:    torch.Tensor,   # (B, 2) 기하학적 중심 원본 픽셀
-        gt_corners_2d: torch.Tensor,   # (B, 8, 2)
-        stride:        int,
+        pred_heat: torch.Tensor,
+        batch: dict,
     ) -> torch.Tensor:
-        _, _, fH, fW = pred_heat.shape
-        dev = pred_heat.device
-
-        center_feat = geo_center / stride
-
-        u = gt_corners_2d[:, :, 0].to(dev)
-        v = gt_corners_2d[:, :, 1].to(dev)
-        bbox_w = (u.max(1).values - u.min(1).values) / stride
-        bbox_h = (v.max(1).values - v.min(1).values) / stride
-
-        radius = gaussian_radius_adaptive(bbox_h.detach(), bbox_w.detach())
-        sigma  = (radius / 3.0).clamp(min=1.0)
-
-        gt_heat = _render_gaussian(center_feat.detach(), fH, fW, sigma.detach())
-        return _modified_focal_loss(pred_heat, gt_heat.to(dev))
+        gt_heat = _build_official_heatmaps(batch, pred_heat.device)
+        return self._official_focal_loss(pred_heat, gt_heat)
 
     # ── L_off ───────────────────────────────────────────────────────────────
 
@@ -923,6 +972,7 @@ class SmokeLoss(nn.Module):
         pred_off:   torch.Tensor,   # (B, 1, fH, fW) geometry | (B, 2, fH, fW) baseline
         geo_center: torch.Tensor,   # (B, 2) 기하학적 중심 원본 픽셀
         stride:     int,
+        reduction:  str = "mean",
     ) -> torch.Tensor:
         center_feat = geo_center / stride
         ix = center_feat[:, 0].long()
@@ -932,10 +982,12 @@ class SmokeLoss(nn.Module):
         if self.is_geometry:
             # [DoF restriction] u 방향만 — v는 log_dv로 결정
             pred_at_u = _extract_at(pred_off, ix, iy)[:, 0]
-            return F.l1_loss(pred_at_u, gt_off[:, 0].to(pred_at_u.device))
+            return F.l1_loss(
+                pred_at_u, gt_off[:, 0].to(pred_at_u.device), reduction=reduction
+            )
         else:
             pred_at = _extract_at(pred_off, ix, iy)            # (B, 2)
-            return F.l1_loss(pred_at, gt_off.to(pred_at.device))
+            return F.l1_loss(pred_at, gt_off.to(pred_at.device), reduction=reduction)
 
     # ── L_3d : SMOKE 3방향 분리 손실 ────────────────────────────────────────
 
@@ -945,6 +997,7 @@ class SmokeLoss(nn.Module):
         batch:      dict,
         geo_center: torch.Tensor,   # (B, 2) 기하학적 중심 원본 픽셀
         stride:     int,
+        reduction:  str = "mean",
     ) -> torch.Tensor:
         """
         SMOKE Eq. (9) 변형:
@@ -1016,14 +1069,18 @@ class SmokeLoss(nn.Module):
                 u_gt, Z_gt, theta_orient, K, Y_center=h_ref
             )
             if valid.any():
-                total = total + F.l1_loss(c_orient[valid], corners_gt[valid].detach())
+                total = total + F.l1_loss(
+                    c_orient[valid], corners_gt[valid].detach(), reduction=reduction
+                )
 
             # L_loc: GT θ + GT dims(상수) + pred u/Z (Y 고정)
             c_loc = _build_corners_geometry_3d(
                 u_pred, Z_pred_geom, yaw_gt, K, Y_center=h_ref
             )
             if valid.any():
-                total = total + F.l1_loss(c_loc[valid], corners_gt[valid].detach())
+                total = total + F.l1_loss(
+                    c_loc[valid], corners_gt[valid].detach(), reduction=reduction
+                )
 
             # L_log_dv: log_dv 직접 지도 [DoF restriction]
             # baseline에는 없는 항목.
@@ -1033,7 +1090,7 @@ class SmokeLoss(nn.Module):
             log_dv_delta_gt = log_dv_gt - log_dv_ref
             if valid.any():
                 total = total + F.l1_loss(
-                    log_dv_delta[valid], log_dv_delta_gt[valid].detach()
+                    log_dv_delta[valid], log_dv_delta_gt[valid].detach(), reduction=reduction
                 )
 
         # ════════════════════════════════════════════════════════════════
@@ -1057,7 +1114,9 @@ class SmokeLoss(nn.Module):
                 u_gt, v_gt, Z_gt, theta_orient, K
             )
             if valid.any():
-                total = total + F.l1_loss(c_orient[valid], corners_gt[valid].detach())
+                total = total + F.l1_loss(
+                    c_orient[valid], corners_gt[valid].detach(), reduction=reduction
+                )
 
             # L_dim: GT 위치·GT θ + pred W/H/L
             c_dim = _build_corners_baseline_3d(
@@ -1065,14 +1124,18 @@ class SmokeLoss(nn.Module):
                 W=W_pred, H=H_pred, L=L_pred,
             )
             if valid.any():
-                total = total + F.l1_loss(c_dim[valid], corners_gt[valid].detach())
+                total = total + F.l1_loss(
+                    c_dim[valid], corners_gt[valid].detach(), reduction=reduction
+                )
 
             # L_loc: GT θ·GT dims(앵커) + pred u/v/Z
             c_loc = _build_corners_baseline_3d(
                 u_pred, v_pred, Z_pred, yaw_gt, K
             )
             if valid.any():
-                total = total + F.l1_loss(c_loc[valid], corners_gt[valid].detach())
+                total = total + F.l1_loss(
+                    c_loc[valid], corners_gt[valid].detach(), reduction=reduction
+                )
 
         return total
 
@@ -1200,17 +1263,11 @@ class SmokeLoss(nn.Module):
             stride     = FEAT_STRIDE
             geo_center = self._get_heatmap_target(batch).to(dev)
 
-            l_heat = self._heat_loss(
-                outputs["heatmap"], geo_center, batch["gt_corners_2d"], stride
-            )
-            l_off = self._off_loss(outputs["offset"], geo_center, stride)
-            l_3d  = self._corner_loss(outputs, batch, geo_center, stride)
+            l_heat = self._heat_loss_official(outputs["heatmap"], batch)
+            l_off = self._off_loss(outputs["offset"], geo_center, stride, reduction="sum")
+            l_3d  = self._corner_loss(outputs, batch, geo_center, stride, reduction="sum")
 
             hm_term = self.lambda_heat * l_heat
-            # Geometry combines four regression-style subproblems:
-            #   u-offset, orientation, location/depth reconstruction, log_dv residual.
-            # Averaging them first, then applying the official regression weight
-            # keeps the scale much closer to the baseline's official loss.
             reg_term_raw = self.lambda_off * l_off + self.lambda_3d * l_3d
             reg_term = reg_term_raw / self.geometry_reg_normalizer
             total = hm_term + reg_term

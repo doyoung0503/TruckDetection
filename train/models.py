@@ -27,6 +27,8 @@ if str(OFFICIAL_SMOKE_DIR) not in sys.path:
 
 from smoke.modeling.backbone import build_backbone as build_official_backbone
 from smoke.modeling.heads.smoke_head.smoke_predictor import make_smoke_predictor
+from smoke.layers.utils import sigmoid_hm
+from smoke.modeling.make_layers import _fill_fc_weights
 
 from train.smoke_loss import (
     _SMOKE_CODER,
@@ -85,43 +87,14 @@ def _make_official_style_head(in_ch: int, out_ch: int) -> nn.Sequential:
     )
 
 
-def _init_heatmap_head(head: nn.Sequential, prior: float = 0.1) -> None:
+def _init_heatmap_head(head: nn.Sequential) -> None:
     last_conv = head[-1]
-    nn.init.constant_(last_conv.bias, -math.log((1.0 - prior) / prior))
+    nn.init.constant_(last_conv.bias, -2.19)
 
 
-def _init_zero_residual_head(head: nn.Sequential) -> None:
-    """
-    Force a residual head to start exactly at zero output.
-    This is stronger than the official SMOKE regression init, but it matches the
-    intended geometry parameterization better: offset/log-depth should start from
-    their analytic reference point rather than from a random feature-dependent
-    residual.
-    """
-    last_conv = head[-1]
-    if not isinstance(last_conv, nn.Conv2d):
-        raise TypeError("Expected the last module of the head to be Conv2d.")
-    nn.init.constant_(last_conv.weight, 0.0)
-    if last_conv.bias is not None:
-        nn.init.constant_(last_conv.bias, 0.0)
-
-
-def _init_yaw_head(head: nn.Sequential) -> None:
-    """
-    Start the yaw unit-vector head from a neutral observation angle:
-      sin(alpha) = 0, cos(alpha) = 1
-    This keeps the initial decoded yaw close to the camera ray direction and
-    removes arbitrary random orientation bias at step 0.
-    """
-    last_conv = head[-1]
-    if not isinstance(last_conv, nn.Conv2d):
-        raise TypeError("Expected the last module of the head to be Conv2d.")
-    if last_conv.out_channels != 2:
-        raise ValueError("Yaw head must output 2 channels: [sin, cos].")
-    nn.init.constant_(last_conv.weight, 0.0)
-    if last_conv.bias is not None:
-        nn.init.constant_(last_conv.bias, 0.0)
-        last_conv.bias.data[1] = 1.0
+def _init_official_reg_head(head: nn.Sequential) -> None:
+    """Match official SMOKE regression-head initialization."""
+    _fill_fc_weights(head)
 
 
 class _DepthDecoder(nn.Module):
@@ -195,15 +168,15 @@ class GeometryModel(nn.Module):
         self.yaw_head = _make_official_style_head(self.backbone.out_channels, 2)
         self.log_dv = _make_official_style_head(self.backbone.out_channels, 1)
         _init_heatmap_head(self.heatmap)
-        _init_zero_residual_head(self.offset)
-        _init_yaw_head(self.yaw_head)
-        _init_zero_residual_head(self.log_dv)
+        _init_official_reg_head(self.offset)
+        _init_official_reg_head(self.yaw_head)
+        _init_official_reg_head(self.log_dv)
 
     def forward(self, x: torch.Tensor, **_) -> dict[str, torch.Tensor]:
         x = self.input_norm(x)
         feat = self.backbone(x)
         return {
-            "heatmap": torch.sigmoid(self.heatmap(feat)),
+            "heatmap": sigmoid_hm(self.heatmap(feat)),
             "offset": self.offset(feat),
             "yaw": F.normalize(self.yaw_head(feat), dim=1, eps=1e-6),
             "log_dv": self.log_dv(feat),  # residual around dynamic log_dv prior
@@ -251,15 +224,15 @@ class GeometryAuxModel(nn.Module):
         self.log_dv = _make_official_style_head(self.backbone.out_channels, 1)
         self.depth_dec = _DepthDecoder(self.backbone.out_channels)
         _init_heatmap_head(self.heatmap)
-        _init_zero_residual_head(self.offset)
-        _init_yaw_head(self.yaw_head)
-        _init_zero_residual_head(self.log_dv)
+        _init_official_reg_head(self.offset)
+        _init_official_reg_head(self.yaw_head)
+        _init_official_reg_head(self.log_dv)
 
     def forward(self, x: torch.Tensor, **_) -> dict[str, torch.Tensor]:
         x = self.input_norm(x)
         feat = self.backbone(x)
         return {
-            "heatmap": torch.sigmoid(self.heatmap(feat)),
+            "heatmap": sigmoid_hm(self.heatmap(feat)),
             "offset": self.offset(feat),
             "yaw": F.normalize(self.yaw_head(feat), dim=1, eps=1e-6),
             "log_dv": self.log_dv(feat),  # residual around dynamic log_dv prior
