@@ -346,8 +346,9 @@ def run_single(
     model   = build_smoke_model(model_type, pretrained=True).to(device)
     loss_fn = build_smoke_loss(model_type).to(device)
 
-    m1 = int(epochs * 0.64)
-    m2 = int(epochs * 0.86)
+    # Official SMOKE default iterations 5850 / 9350 over 14500 ~= 40% / 64%.
+    m1 = max(1, int(epochs * 0.40))
+    m2 = max(m1 + 1, int(epochs * 0.64))
     optimizer = Adam(model.parameters(), lr=lr)
     scheduler = MultiStepLR(optimizer, milestones=[m1, m2], gamma=0.1)
 
@@ -625,7 +626,7 @@ def parse_args() -> argparse.Namespace:
                    help="학습할 모델 타입 (default: all)")
     p.add_argument("--epochs", type=int,   default=100,  help="학습 에포크 수")
     p.add_argument("--batch",  type=int,   default=32,   help="배치 크기")
-    p.add_argument("--lr",     type=float, default=5e-4, help="초기 Learning Rate")
+    p.add_argument("--lr",     type=float, default=2.5e-4, help="초기 Learning Rate")
     p.add_argument("--device", default=DEVICE,            help=f"학습 기기 (default: {DEVICE})")
     p.add_argument("--seed",   type=int,   default=None, help="랜덤 시드 (None=고정 없음)")
     return p.parse_args()

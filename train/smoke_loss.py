@@ -39,6 +39,7 @@ SMOKE-style ablation framework 손실 함수 (4종 절제 모델 공용).
 
 from __future__ import annotations
 
+import math
 from typing import Literal
 
 import torch
@@ -51,6 +52,7 @@ TRUCK_W: float = 2.5
 TRUCK_L: float = 9.8
 TRUCK_H: float = 3.3
 EPS: float = 1e-6
+PI: float = math.pi
 
 FEAT_STRIDE: int = 8
 
@@ -113,8 +115,15 @@ class SMOKECoder:
         αz → global yaw θ.  (SMOKE Eq. 3)
         [deviation] atan2(sin, cos) — atan(a/b)±π/2 와 수학적으로 동일.
         """
-        alpha_z = torch.atan2(ori_vec[:, 0], ori_vec[:, 1])
-        theta   = alpha_z + torch.atan2(X, Z)
+        alpha_z = torch.atan(ori_vec[:, 0] / (ori_vec[:, 1] + EPS))
+        alpha_z = torch.where(
+            ori_vec[:, 1] >= 0,
+            alpha_z - PI / 2.0,
+            alpha_z + PI / 2.0,
+        )
+        theta = alpha_z + torch.atan(X / (Z + EPS))
+        theta = torch.where(theta > PI, theta - 2.0 * PI, theta)
+        theta = torch.where(theta < -PI, theta + 2.0 * PI, theta)
         return alpha_z, theta
 
     def decode_location(
