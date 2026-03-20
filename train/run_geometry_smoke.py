@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import random
 import sys
 from pathlib import Path
@@ -30,6 +31,7 @@ if str(OFFICIAL_SMOKE_DIR) not in sys.path:
 from smoke.engine.trainer import do_train
 from smoke.solver.build import make_lr_scheduler, make_optimizer
 from smoke.utils.check_point import DetectronCheckpointer
+from smoke.utils.logger import setup_logger
 
 from train.dataset import make_dataloaders
 from train.models import build_smoke_model
@@ -186,6 +188,8 @@ def main() -> None:
 
     output_dir = args.output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
+    logger = setup_logger(str(output_dir), 0)
+    logger.info("Launching geometry training with file logging enabled.")
 
     train_loader, _ = make_dataloaders(
         root=str(dataset_root),
@@ -245,6 +249,15 @@ def main() -> None:
     print("[geometry-smoke] max_iter:", max_iter)
     print("[geometry-smoke] steps:", (step_1, step_2))
     print("[geometry-smoke] checkpoint_period:", checkpoint_period)
+    logging.getLogger("smoke").info(
+        "geometry config | dataset=%s output=%s batch=%d max_iter=%d steps=%s checkpoint_period=%d",
+        dataset_root,
+        output_dir,
+        args.batch,
+        max_iter,
+        (step_1, step_2),
+        checkpoint_period,
+    )
 
     do_train(
         cfg=cfg,
