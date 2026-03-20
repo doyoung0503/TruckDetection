@@ -21,52 +21,46 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 ROOT = Path(__file__).resolve().parent.parent
-OFFICIAL_SMOKE_DIR = ROOT / "external" / "SMOKE"
+OFFICIAL_SMOKE_DIR = ROOT / "SMOKE-master"
 if str(OFFICIAL_SMOKE_DIR) not in sys.path:
     sys.path.insert(0, str(OFFICIAL_SMOKE_DIR))
 
-from smoke.config.defaults import _C as _OFFICIAL_SMOKE_DEFAULTS
 from smoke.modeling.backbone import build_backbone as build_official_backbone
 from smoke.modeling.heads.smoke_head.smoke_predictor import make_smoke_predictor
 
 from train.smoke_loss import (
     _SMOKE_CODER,
+    _build_trans_mats,
     DEPTH_MEAN,
     DEPTH_STD,
     FEAT_STRIDE,
     TRUCK_H,
     TRUCK_L,
     TRUCK_W,
+    build_official_smoke_cfg,
+    decode_baseline_official,
 )
 
 
-FEAT_CH = 64
-HEAD_CH = 256
-
 ModelType = Literal["baseline", "geometry", "baseline_depth", "geometry_aux"]
+_OFFICIAL_CFG = build_official_smoke_cfg()
+FEAT_CH = _OFFICIAL_CFG.MODEL.BACKBONE.BACKBONE_OUT_CHANNELS
+HEAD_CH = _OFFICIAL_CFG.MODEL.SMOKE_HEAD.NUM_CHANNEL
 
 
-def _build_official_smoke_cfg():
-    cfg = _OFFICIAL_SMOKE_DEFAULTS.clone()
-    cfg.defrost()
-    cfg.MODEL.DEVICE = "cpu"
-    cfg.DATASETS.DETECT_CLASSES = ("Car",)
-    cfg.MODEL.BACKBONE.CONV_BODY = "DLA-34-DCN"
-    cfg.MODEL.BACKBONE.USE_NORMALIZATION = "GN"
-    cfg.MODEL.BACKBONE.DOWN_RATIO = 4
-    cfg.MODEL.BACKBONE.BACKBONE_OUT_CHANNELS = FEAT_CH
-    cfg.MODEL.SMOKE_HEAD.USE_NORMALIZATION = "GN"
-    cfg.MODEL.SMOKE_HEAD.NUM_CHANNEL = HEAD_CH
-    cfg.MODEL.SMOKE_HEAD.REGRESSION_HEADS = 8
-    cfg.MODEL.SMOKE_HEAD.REGRESSION_CHANNEL = (1, 2, 3, 2)
-    # Official SMOKE stores references in (L, H, W) order.
-    cfg.MODEL.SMOKE_HEAD.DIMENSION_REFERENCE = ((TRUCK_L, TRUCK_H, TRUCK_W),)
-    cfg.MODEL.SMOKE_HEAD.DEPTH_REFERENCE = (DEPTH_MEAN, DEPTH_STD)
-    cfg.freeze()
-    return cfg
+class OfficialSmokeInputNorm(nn.Module):
+    """Apply the official SMOKE image normalization inside the model."""
 
+    def __init__(self):
+        super().__init__()
+        mean = torch.tensor(_OFFICIAL_CFG.INPUT.PIXEL_MEAN, dtype=torch.float32)
+        std = torch.tensor(_OFFICIAL_CFG.INPUT.PIXEL_STD, dtype=torch.float32)
+        self.register_buffer("mean", mean.view(1, 3, 1, 1), persistent=False)
+        self.register_buffer("std", std.view(1, 3, 1, 1), persistent=False)
 
-_OFFICIAL_CFG = _build_official_smoke_cfg()
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = x[:, [2, 1, 0], ...]
+        return (x - self.mean) / self.std
 
 
 class OfficialSmokeBackbone(nn.Module):
@@ -127,12 +121,15 @@ class BaselineModel(nn.Module):
 
     def __init__(self, pretrained: bool = True):
         super().__init__()
+        self.input_norm = OfficialSmokeInputNorm()
         self.backbone = OfficialSmokeBackbone()
         self.predictor = make_smoke_predictor(_OFFICIAL_CFG, self.backbone.out_channels)
 
     def forward(self, x: torch.Tensor, **_) -> dict[str, torch.Tensor]:
+        x = self.input_norm(x)
         feat = self.backbone(x)
-        heatmap, regression = self.predictor(feat)
+        predictions = self.predictor(feat)
+        heatmap, regression = predictions
         reg3d = torch.cat(
             [regression[:, 0:1], regression[:, 3:6], regression[:, 6:8]],
             dim=1,
@@ -141,6 +138,7 @@ class BaselineModel(nn.Module):
             "heatmap": heatmap,
             "offset": regression[:, 1:3],
             "reg3d": reg3d,
+            "predictions": predictions,
         }
 
 
@@ -155,6 +153,7 @@ class GeometryModel(nn.Module):
 
     def __init__(self, pretrained: bool = True):
         super().__init__()
+        self.input_norm = OfficialSmokeInputNorm()
         self.backbone = OfficialSmokeBackbone()
         self.heatmap = _make_official_style_head(self.backbone.out_channels, 1)
         self.offset = _make_official_style_head(self.backbone.out_channels, 1)
@@ -163,6 +162,7 @@ class GeometryModel(nn.Module):
         _init_heatmap_head(self.heatmap)
 
     def forward(self, x: torch.Tensor, **_) -> dict[str, torch.Tensor]:
+        x = self.input_norm(x)
         feat = self.backbone(x)
         return {
             "heatmap": torch.sigmoid(self.heatmap(feat)),
@@ -177,13 +177,16 @@ class BaselineDepthModel(nn.Module):
 
     def __init__(self, pretrained: bool = True):
         super().__init__()
+        self.input_norm = OfficialSmokeInputNorm()
         self.backbone = OfficialSmokeBackbone()
         self.predictor = make_smoke_predictor(_OFFICIAL_CFG, self.backbone.out_channels)
         self.depth_dec = _DepthDecoder(self.backbone.out_channels)
 
     def forward(self, x: torch.Tensor, **_) -> dict[str, torch.Tensor]:
+        x = self.input_norm(x)
         feat = self.backbone(x)
-        heatmap, regression = self.predictor(feat)
+        predictions = self.predictor(feat)
+        heatmap, regression = predictions
         reg3d = torch.cat(
             [regression[:, 0:1], regression[:, 3:6], regression[:, 6:8]],
             dim=1,
@@ -193,6 +196,7 @@ class BaselineDepthModel(nn.Module):
             "offset": regression[:, 1:3],
             "reg3d": reg3d,
             "depth": self.depth_dec(feat),
+            "predictions": predictions,
         }
 
 
@@ -201,6 +205,7 @@ class GeometryAuxModel(nn.Module):
 
     def __init__(self, pretrained: bool = True):
         super().__init__()
+        self.input_norm = OfficialSmokeInputNorm()
         self.backbone = OfficialSmokeBackbone()
         self.heatmap = _make_official_style_head(self.backbone.out_channels, 1)
         self.offset = _make_official_style_head(self.backbone.out_channels, 1)
@@ -210,6 +215,7 @@ class GeometryAuxModel(nn.Module):
         _init_heatmap_head(self.heatmap)
 
     def forward(self, x: torch.Tensor, **_) -> dict[str, torch.Tensor]:
+        x = self.input_norm(x)
         feat = self.backbone(x)
         return {
             "heatmap": torch.sigmoid(self.heatmap(feat)),
@@ -294,44 +300,23 @@ def decode_predictions(
         Y = h_ref
         yaw = yaw.unsqueeze(1)
     else:
-        off = offset.view(b, 2, -1)
-        ox = off[:, 0].gather(1, inds)
-        oy = off[:, 1].gather(1, inds)
-        u_c = (ix + ox) * stride
-        v_c = (iy + oy) * stride
+        predictions = outputs.get("predictions")
+        if predictions is None:
+            raise KeyError("Baseline outputs must include 'predictions' for official decode.")
+        image_h = int(heatmap.shape[-2] * FEAT_STRIDE)
+        image_w = int(heatmap.shape[-1] * FEAT_STRIDE)
+        trans_mats = _build_trans_mats(b, image_h, image_w, K.device)
+        decoded = decode_baseline_official(predictions, K, trans_mats)
 
-        reg = outputs["reg3d"].view(b, 6, -1)
-        z_raw = reg[:, 0].gather(1, inds).squeeze(1)
-        dim = torch.stack(
-            [
-                reg[:, 1].gather(1, inds).squeeze(1),
-                reg[:, 2].gather(1, inds).squeeze(1),
-                reg[:, 3].gather(1, inds).squeeze(1),
-            ],
-            dim=1,
-        )
-        ori = torch.stack(
-            [reg[:, 4].gather(1, inds).squeeze(1), reg[:, 5].gather(1, inds).squeeze(1)],
-            dim=1,
-        )
-
-        coder = _SMOKE_CODER
-        if depth_mean != coder.depth_mean or depth_std != coder.depth_std:
-            from train.smoke_loss import SMOKECoder
-            coder = SMOKECoder(depth_ref=(depth_mean, depth_std))
-
-        z_1d = coder.decode_depth(z_raw)
-        w_1d, h_1d, l_1d = coder.decode_dimension(dim)
-        x_1d, y_1d, _ = coder.decode_location(u_c.squeeze(1), v_c.squeeze(1), z_1d, K)
-        _, yaw_1d = coder.decode_orientation(ori, x_1d, z_1d)
-
-        Z = z_1d.unsqueeze(1)
-        W = w_1d.unsqueeze(1)
-        H = h_1d.unsqueeze(1)
-        L = l_1d.unsqueeze(1)
-        X = x_1d.unsqueeze(1)
-        Y = y_1d.unsqueeze(1)
-        yaw = yaw_1d.unsqueeze(1)
+        X = decoded["locations_center"][:, 0:1]
+        Y = decoded["locations_center"][:, 1:2]
+        Z = decoded["locations_center"][:, 2:3]
+        L = decoded["dimensions_lhw"][:, 0:1]
+        H = decoded["dimensions_lhw"][:, 1:2]
+        W = decoded["dimensions_lhw"][:, 2:3]
+        yaw = decoded["rotys"].unsqueeze(1)
+        u_c = ((decoded["xs"].unsqueeze(1) + outputs["offset"].view(b, 2, -1)[:, 0].gather(1, inds)) * FEAT_STRIDE)
+        v_c = ((decoded["ys"].unsqueeze(1) + outputs["offset"].view(b, 2, -1)[:, 1].gather(1, inds)) * FEAT_STRIDE)
 
     return [
         {

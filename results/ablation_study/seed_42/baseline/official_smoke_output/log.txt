@@ -1,0 +1,378 @@
+[2026-03-18 18:34:45,249] smoke INFO: Using 1 GPUs
+[2026-03-18 18:34:45,249] smoke INFO: Collecting environment info
+[2026-03-18 18:34:45,636] smoke INFO: 
+PyTorch version: 2.10.0
+Is debug build: False
+CUDA used to build PyTorch: None
+ROCM used to build PyTorch: N/A
+
+OS: macOS 26.3.1 (arm64)
+GCC version: Could not collect
+Clang version: 17.0.0 (clang-1700.6.4.2)
+CMake version: version 4.2.3
+Libc version: N/A
+
+Python version: 3.14.3 (main, Feb  3 2026, 15:32:20) [Clang 17.0.0 (clang-1700.6.3.2)] (64-bit runtime)
+Python platform: macOS-26.3.1-arm64-arm-64bit-Mach-O
+Is CUDA available: False
+CUDA runtime version: No CUDA
+CUDA_MODULE_LOADING set to: N/A
+GPU models and configuration: No CUDA
+Nvidia driver version: No CUDA
+cuDNN version: No CUDA
+Is XPU available: False
+HIP runtime version: N/A
+MIOpen runtime version: N/A
+Is XNNPACK available: True
+Caching allocator config: N/A
+
+CPU:
+Apple M4 Pro
+
+Versions of relevant libraries:
+[pip3] numpy==2.4.3
+[pip3] torch==2.10.0
+[pip3] torchvision==0.25.0
+[conda] Could not collect
+        Pillow (12.1.1)
+[2026-03-18 18:34:45,636] smoke INFO: Namespace(config_file='configs/smoke_gn_vector.yaml', eval_only=False, ckpt=None, num_gpus=1, num_machines=1, machine_rank=0, dist_url='tcp://127.0.0.1:49653', opts=['MODEL.DEVICE', 'mps', 'DATASETS.TRAIN_SPLIT', 'train', 'DATASETS.TEST_SPLIT', 'val', 'DATASETS.DETECT_CLASSES', "('Car',)", 'SOLVER.IMS_PER_BATCH', '4000', 'SOLVER.BASE_LR', '0.00025', 'SOLVER.MAX_ITERATION', '1', 'SOLVER.STEPS', '(1,2)', 'SOLVER.CHECKPOINT_PERIOD', '1', 'SOLVER.EVALUATE_PERIOD', '2', 'DATALOADER.NUM_WORKERS', '0', 'SEED', '42', 'OUTPUT_DIR', '/Users/doyoung/Documents/Blender/results/ablation_study/seed_42/baseline/official_smoke_output'])
+[2026-03-18 18:34:45,636] smoke INFO: Loaded configuration file configs/smoke_gn_vector.yaml
+[2026-03-18 18:34:45,636] smoke INFO: 
+MODEL:
+  WEIGHT: "catalog://ImageNetPretrained/DLA34"
+INPUT:
+  FLIP_PROB_TRAIN: 0.5
+  SHIFT_SCALE_PROB_TRAIN: 0.3
+DATASETS:
+  DETECT_CLASSES: ("Car", "Cyclist", "Pedestrian")
+  TRAIN: ("kitti_train",)
+  TEST: ("kitti_test",)
+  TRAIN_SPLIT: "trainval"
+  TEST_SPLIT: "test"
+SOLVER:
+  BASE_LR: 2.5e-4
+  STEPS: (10000, 18000)
+  MAX_ITERATION: 25000
+  IMS_PER_BATCH: 32
+[2026-03-18 18:34:45,637] smoke INFO: Running with config:
+CUDNN_BENCHMARK: True
+DATALOADER:
+  ASPECT_RATIO_GROUPING: False
+  NUM_WORKERS: 0
+  SIZE_DIVISIBILITY: 0
+DATASETS:
+  DETECT_CLASSES: ('Car',)
+  MAX_OBJECTS: 30
+  TEST: ('kitti_test',)
+  TEST_SPLIT: val
+  TRAIN: ('kitti_train',)
+  TRAIN_SPLIT: train
+INPUT:
+  FLIP_PROB_TRAIN: 0.5
+  HEIGHT_TEST: 384
+  HEIGHT_TRAIN: 384
+  PIXEL_MEAN: [0.485, 0.456, 0.406]
+  PIXEL_STD: [0.229, 0.224, 0.225]
+  SHIFT_SCALE_PROB_TRAIN: 0.3
+  SHIFT_SCALE_TRAIN: (0.2, 0.4)
+  TO_BGR: True
+  WIDTH_TEST: 1280
+  WIDTH_TRAIN: 1280
+MODEL:
+  BACKBONE:
+    BACKBONE_OUT_CHANNELS: 64
+    CONV_BODY: DLA-34-DCN
+    DOWN_RATIO: 4
+    FREEZE_CONV_BODY_AT: 0
+    USE_NORMALIZATION: GN
+  DEVICE: mps
+  GROUP_NORM:
+    DIM_PER_GP: -1
+    EPSILON: 1e-05
+    NUM_GROUPS: 32
+  SMOKE_HEAD:
+    DEPTH_REFERENCE: (28.01, 16.32)
+    DIMENSION_REFERENCE: ((3.88, 1.63, 1.53), (1.78, 1.7, 0.58), (0.88, 1.73, 0.67))
+    LOSS_ALPHA: 2
+    LOSS_BETA: 4
+    LOSS_TYPE: ('FocalLoss', 'DisL1')
+    LOSS_WEIGHT: (1.0, 10.0)
+    NUM_CHANNEL: 256
+    PREDICTOR: SMOKEPredictor
+    REGRESSION_CHANNEL: (1, 2, 3, 2)
+    REGRESSION_HEADS: 8
+    USE_NMS: False
+    USE_NORMALIZATION: GN
+  SMOKE_ON: True
+  WEIGHT: catalog://ImageNetPretrained/DLA34
+OUTPUT_DIR: /Users/doyoung/Documents/Blender/results/ablation_study/seed_42/baseline/official_smoke_output
+PATHS_CATALOG: /Users/doyoung/Documents/Blender/external/SMOKE/smoke/config/paths_catalog.py
+SEED: 42
+SOLVER:
+  BASE_LR: 0.00025
+  BIAS_LR_FACTOR: 2
+  CHECKPOINT_PERIOD: 1
+  EVALUATE_PERIOD: 2
+  IMS_PER_BATCH: 4000
+  LOAD_OPTIMIZER_SCHEDULER: True
+  MASTER_BATCH: -1
+  MAX_ITERATION: 1
+  OPTIMIZER: Adam
+  STEPS: (1, 2)
+TEST:
+  DETECTIONS_PER_IMG: 50
+  DETECTIONS_THRESHOLD: 0.25
+  IMS_PER_BATCH: 1
+  PRED_2D: True
+  SINGLE_GPU_TEST: True
+[2026-03-18 18:34:45,748] smoke.utils.check_point INFO: Loading checkpoint from catalog://ImageNetPretrained/DLA34
+[2026-03-18 18:34:45,748] smoke.utils.check_point INFO: catalog://ImageNetPretrained/DLA34 points to http://dl.yf.io/dla/models/imagenet/dla34-ba72cf86.pth
+[2026-03-18 18:34:45,748] smoke.utils.check_point INFO: url http://dl.yf.io/dla/models/imagenet/dla34-ba72cf86.pth cached in /Users/doyoung/.torch/models/dla34-ba72cf86.pth
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.base_layer.0.weight                                loaded from base_layer.0.weight                 of shape (16, 3, 7, 7)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.base_layer.1.bias                                  loaded from base_layer.1.bias                   of shape (16,)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.base_layer.1.weight                                loaded from base_layer.1.weight                 of shape (16,)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level0.0.weight                                    loaded from level0.0.weight                     of shape (16, 16, 3, 3)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level0.1.bias                                      loaded from level0.1.bias                       of shape (16,)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level0.1.weight                                    loaded from level0.1.weight                     of shape (16,)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level1.0.weight                                    loaded from level1.0.weight                     of shape (32, 16, 3, 3)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level1.1.bias                                      loaded from level1.1.bias                       of shape (32,)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level1.1.weight                                    loaded from level1.1.weight                     of shape (32,)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level2.project.0.weight                            loaded from level2.project.0.weight             of shape (64, 32, 1, 1)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level2.project.1.bias                              loaded from level2.project.1.bias               of shape (64,)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level2.project.1.weight                            loaded from level2.project.1.weight             of shape (64,)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level2.root.conv.weight                            loaded from level2.root.conv.weight             of shape (64, 128, 1, 1)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level2.tree1.conv1.weight                          loaded from level2.tree1.conv1.weight           of shape (64, 32, 3, 3)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level2.tree1.conv2.weight                          loaded from level2.tree1.conv2.weight           of shape (64, 64, 3, 3)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level2.tree2.conv1.weight                          loaded from level2.tree2.conv1.weight           of shape (64, 64, 3, 3)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level2.tree2.conv2.weight                          loaded from level2.tree2.conv2.weight           of shape (64, 64, 3, 3)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level3.project.0.weight                            loaded from level3.project.0.weight             of shape (128, 64, 1, 1)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level3.project.1.bias                              loaded from level3.project.1.bias               of shape (128,)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level3.project.1.weight                            loaded from level3.project.1.weight             of shape (128,)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.project.0.weight                      loaded from level3.tree1.project.0.weight       of shape (128, 64, 1, 1)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.project.1.bias                        loaded from level3.tree1.project.1.bias         of shape (128,)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.project.1.weight                      loaded from level3.tree1.project.1.weight       of shape (128,)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.root.conv.weight                      loaded from level3.tree1.root.conv.weight       of shape (128, 256, 1, 1)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.tree1.conv1.weight                    loaded from level3.tree1.tree1.conv1.weight     of shape (128, 64, 3, 3)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.tree1.conv2.weight                    loaded from level3.tree1.tree1.conv2.weight     of shape (128, 128, 3, 3)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.tree2.conv1.weight                    loaded from level3.tree1.tree2.conv1.weight     of shape (128, 128, 3, 3)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.tree2.conv2.weight                    loaded from level3.tree1.tree2.conv2.weight     of shape (128, 128, 3, 3)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.root.conv.weight                      loaded from level3.tree2.root.conv.weight       of shape (128, 448, 1, 1)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.tree1.conv1.weight                    loaded from level3.tree2.tree1.conv1.weight     of shape (128, 128, 3, 3)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.tree1.conv2.weight                    loaded from level3.tree2.tree1.conv2.weight     of shape (128, 128, 3, 3)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.tree2.conv1.weight                    loaded from level3.tree2.tree2.conv1.weight     of shape (128, 128, 3, 3)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.tree2.conv2.weight                    loaded from level3.tree2.tree2.conv2.weight     of shape (128, 128, 3, 3)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level4.project.0.weight                            loaded from level4.project.0.weight             of shape (256, 128, 1, 1)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level4.project.1.bias                              loaded from level4.project.1.bias               of shape (256,)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level4.project.1.weight                            loaded from level4.project.1.weight             of shape (256,)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.project.0.weight                      loaded from level4.tree1.project.0.weight       of shape (256, 128, 1, 1)
+[2026-03-18 18:34:45,763] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.project.1.bias                        loaded from level4.tree1.project.1.bias         of shape (256,)
+[2026-03-18 18:34:45,764] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.project.1.weight                      loaded from level4.tree1.project.1.weight       of shape (256,)
+[2026-03-18 18:34:45,764] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.root.conv.weight                      loaded from level4.tree1.root.conv.weight       of shape (256, 512, 1, 1)
+[2026-03-18 18:34:45,764] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.tree1.conv1.weight                    loaded from level4.tree1.tree1.conv1.weight     of shape (256, 128, 3, 3)
+[2026-03-18 18:34:45,764] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.tree1.conv2.weight                    loaded from level4.tree1.tree1.conv2.weight     of shape (256, 256, 3, 3)
+[2026-03-18 18:34:45,764] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.tree2.conv1.weight                    loaded from level4.tree1.tree2.conv1.weight     of shape (256, 256, 3, 3)
+[2026-03-18 18:34:45,764] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.tree2.conv2.weight                    loaded from level4.tree1.tree2.conv2.weight     of shape (256, 256, 3, 3)
+[2026-03-18 18:34:45,764] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.root.conv.weight                      loaded from level4.tree2.root.conv.weight       of shape (256, 896, 1, 1)
+[2026-03-18 18:34:45,764] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.tree1.conv1.weight                    loaded from level4.tree2.tree1.conv1.weight     of shape (256, 256, 3, 3)
+[2026-03-18 18:34:45,764] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.tree1.conv2.weight                    loaded from level4.tree2.tree1.conv2.weight     of shape (256, 256, 3, 3)
+[2026-03-18 18:34:45,764] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.tree2.conv1.weight                    loaded from level4.tree2.tree2.conv1.weight     of shape (256, 256, 3, 3)
+[2026-03-18 18:34:45,764] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.tree2.conv2.weight                    loaded from level4.tree2.tree2.conv2.weight     of shape (256, 256, 3, 3)
+[2026-03-18 18:34:45,764] smoke.utils.model_serialization INFO: backbone.body.base.level5.project.0.weight                            loaded from level5.project.0.weight             of shape (512, 256, 1, 1)
+[2026-03-18 18:34:45,764] smoke.utils.model_serialization INFO: backbone.body.base.level5.project.1.bias                              loaded from level5.project.1.bias               of shape (512,)
+[2026-03-18 18:34:45,764] smoke.utils.model_serialization INFO: backbone.body.base.level5.project.1.weight                            loaded from level5.project.1.weight             of shape (512,)
+[2026-03-18 18:34:45,764] smoke.utils.model_serialization INFO: backbone.body.base.level5.root.conv.weight                            loaded from level5.root.conv.weight             of shape (512, 1280, 1, 1)
+[2026-03-18 18:34:45,764] smoke.utils.model_serialization INFO: backbone.body.base.level5.tree1.conv1.weight                          loaded from level5.tree1.conv1.weight           of shape (512, 256, 3, 3)
+[2026-03-18 18:34:45,764] smoke.utils.model_serialization INFO: backbone.body.base.level5.tree1.conv2.weight                          loaded from level5.tree1.conv2.weight           of shape (512, 512, 3, 3)
+[2026-03-18 18:34:45,764] smoke.utils.model_serialization INFO: backbone.body.base.level5.tree2.conv1.weight                          loaded from level5.tree2.conv1.weight           of shape (512, 512, 3, 3)
+[2026-03-18 18:34:45,764] smoke.utils.model_serialization INFO: backbone.body.base.level5.tree2.conv2.weight                          loaded from level5.tree2.conv2.weight           of shape (512, 512, 3, 3)
+[2026-03-18 18:34:45,776] smoke.data.datasets.kitti INFO: Initializing KITTI train set with 4000 files loaded
+[2026-03-18 18:34:45,776] smoke.trainer INFO: Start training
+[2026-03-18 18:59:13,749] smoke INFO: Using 1 GPUs
+[2026-03-18 18:59:13,750] smoke INFO: Collecting environment info
+[2026-03-18 18:59:14,011] smoke INFO: 
+PyTorch version: 2.10.0
+Is debug build: False
+CUDA used to build PyTorch: None
+ROCM used to build PyTorch: N/A
+
+OS: macOS 26.3.1 (arm64)
+GCC version: Could not collect
+Clang version: 17.0.0 (clang-1700.6.4.2)
+CMake version: version 4.2.3
+Libc version: N/A
+
+Python version: 3.14.3 (main, Feb  3 2026, 15:32:20) [Clang 17.0.0 (clang-1700.6.3.2)] (64-bit runtime)
+Python platform: macOS-26.3.1-arm64-arm-64bit-Mach-O
+Is CUDA available: False
+CUDA runtime version: No CUDA
+CUDA_MODULE_LOADING set to: N/A
+GPU models and configuration: No CUDA
+Nvidia driver version: No CUDA
+cuDNN version: No CUDA
+Is XPU available: False
+HIP runtime version: N/A
+MIOpen runtime version: N/A
+Is XNNPACK available: True
+Caching allocator config: N/A
+
+CPU:
+sysctl: sysctl fmt -1 1024 1: Operation not permitted
+
+Versions of relevant libraries:
+[pip3] numpy==2.4.3
+[pip3] torch==2.10.0
+[pip3] torchvision==0.25.0
+[conda] Could not collect
+        Pillow (12.1.1)
+[2026-03-18 18:59:14,012] smoke INFO: Namespace(config_file='configs/smoke_gn_vector.yaml', eval_only=False, ckpt=None, num_gpus=1, num_machines=1, machine_rank=0, dist_url='tcp://127.0.0.1:49653', opts=['MODEL.DEVICE', 'cpu', 'DATASETS.TRAIN_SPLIT', 'train', 'DATASETS.TEST_SPLIT', 'val', 'DATASETS.DETECT_CLASSES', "('Car',)", 'SOLVER.IMS_PER_BATCH', '32', 'SOLVER.BASE_LR', '0.00025', 'SOLVER.MAX_ITERATION', '125', 'SOLVER.STEPS', '(52,83)', 'SOLVER.CHECKPOINT_PERIOD', '125', 'SOLVER.EVALUATE_PERIOD', '126', 'DATALOADER.NUM_WORKERS', '0', 'SEED', '42', 'OUTPUT_DIR', '/Users/doyoung/Documents/Blender/results/ablation_study/seed_42/baseline/official_smoke_output'])
+[2026-03-18 18:59:14,012] smoke INFO: Loaded configuration file configs/smoke_gn_vector.yaml
+[2026-03-18 18:59:14,012] smoke INFO: 
+MODEL:
+  WEIGHT: "catalog://ImageNetPretrained/DLA34"
+INPUT:
+  FLIP_PROB_TRAIN: 0.5
+  SHIFT_SCALE_PROB_TRAIN: 0.3
+DATASETS:
+  DETECT_CLASSES: ("Car", "Cyclist", "Pedestrian")
+  TRAIN: ("kitti_train",)
+  TEST: ("kitti_test",)
+  TRAIN_SPLIT: "trainval"
+  TEST_SPLIT: "test"
+SOLVER:
+  BASE_LR: 2.5e-4
+  STEPS: (10000, 18000)
+  MAX_ITERATION: 25000
+  IMS_PER_BATCH: 32
+[2026-03-18 18:59:14,013] smoke INFO: Running with config:
+CUDNN_BENCHMARK: True
+DATALOADER:
+  ASPECT_RATIO_GROUPING: False
+  NUM_WORKERS: 0
+  SIZE_DIVISIBILITY: 0
+DATASETS:
+  DETECT_CLASSES: ('Car',)
+  MAX_OBJECTS: 30
+  TEST: ('kitti_test',)
+  TEST_SPLIT: val
+  TRAIN: ('kitti_train',)
+  TRAIN_SPLIT: train
+INPUT:
+  FLIP_PROB_TRAIN: 0.5
+  HEIGHT_TEST: 384
+  HEIGHT_TRAIN: 384
+  PIXEL_MEAN: [0.485, 0.456, 0.406]
+  PIXEL_STD: [0.229, 0.224, 0.225]
+  SHIFT_SCALE_PROB_TRAIN: 0.3
+  SHIFT_SCALE_TRAIN: (0.2, 0.4)
+  TO_BGR: True
+  WIDTH_TEST: 1280
+  WIDTH_TRAIN: 1280
+MODEL:
+  BACKBONE:
+    BACKBONE_OUT_CHANNELS: 64
+    CONV_BODY: DLA-34-DCN
+    DOWN_RATIO: 4
+    FREEZE_CONV_BODY_AT: 0
+    USE_NORMALIZATION: GN
+  DEVICE: cpu
+  GROUP_NORM:
+    DIM_PER_GP: -1
+    EPSILON: 1e-05
+    NUM_GROUPS: 32
+  SMOKE_HEAD:
+    DEPTH_REFERENCE: (28.01, 16.32)
+    DIMENSION_REFERENCE: ((3.88, 1.63, 1.53), (1.78, 1.7, 0.58), (0.88, 1.73, 0.67))
+    LOSS_ALPHA: 2
+    LOSS_BETA: 4
+    LOSS_TYPE: ('FocalLoss', 'DisL1')
+    LOSS_WEIGHT: (1.0, 10.0)
+    NUM_CHANNEL: 256
+    PREDICTOR: SMOKEPredictor
+    REGRESSION_CHANNEL: (1, 2, 3, 2)
+    REGRESSION_HEADS: 8
+    USE_NMS: False
+    USE_NORMALIZATION: GN
+  SMOKE_ON: True
+  WEIGHT: catalog://ImageNetPretrained/DLA34
+OUTPUT_DIR: /Users/doyoung/Documents/Blender/results/ablation_study/seed_42/baseline/official_smoke_output
+PATHS_CATALOG: /Users/doyoung/Documents/Blender/external/SMOKE/smoke/config/paths_catalog.py
+SEED: 42
+SOLVER:
+  BASE_LR: 0.00025
+  BIAS_LR_FACTOR: 2
+  CHECKPOINT_PERIOD: 125
+  EVALUATE_PERIOD: 126
+  IMS_PER_BATCH: 32
+  LOAD_OPTIMIZER_SCHEDULER: True
+  MASTER_BATCH: -1
+  MAX_ITERATION: 125
+  OPTIMIZER: Adam
+  STEPS: (52, 83)
+TEST:
+  DETECTIONS_PER_IMG: 50
+  DETECTIONS_THRESHOLD: 0.25
+  IMS_PER_BATCH: 1
+  PRED_2D: True
+  SINGLE_GPU_TEST: True
+[2026-03-18 18:59:14,058] smoke.utils.check_point INFO: Loading checkpoint from catalog://ImageNetPretrained/DLA34
+[2026-03-18 18:59:14,059] smoke.utils.check_point INFO: catalog://ImageNetPretrained/DLA34 points to http://dl.yf.io/dla/models/imagenet/dla34-ba72cf86.pth
+[2026-03-18 18:59:14,059] smoke.utils.check_point INFO: url http://dl.yf.io/dla/models/imagenet/dla34-ba72cf86.pth cached in /Users/doyoung/.torch/models/dla34-ba72cf86.pth
+[2026-03-18 18:59:14,075] smoke.utils.model_serialization INFO: backbone.body.base.base_layer.0.weight                                loaded from base_layer.0.weight                 of shape (16, 3, 7, 7)
+[2026-03-18 18:59:14,075] smoke.utils.model_serialization INFO: backbone.body.base.base_layer.1.bias                                  loaded from base_layer.1.bias                   of shape (16,)
+[2026-03-18 18:59:14,076] smoke.utils.model_serialization INFO: backbone.body.base.base_layer.1.weight                                loaded from base_layer.1.weight                 of shape (16,)
+[2026-03-18 18:59:14,076] smoke.utils.model_serialization INFO: backbone.body.base.level0.0.weight                                    loaded from level0.0.weight                     of shape (16, 16, 3, 3)
+[2026-03-18 18:59:14,076] smoke.utils.model_serialization INFO: backbone.body.base.level0.1.bias                                      loaded from level0.1.bias                       of shape (16,)
+[2026-03-18 18:59:14,076] smoke.utils.model_serialization INFO: backbone.body.base.level0.1.weight                                    loaded from level0.1.weight                     of shape (16,)
+[2026-03-18 18:59:14,076] smoke.utils.model_serialization INFO: backbone.body.base.level1.0.weight                                    loaded from level1.0.weight                     of shape (32, 16, 3, 3)
+[2026-03-18 18:59:14,076] smoke.utils.model_serialization INFO: backbone.body.base.level1.1.bias                                      loaded from level1.1.bias                       of shape (32,)
+[2026-03-18 18:59:14,077] smoke.utils.model_serialization INFO: backbone.body.base.level1.1.weight                                    loaded from level1.1.weight                     of shape (32,)
+[2026-03-18 18:59:14,077] smoke.utils.model_serialization INFO: backbone.body.base.level2.project.0.weight                            loaded from level2.project.0.weight             of shape (64, 32, 1, 1)
+[2026-03-18 18:59:14,077] smoke.utils.model_serialization INFO: backbone.body.base.level2.project.1.bias                              loaded from level2.project.1.bias               of shape (64,)
+[2026-03-18 18:59:14,077] smoke.utils.model_serialization INFO: backbone.body.base.level2.project.1.weight                            loaded from level2.project.1.weight             of shape (64,)
+[2026-03-18 18:59:14,077] smoke.utils.model_serialization INFO: backbone.body.base.level2.root.conv.weight                            loaded from level2.root.conv.weight             of shape (64, 128, 1, 1)
+[2026-03-18 18:59:14,077] smoke.utils.model_serialization INFO: backbone.body.base.level2.tree1.conv1.weight                          loaded from level2.tree1.conv1.weight           of shape (64, 32, 3, 3)
+[2026-03-18 18:59:14,078] smoke.utils.model_serialization INFO: backbone.body.base.level2.tree1.conv2.weight                          loaded from level2.tree1.conv2.weight           of shape (64, 64, 3, 3)
+[2026-03-18 18:59:14,078] smoke.utils.model_serialization INFO: backbone.body.base.level2.tree2.conv1.weight                          loaded from level2.tree2.conv1.weight           of shape (64, 64, 3, 3)
+[2026-03-18 18:59:14,078] smoke.utils.model_serialization INFO: backbone.body.base.level2.tree2.conv2.weight                          loaded from level2.tree2.conv2.weight           of shape (64, 64, 3, 3)
+[2026-03-18 18:59:14,078] smoke.utils.model_serialization INFO: backbone.body.base.level3.project.0.weight                            loaded from level3.project.0.weight             of shape (128, 64, 1, 1)
+[2026-03-18 18:59:14,078] smoke.utils.model_serialization INFO: backbone.body.base.level3.project.1.bias                              loaded from level3.project.1.bias               of shape (128,)
+[2026-03-18 18:59:14,078] smoke.utils.model_serialization INFO: backbone.body.base.level3.project.1.weight                            loaded from level3.project.1.weight             of shape (128,)
+[2026-03-18 18:59:14,079] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.project.0.weight                      loaded from level3.tree1.project.0.weight       of shape (128, 64, 1, 1)
+[2026-03-18 18:59:14,079] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.project.1.bias                        loaded from level3.tree1.project.1.bias         of shape (128,)
+[2026-03-18 18:59:14,079] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.project.1.weight                      loaded from level3.tree1.project.1.weight       of shape (128,)
+[2026-03-18 18:59:14,079] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.root.conv.weight                      loaded from level3.tree1.root.conv.weight       of shape (128, 256, 1, 1)
+[2026-03-18 18:59:14,079] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.tree1.conv1.weight                    loaded from level3.tree1.tree1.conv1.weight     of shape (128, 64, 3, 3)
+[2026-03-18 18:59:14,080] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.tree1.conv2.weight                    loaded from level3.tree1.tree1.conv2.weight     of shape (128, 128, 3, 3)
+[2026-03-18 18:59:14,080] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.tree2.conv1.weight                    loaded from level3.tree1.tree2.conv1.weight     of shape (128, 128, 3, 3)
+[2026-03-18 18:59:14,080] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.tree2.conv2.weight                    loaded from level3.tree1.tree2.conv2.weight     of shape (128, 128, 3, 3)
+[2026-03-18 18:59:14,080] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.root.conv.weight                      loaded from level3.tree2.root.conv.weight       of shape (128, 448, 1, 1)
+[2026-03-18 18:59:14,080] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.tree1.conv1.weight                    loaded from level3.tree2.tree1.conv1.weight     of shape (128, 128, 3, 3)
+[2026-03-18 18:59:14,080] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.tree1.conv2.weight                    loaded from level3.tree2.tree1.conv2.weight     of shape (128, 128, 3, 3)
+[2026-03-18 18:59:14,081] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.tree2.conv1.weight                    loaded from level3.tree2.tree2.conv1.weight     of shape (128, 128, 3, 3)
+[2026-03-18 18:59:14,081] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.tree2.conv2.weight                    loaded from level3.tree2.tree2.conv2.weight     of shape (128, 128, 3, 3)
+[2026-03-18 18:59:14,081] smoke.utils.model_serialization INFO: backbone.body.base.level4.project.0.weight                            loaded from level4.project.0.weight             of shape (256, 128, 1, 1)
+[2026-03-18 18:59:14,081] smoke.utils.model_serialization INFO: backbone.body.base.level4.project.1.bias                              loaded from level4.project.1.bias               of shape (256,)
+[2026-03-18 18:59:14,081] smoke.utils.model_serialization INFO: backbone.body.base.level4.project.1.weight                            loaded from level4.project.1.weight             of shape (256,)
+[2026-03-18 18:59:14,082] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.project.0.weight                      loaded from level4.tree1.project.0.weight       of shape (256, 128, 1, 1)
+[2026-03-18 18:59:14,082] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.project.1.bias                        loaded from level4.tree1.project.1.bias         of shape (256,)
+[2026-03-18 18:59:14,082] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.project.1.weight                      loaded from level4.tree1.project.1.weight       of shape (256,)
+[2026-03-18 18:59:14,082] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.root.conv.weight                      loaded from level4.tree1.root.conv.weight       of shape (256, 512, 1, 1)
+[2026-03-18 18:59:14,082] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.tree1.conv1.weight                    loaded from level4.tree1.tree1.conv1.weight     of shape (256, 128, 3, 3)
+[2026-03-18 18:59:14,082] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.tree1.conv2.weight                    loaded from level4.tree1.tree1.conv2.weight     of shape (256, 256, 3, 3)
+[2026-03-18 18:59:14,083] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.tree2.conv1.weight                    loaded from level4.tree1.tree2.conv1.weight     of shape (256, 256, 3, 3)
+[2026-03-18 18:59:14,083] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.tree2.conv2.weight                    loaded from level4.tree1.tree2.conv2.weight     of shape (256, 256, 3, 3)
+[2026-03-18 18:59:14,083] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.root.conv.weight                      loaded from level4.tree2.root.conv.weight       of shape (256, 896, 1, 1)
+[2026-03-18 18:59:14,083] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.tree1.conv1.weight                    loaded from level4.tree2.tree1.conv1.weight     of shape (256, 256, 3, 3)
+[2026-03-18 18:59:14,083] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.tree1.conv2.weight                    loaded from level4.tree2.tree1.conv2.weight     of shape (256, 256, 3, 3)
+[2026-03-18 18:59:14,083] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.tree2.conv1.weight                    loaded from level4.tree2.tree2.conv1.weight     of shape (256, 256, 3, 3)
+[2026-03-18 18:59:14,084] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.tree2.conv2.weight                    loaded from level4.tree2.tree2.conv2.weight     of shape (256, 256, 3, 3)
+[2026-03-18 18:59:14,084] smoke.utils.model_serialization INFO: backbone.body.base.level5.project.0.weight                            loaded from level5.project.0.weight             of shape (512, 256, 1, 1)
+[2026-03-18 18:59:14,084] smoke.utils.model_serialization INFO: backbone.body.base.level5.project.1.bias                              loaded from level5.project.1.bias               of shape (512,)
+[2026-03-18 18:59:14,084] smoke.utils.model_serialization INFO: backbone.body.base.level5.project.1.weight                            loaded from level5.project.1.weight             of shape (512,)
+[2026-03-18 18:59:14,084] smoke.utils.model_serialization INFO: backbone.body.base.level5.root.conv.weight                            loaded from level5.root.conv.weight             of shape (512, 1280, 1, 1)
+[2026-03-18 18:59:14,085] smoke.utils.model_serialization INFO: backbone.body.base.level5.tree1.conv1.weight                          loaded from level5.tree1.conv1.weight           of shape (512, 256, 3, 3)
+[2026-03-18 18:59:14,085] smoke.utils.model_serialization INFO: backbone.body.base.level5.tree1.conv2.weight                          loaded from level5.tree1.conv2.weight           of shape (512, 512, 3, 3)
+[2026-03-18 18:59:14,085] smoke.utils.model_serialization INFO: backbone.body.base.level5.tree2.conv1.weight                          loaded from level5.tree2.conv1.weight           of shape (512, 512, 3, 3)
+[2026-03-18 18:59:14,085] smoke.utils.model_serialization INFO: backbone.body.base.level5.tree2.conv2.weight                          loaded from level5.tree2.conv2.weight           of shape (512, 512, 3, 3)
+[2026-03-18 18:59:14,090] smoke.data.datasets.kitti INFO: Initializing KITTI train set with 4000 files loaded
+[2026-03-18 18:59:14,091] smoke.trainer INFO: Start training

@@ -15,7 +15,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_SMOKE_DIR = ROOT / "external" / "SMOKE"
+DEFAULT_SMOKE_DIR = ROOT / "SMOKE-master"
 DEFAULT_DATASET_ROOT = ROOT / "datasets" / "v3" / "kitti_smoke_1280x384_lb"
 
 
@@ -39,6 +39,17 @@ def _build_command(
     if extra_opts:
         cmd += extra_opts
     return cmd
+
+
+def _requested_device_from_opts(opts: list[str]) -> str | None:
+    """
+    Extract MODEL.DEVICE value from flat opts list.
+    Example: ["MODEL.DEVICE", "mps", ...] -> "mps"
+    """
+    for i in range(len(opts) - 1):
+        if opts[i] == "MODEL.DEVICE":
+            return str(opts[i + 1]).strip().lower()
+    return None
 
 
 def _validate_smoke_repo(smoke_dir: Path) -> None:
@@ -144,6 +155,11 @@ def main() -> None:
         nargs="*",
         help="Optional config overrides passed through to plain_train_net.py",
     )
+    parser.add_argument(
+        "--enable-mps-fallback",
+        action="store_true",
+        help="Set PYTORCH_ENABLE_MPS_FALLBACK=1 for MPS training.",
+    )
     args = parser.parse_args()
 
     smoke_dir = args.smoke_dir.resolve()
@@ -156,6 +172,10 @@ def main() -> None:
     env["PYTHONPATH"] = (
         f"{smoke_dir}:{prev_pythonpath}" if prev_pythonpath else str(smoke_dir)
     )
+    requested_device = _requested_device_from_opts(args.opts)
+    auto_mps_fallback = requested_device == "mps"
+    if args.enable_mps_fallback or auto_mps_fallback:
+        env["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
     cmd = _build_command(
         smoke_dir=smoke_dir,
@@ -170,10 +190,8 @@ def main() -> None:
     print("[official-smoke] cwd:", smoke_dir)
     print("[official-smoke] cmd:", " ".join(cmd))
     print("[official-smoke] dataset:", dataset_root)
-    print(
-        "[official-smoke] note: run `python setup.py build develop` once inside "
-        "external/SMOKE before first training."
-    )
+    if args.enable_mps_fallback or auto_mps_fallback:
+        print("[official-smoke] note: PYTORCH_ENABLE_MPS_FALLBACK=1 is enabled.")
 
     subprocess.run(cmd, cwd=smoke_dir, env=env, check=True)
 

@@ -45,19 +45,22 @@ from train.models     import build_smoke_model
 from train.smoke_loss import (
     build_smoke_loss,
     _build_corners_baseline_3d,
+    _build_corners_from_center_location,
     _build_corners_geometry_3d,
     _build_gt_corners_baseline,
     _build_gt_corners_geometry,
+    _build_trans_mats,
     _extract_at,
     _SMOKE_CODER,
     TRUCK_H, FEAT_STRIDE, EPS,
+    decode_baseline_official,
 )
 from train.metrics import calculate_metrics, aggregate_metrics
 
 # ── 경로 ──────────────────────────────────────────────────────────────────────
 
 ROOT         = Path(__file__).resolve().parent.parent
-DATASET_ROOT = str(ROOT / "datasets" / "v3")
+DATASET_ROOT = str(ROOT / "datasets" / "v3" / "kitti_smoke_1280x384_lb")
 RESULTS_DIR  = ROOT / "results" / "smoke_ablation"
 
 # ── 기기 ──────────────────────────────────────────────────────────────────────
@@ -155,25 +158,24 @@ def decode_predictions(
         )
 
     else:
-        # offset 2ch: v-방향도 포함
-        if offset.shape[1] >= 2:
-            pred_off_v = _extract_at(offset, ix, iy)[:, 1]
-            v_c = (iy.float() + pred_off_v) * stride
-        else:
-            v_c = iy.float() * stride   # fallback
+        predictions = outputs.get("predictions")
+        if predictions is None:
+            raise KeyError("Baseline outputs must include 'predictions' for official decode.")
+        image_h = int(batch["image"].shape[-2])
+        image_w = int(batch["image"].shape[-1])
+        trans_mats = _build_trans_mats(B, image_h, image_w, dev)
+        decoded = decode_baseline_official(predictions, K, trans_mats)
 
-        reg = _extract_at(outputs["reg3d"], ix, iy)   # (B, 6)
+        X_center = decoded["locations_center"][:, 0]
+        Y_center = decoded["locations_center"][:, 1]
+        pred_z = decoded["locations_center"][:, 2]
+        L_pred = decoded["dimensions_lhw"][:, 0]
+        H_pred = decoded["dimensions_lhw"][:, 1]
+        W_pred = decoded["dimensions_lhw"][:, 2]
+        pred_yaw = decoded["rotys"]
 
-        # _SMOKE_CODER: depth / dim / orientation (단일 소스 경로)
-        pred_z                 = _SMOKE_CODER.decode_depth(reg[:, 0])
-        W_pred, H_pred, L_pred = _SMOKE_CODER.decode_dimension(reg[:, 1:4])
-        X_pred                 = (u_c - K[:, 0, 2]) * pred_z / (K[:, 0, 0] + EPS)
-        _, pred_yaw            = _SMOKE_CODER.decode_orientation(
-            reg[:, 4:6], X_pred, pred_z
-        )
-
-        pred_corners = _build_corners_baseline_3d(
-            u_c, v_c, pred_z, pred_yaw, K, W_pred, H_pred, L_pred
+        pred_corners = _build_corners_from_center_location(
+            X_center, Y_center, pred_z, pred_yaw, W_pred, H_pred, L_pred
         )
 
     return pred_corners, pred_yaw, pred_z
@@ -312,6 +314,9 @@ def run_single(
     lr:         float,
     device:     str,
     seed:       int | None = None,
+    num_workers: int = 8,
+    save_every: int = 5,
+    eval_every: int = 0,
 ) -> dict:
     """
     단일 model_type 에 대해 전체 학습+검증 수행.
@@ -336,7 +341,7 @@ def run_single(
         root        = DATASET_ROOT,
         model_type  = model_type,
         batch_size  = batch_size,
-        num_workers = 8,
+        num_workers = num_workers,
         augment     = True,
     )
     n_train = len(train_loader.dataset)
@@ -355,6 +360,7 @@ def run_single(
     ckpt_dir  = RESULTS_DIR / model_type
     ckpt_dir.mkdir(parents=True, exist_ok=True)
     best_ckpt = ckpt_dir / "best.pt"
+    last_ckpt = ckpt_dir / "last.pt"
 
     best_val_loss = float("inf")
     best_z_error  = float("inf")
@@ -366,8 +372,12 @@ def run_single(
     for ep in range(1, epochs + 1):
         t0 = time.time()
 
-        train_ld  = _train_epoch(model, train_loader, loss_fn, optimizer, device)
-        val_ld, val_met = _val_epoch(model, val_loader, loss_fn, model_type, device)
+        train_ld = _train_epoch(model, train_loader, loss_fn, optimizer, device)
+        ran_val = eval_every > 0 and (ep % eval_every == 0 or ep == epochs)
+        if ran_val:
+            val_ld, val_met = _val_epoch(model, val_loader, loss_fn, model_type, device)
+        else:
+            val_ld, val_met = {}, {}
 
         scheduler.step()
         elapsed = time.time() - t0
@@ -391,7 +401,7 @@ def run_single(
         }
 
         # ── Best 체크포인트 ───────────────────────────────────────────────
-        if val_total < best_val_loss:
+        if ran_val and val_total < best_val_loss:
             best_val_loss = val_total
             best_z_error  = z_err
             best_adds     = adds_val
@@ -399,34 +409,43 @@ def run_single(
             torch.save(ckpt_payload, best_ckpt)
 
         # ── 주기적 체크포인트 (5 에포크마다) ────────────────────────────
-        if ep % 5 == 0:
+        if save_every > 0 and ep % save_every == 0:
             periodic_ckpt = ckpt_dir / f"epoch_{ep:04d}.pt"
             torch.save(ckpt_payload, periodic_ckpt)
+        if ep == epochs:
+            torch.save(ckpt_payload, last_ckpt)
 
         # ── 로깅 ─────────────────────────────────────────────────────────
         train_str = " ".join(
             f"{k}={v:.3f}" for k, v in train_ld.items()
             if k in ("total", "l_heat", "l_off", "l_3d")
         )
-        val_str = " ".join(
-            f"{k}={v:.3f}" for k, v in val_ld.items()
-            if k in ("total", "l_heat", "l_3d")
-        )
-        met_str = (
-            f"Z={z_err:.2f}m  "
-            f"Center={val_met.get('center_error_m', 0):.2f}m  "
-            f"Yaw={val_met.get('yaw_error_deg', 0):.1f}°  "
-            f"ADD-S={adds_val:.2f}m"
-        )
-
-        star = " ★" if ep == best_epoch else ""
-        print(
-            f"  Ep {ep:>4}/{epochs}"
-            f"  [{elapsed:4.0f}s]"
-            f"  train: {train_str}"
-            f"  val: {val_str}"
-            f"  | {met_str}{star}"
-        )
+        if ran_val:
+            val_str = " ".join(
+                f"{k}={v:.3f}" for k, v in val_ld.items()
+                if k in ("total", "l_heat", "l_3d")
+            )
+            met_str = (
+                f"Z={z_err:.2f}m  "
+                f"Center={val_met.get('center_error_m', 0):.2f}m  "
+                f"Yaw={val_met.get('yaw_error_deg', 0):.1f}°  "
+                f"ADD-S={adds_val:.2f}m"
+            )
+            star = " ★" if ep == best_epoch else ""
+            print(
+                f"  Ep {ep:>4}/{epochs}"
+                f"  [{elapsed:4.0f}s]"
+                f"  train: {train_str}"
+                f"  val: {val_str}"
+                f"  | {met_str}{star}"
+            )
+        else:
+            print(
+                f"  Ep {ep:>4}/{epochs}"
+                f"  [{elapsed:4.0f}s]"
+                f"  train: {train_str}"
+                f"  | val: skipped"
+            )
 
         history.append({
             "epoch":      ep,
@@ -439,9 +458,13 @@ def run_single(
         with open(hist_path, "w", encoding="utf-8") as f:
             json.dump(history, f, indent=2, ensure_ascii=False)
 
-    print(f"\n  ▶ Best  ep={best_epoch}  val_loss={best_val_loss:.4f}"
-          f"  Z={best_z_error:.3f}m  ADD-S={best_adds:.3f}m")
-    print(f"     체크포인트 → {best_ckpt}")
+    if best_epoch > 0:
+        print(f"\n  ▶ Best  ep={best_epoch}  val_loss={best_val_loss:.4f}"
+              f"  Z={best_z_error:.3f}m  ADD-S={best_adds:.3f}m")
+        print(f"     체크포인트 → {best_ckpt}")
+    else:
+        print("\n  ▶ Validation was skipped during training.")
+    print(f"     마지막 체크포인트 → {last_ckpt}")
     print(f"     히스토리  → {hist_path}")
 
     return {
@@ -629,6 +652,9 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--lr",     type=float, default=2.5e-4, help="초기 Learning Rate")
     p.add_argument("--device", default=DEVICE,            help=f"학습 기기 (default: {DEVICE})")
     p.add_argument("--seed",   type=int,   default=None, help="랜덤 시드 (None=고정 없음)")
+    p.add_argument("--workers", type=int, default=8, help="DataLoader worker 수")
+    p.add_argument("--save-every", type=int, default=5, help="체크포인트 저장 주기(epoch)")
+    p.add_argument("--eval-every", type=int, default=0, help="학습 중 검증 주기(epoch), 0이면 비활성화")
     return p.parse_args()
 
 
@@ -649,13 +675,16 @@ def main() -> None:
             lr         = args.lr,
             device     = args.device,
             seed       = args.seed,
+            num_workers = args.workers,
+            save_every  = args.save_every,
+            eval_every  = args.eval_every,
         )
         results.append(r)
 
-    if len(results) > 1:
+    if args.eval_every > 0 and len(results) > 1:
         _print_summary(results)
         plot_ablation_curves(results, save_dir=RESULTS_DIR)
-    elif len(results) == 1:
+    elif args.eval_every > 0 and len(results) == 1:
         plot_ablation_curves(results, save_dir=RESULTS_DIR)
 
 

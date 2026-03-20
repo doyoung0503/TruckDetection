@@ -40,11 +40,29 @@ SMOKE-style ablation framework 손실 함수 (4종 절제 모델 공용).
 from __future__ import annotations
 
 import math
+import sys
+from pathlib import Path
 from typing import Literal
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+ROOT = Path(__file__).resolve().parent.parent
+OFFICIAL_SMOKE_DIR = ROOT / "SMOKE-master"
+if str(OFFICIAL_SMOKE_DIR) not in sys.path:
+    sys.path.insert(0, str(OFFICIAL_SMOKE_DIR))
+
+from smoke.config.defaults import _C as _OFFICIAL_SMOKE_DEFAULTS
+from smoke.modeling.heatmap_coder import (
+    affine_transform as official_affine_transform,
+    draw_umich_gaussian as official_draw_umich_gaussian,
+    gaussian_radius as official_gaussian_radius,
+    get_transfrom_matrix,
+)
+from smoke.modeling.heads.smoke_head.loss import make_smoke_loss_evaluator
+from smoke.modeling.smoke_coder import SMOKECoder as OfficialSMOKECoder
+from smoke.structures.params_3d import ParamsList
 
 # ── 상수 ──────────────────────────────────────────────────────────────────────
 
@@ -54,11 +72,293 @@ TRUCK_H: float = 3.3
 EPS: float = 1e-6
 PI: float = math.pi
 
-FEAT_STRIDE: int = 8
+FEAT_STRIDE: int = 4
 
 # 데이터셋 깊이 통계 (train split 3999개 기준, m 단위)
 DEPTH_MEAN: float = 6.15
 DEPTH_STD:  float = 2.48
+
+
+def build_official_smoke_cfg(device: str = "cpu"):
+    """Project-local official SMOKE config built from SMOKE-master defaults."""
+    cfg = _OFFICIAL_SMOKE_DEFAULTS.clone()
+    cfg.defrost()
+    cfg.MODEL.DEVICE = device
+    cfg.INPUT.HEIGHT_TRAIN = 384
+    cfg.INPUT.WIDTH_TRAIN = 1280
+    cfg.INPUT.HEIGHT_TEST = 384
+    cfg.INPUT.WIDTH_TEST = 1280
+    cfg.DATASETS.DETECT_CLASSES = ("Car",)
+    cfg.MODEL.BACKBONE.CONV_BODY = "DLA-34-DCN"
+    cfg.MODEL.BACKBONE.USE_NORMALIZATION = "GN"
+    cfg.MODEL.BACKBONE.DOWN_RATIO = FEAT_STRIDE
+    cfg.MODEL.BACKBONE.BACKBONE_OUT_CHANNELS = 64
+    cfg.MODEL.SMOKE_HEAD.USE_NORMALIZATION = "GN"
+    cfg.MODEL.SMOKE_HEAD.NUM_CHANNEL = 256
+    cfg.MODEL.SMOKE_HEAD.REGRESSION_HEADS = 8
+    cfg.MODEL.SMOKE_HEAD.REGRESSION_CHANNEL = (1, 2, 3, 2)
+    cfg.MODEL.SMOKE_HEAD.DIMENSION_REFERENCE = ((TRUCK_L, TRUCK_H, TRUCK_W),)
+    cfg.MODEL.SMOKE_HEAD.DEPTH_REFERENCE = (DEPTH_MEAN, DEPTH_STD)
+    cfg.TEST.DETECTIONS_THRESHOLD = 0.0
+    cfg.TEST.DETECTIONS_PER_IMG = 1
+    cfg.freeze()
+    return cfg
+
+
+def _device_type_str(device: torch.device | str) -> str:
+    if isinstance(device, str):
+        return device.split(":")[0]
+    return device.type
+
+
+def _build_trans_mats(
+    batch_size: int,
+    image_h: int,
+    image_w: int,
+    device: torch.device,
+    stride: int = FEAT_STRIDE,
+) -> torch.Tensor:
+    center = [image_w / 2.0, image_h / 2.0]
+    size = [float(image_w), float(image_h)]
+    out_size = [image_w / stride, image_h / stride]
+    mat_np = get_transfrom_matrix([center, size], out_size)
+    mat = torch.as_tensor(mat_np, dtype=torch.float32, device=device)
+    return mat.unsqueeze(0).repeat(batch_size, 1, 1)
+
+
+def _decode_location_official(
+    points: torch.Tensor,
+    points_offset: torch.Tensor,
+    depths: torch.Tensor,
+    Ks: torch.Tensor,
+    trans_mats: torch.Tensor,
+) -> torch.Tensor:
+    """
+    Official SMOKE decode_location copied from SMOKE-master.
+    points and points_offset are on the feature map.
+    """
+    device = depths.device
+    Ks = Ks.to(device=device)
+    trans_mats = trans_mats.to(device=device)
+
+    n = points_offset.shape[0]
+    batch_size = Ks.shape[0]
+    batch_id = torch.arange(batch_size, device=device).unsqueeze(1)
+    obj_id = batch_id.repeat(1, max(n // batch_size, 1)).flatten()[:n]
+
+    trans_mats_inv = trans_mats.inverse()[obj_id]
+    Ks_inv = Ks.inverse()[obj_id]
+
+    points = points.view(-1, 2)
+    proj_points = points + points_offset
+    proj_points_extend = torch.cat(
+        (proj_points, torch.ones(n, 1, device=device)), dim=1
+    ).unsqueeze(-1)
+    proj_points_img = torch.matmul(trans_mats_inv, proj_points_extend)
+    proj_points_img = proj_points_img * depths.view(n, -1, 1)
+    locations = torch.matmul(Ks_inv, proj_points_img)
+    return locations.squeeze(2)
+
+
+def _decode_dimension_official(
+    dims_offset: torch.Tensor,
+    device: torch.device,
+) -> torch.Tensor:
+    dim_ref = torch.tensor(
+        [TRUCK_L, TRUCK_H, TRUCK_W],
+        dtype=dims_offset.dtype,
+        device=device,
+    ).view(1, 3)
+    return dims_offset.exp() * dim_ref
+
+
+def _decode_orientation_official(
+    vector_ori: torch.Tensor,
+    locations: torch.Tensor,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    locations = locations.view(-1, 3)
+    rays = torch.atan(locations[:, 0] / (locations[:, 2] + EPS))
+    alphas = torch.atan(vector_ori[:, 0] / (vector_ori[:, 1] + EPS))
+
+    alphas = torch.where(
+        vector_ori[:, 1] >= 0,
+        alphas - PI / 2.0,
+        alphas + PI / 2.0,
+    )
+    rotys = alphas + rays
+    rotys = torch.where(rotys > PI, rotys - 2.0 * PI, rotys)
+    rotys = torch.where(rotys < -PI, rotys + 2.0 * PI, rotys)
+    return rotys, alphas
+
+
+def _build_corners_from_center_location(
+    X_center: torch.Tensor,
+    Y_center: torch.Tensor,
+    Z_center: torch.Tensor,
+    yaw: torch.Tensor,
+    W: torch.Tensor,
+    H: torch.Tensor,
+    L: torch.Tensor,
+) -> torch.Tensor:
+    P_c = torch.stack([X_center, Y_center, Z_center], dim=-1)
+    right, up_cam, forward = _rotation_axes(yaw)
+    return _apply_center_offsets(P_c, right, up_cam, forward, W, H, L, X_center.device)
+
+
+def decode_baseline_official(
+    predictions: list[torch.Tensor] | tuple[torch.Tensor, torch.Tensor],
+    K: torch.Tensor,
+    trans_mats: torch.Tensor,
+    topk: int = 1,
+) -> dict[str, torch.Tensor]:
+    """Top-k baseline decoding with the official SMOKE equations."""
+    if topk != 1:
+        raise ValueError(f"decode_baseline_official supports topk=1 only (got {topk}).")
+
+    pred_heatmap, pred_regression = predictions
+    batch = pred_heatmap.shape[0]
+    _, reg_head, _, _ = pred_regression.shape
+
+    heatmap = F.max_pool2d(pred_heatmap, kernel_size=3, stride=1, padding=1)
+    heatmap = (heatmap == pred_heatmap).float() * pred_heatmap
+    flat = heatmap.view(batch, -1)
+    scores, inds = flat.topk(1, dim=1)
+    feat_w = pred_heatmap.shape[-1]
+    ys = (inds // feat_w).float()
+    xs = (inds % feat_w).float()
+
+    pred_regression = pred_regression.view(batch, reg_head, -1)
+    gather_idx = inds.unsqueeze(1).expand(batch, reg_head, 1)
+    pred_pois = pred_regression.gather(2, gather_idx).squeeze(-1)
+
+    pred_depths_offset = pred_pois[:, 0]
+    pred_proj_offsets = pred_pois[:, 1:3]
+    pred_dimensions_offsets = pred_pois[:, 3:6]
+    pred_orientation = pred_pois[:, 6:8]
+
+    pred_depths = pred_depths_offset * DEPTH_STD + DEPTH_MEAN
+    pred_proj_points = torch.cat([xs, ys], dim=1)
+    pred_locations = _decode_location_official(
+        pred_proj_points,
+        pred_proj_offsets,
+        pred_depths,
+        K,
+        trans_mats,
+    )
+    pred_dimensions_lhw = _decode_dimension_official(
+        pred_dimensions_offsets,
+        pred_regression.device,
+    )
+    pred_locations_bottom = pred_locations.clone()
+    pred_locations_bottom[:, 1] += pred_dimensions_lhw[:, 1] / 2.0
+    pred_rotys, pred_alphas = _decode_orientation_official(
+        pred_orientation,
+        pred_locations_bottom,
+    )
+
+    return {
+        "scores": scores.squeeze(1),
+        "xs": xs.squeeze(1),
+        "ys": ys.squeeze(1),
+        "locations_center": pred_locations,
+        "locations_bottom": pred_locations_bottom,
+        "dimensions_lhw": pred_dimensions_lhw,
+        "rotys": pred_rotys,
+        "alphas": pred_alphas,
+    }
+
+
+def _build_official_targets(batch: dict, device: torch.device) -> list[ParamsList]:
+    """
+    Adapt the project's batch dict into SMOKE-master ParamsList targets.
+    Single-class, single-object per image.
+    """
+    image = batch["image"]
+    batch_size, _, image_h, image_w = image.shape
+    feat_h = image_h // FEAT_STRIDE
+    feat_w = image_w // FEAT_STRIDE
+    max_objs = build_official_smoke_cfg().DATASETS.MAX_OBJECTS
+
+    targets: list[ParamsList] = []
+    trans_mats = _build_trans_mats(batch_size, image_h, image_w, torch.device("cpu"))
+
+    for b in range(batch_size):
+        target = ParamsList(image_size=(image_w, image_h), is_train=True)
+        heat_map = torch.zeros((1, feat_h, feat_w), dtype=torch.float32)
+        regression = torch.zeros((max_objs, 3, 8), dtype=torch.float32)
+        cls_ids = torch.zeros((max_objs,), dtype=torch.int64)
+        proj_points = torch.zeros((max_objs, 2), dtype=torch.int64)
+        dimensions = torch.zeros((max_objs, 3), dtype=torch.float32)
+        locations = torch.zeros((max_objs, 3), dtype=torch.float32)
+        rotys = torch.zeros((max_objs,), dtype=torch.float32)
+        reg_mask = torch.zeros((max_objs,), dtype=torch.uint8)
+        flip_mask = torch.zeros((max_objs,), dtype=torch.uint8)
+
+        center_2d = batch["center_2d"][b].detach().cpu().numpy()
+        corners_2d = batch["gt_corners_2d"][b].detach().cpu().numpy()
+        K_b = batch["K"][b].detach().cpu()
+        h_cam = float(batch["h_cam"][b].detach().cpu())
+        yaw = float(batch["yaw_theta"][b].detach().cpu())
+
+        fx = float(K_b[0, 0])
+        fy = float(K_b[1, 1])
+        cx = float(K_b[0, 2])
+        cy = float(K_b[1, 2])
+        h_ref = h_cam - TRUCK_H / 2.0
+        dv = float(center_2d[1] - cy)
+        z_center = fy * abs(h_ref) / max(abs(dv), EPS)
+        x_center = (float(center_2d[0]) - cx) * z_center / max(fx, EPS)
+
+        loc_bottom = torch.tensor(
+            [[x_center, h_cam, z_center]],
+            dtype=torch.float32,
+        )
+        dims_lhw = torch.tensor(
+            [[TRUCK_L, TRUCK_H, TRUCK_W]],
+            dtype=torch.float32,
+        )
+        rot = torch.tensor([yaw], dtype=torch.float32)
+        box3d = _OFFICIAL_BOX_CODER.encode_box3d(rot, dims_lhw, loc_bottom)[0]
+
+        point = official_affine_transform(center_2d, trans_mats[b].numpy())
+        corners_feat = torch.as_tensor(
+            [official_affine_transform(pt, trans_mats[b].numpy()) for pt in corners_2d],
+            dtype=torch.float32,
+        )
+        xmins = corners_feat[:, 0].min().item()
+        xmaxs = corners_feat[:, 0].max().item()
+        ymins = corners_feat[:, 1].min().item()
+        ymaxs = corners_feat[:, 1].max().item()
+        box_h = ymaxs - ymins
+        box_w = xmaxs - xmins
+
+        if 0.0 < point[0] < feat_w and 0.0 < point[1] < feat_h:
+            point_int = point.astype("int32")
+            radius = max(0, int(official_gaussian_radius(box_h, box_w)))
+            heat_map[0] = torch.from_numpy(
+                official_draw_umich_gaussian(heat_map[0].numpy(), point_int, radius)
+            )
+            regression[0] = box3d
+            proj_points[0] = torch.as_tensor(point_int, dtype=torch.int64)
+            dimensions[0] = dims_lhw[0]
+            locations[0] = loc_bottom[0]
+            rotys[0] = yaw
+            reg_mask[0] = 1
+
+        target.add_field("hm", heat_map)
+        target.add_field("reg", regression)
+        target.add_field("cls_ids", cls_ids)
+        target.add_field("proj_p", proj_points)
+        target.add_field("dimensions", dimensions)
+        target.add_field("locations", locations)
+        target.add_field("rotys", rotys)
+        target.add_field("trans_mat", trans_mats[b])
+        target.add_field("K", K_b)
+        target.add_field("reg_mask", reg_mask)
+        target.add_field("flip_mask", flip_mask)
+        targets.append(target.to(device))
+
+    return targets
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -148,6 +448,11 @@ class SMOKECoder:
 # 모듈 레벨 싱글턴 — SmokeLoss / smoke_trainer.py / models.py 공용
 # SmokeLoss 내부에 self._coder를 별도 생성하지 않고 여기에 집중
 _SMOKE_CODER: SMOKECoder = SMOKECoder()
+_OFFICIAL_BOX_CODER = OfficialSMOKECoder(
+    depth_ref=(DEPTH_MEAN, DEPTH_STD),
+    dim_ref=((TRUCK_L, TRUCK_H, TRUCK_W),),
+    device="cpu",
+)
 
 
 # ── 코너 부호 패턴 ──────────────────────────────────────────────────────────
@@ -520,6 +825,7 @@ class SmokeLoss(nn.Module):
         self.depth_max         = depth_max_m
         self.use_depth         = model_type in ("baseline_depth", "geometry_aux")
         self.is_geometry       = model_type in ("geometry", "geometry_aux")
+        self._official_loss_cache: dict[str, object] = {}
         # 기본 통계값이면 모듈 싱글턴 재사용, 커스텀이면 전용 coder 생성
         if depth_mean == DEPTH_MEAN and depth_std == DEPTH_STD:
             self._coder = _SMOKE_CODER
@@ -528,6 +834,14 @@ class SmokeLoss(nn.Module):
                 depth_ref=(depth_mean, depth_std),
                 dim_ref=(TRUCK_W, TRUCK_H, TRUCK_L),
             )
+
+    def _get_official_loss(self, device: torch.device):
+        device_key = _device_type_str(device)
+        if device_key not in self._official_loss_cache:
+            self._official_loss_cache[device_key] = make_smoke_loss_evaluator(
+                build_official_smoke_cfg(device=device_key)
+            )
+        return self._official_loss_cache[device_key]
 
     # ── Heatmap GT 중심점 ────────────────────────────────────────────────────
 
@@ -830,25 +1144,41 @@ class SmokeLoss(nn.Module):
         outputs: dict,
         batch:   dict,
     ) -> tuple[torch.Tensor, dict]:
-        stride     = FEAT_STRIDE
-        geo_center = self._get_heatmap_target(batch).to(outputs["heatmap"].device)
+        dev = outputs["heatmap"].device
 
-        l_heat = self._heat_loss(
-            outputs["heatmap"], geo_center, batch["gt_corners_2d"], stride
-        )
-        l_off = self._off_loss(outputs["offset"], geo_center, stride)
-        l_3d  = self._corner_loss(outputs, batch, geo_center, stride)
+        if self.is_geometry:
+            stride     = FEAT_STRIDE
+            geo_center = self._get_heatmap_target(batch).to(dev)
 
-        total = (
-            self.lambda_heat * l_heat
-            + self.lambda_off  * l_off
-            + self.lambda_3d   * l_3d
-        )
-        ld = {
-            "l_heat": l_heat.item(),
-            "l_off" : l_off.item(),
-            "l_3d"  : l_3d.item(),
-        }
+            l_heat = self._heat_loss(
+                outputs["heatmap"], geo_center, batch["gt_corners_2d"], stride
+            )
+            l_off = self._off_loss(outputs["offset"], geo_center, stride)
+            l_3d  = self._corner_loss(outputs, batch, geo_center, stride)
+
+            total = (
+                self.lambda_heat * l_heat
+                + self.lambda_off  * l_off
+                + self.lambda_3d   * l_3d
+            )
+            ld = {
+                "l_heat": l_heat.item(),
+                "l_off" : l_off.item(),
+                "l_3d"  : l_3d.item(),
+            }
+        else:
+            predictions = outputs.get("predictions")
+            if predictions is None:
+                raise KeyError("Baseline outputs must include 'predictions' for official SMOKE loss.")
+            official_targets = _build_official_targets(batch, dev)
+            official_loss = self._get_official_loss(dev)
+            loss_heatmap, loss_regression = official_loss(predictions, official_targets)
+            total = loss_heatmap + loss_regression
+            ld = {
+                "l_heat": loss_heatmap.item(),
+                "l_off": 0.0,
+                "l_3d": loss_regression.item(),
+            }
 
         if self.use_depth and "depth" in outputs:
             l_depth = self._depth_loss(outputs["depth"], batch)

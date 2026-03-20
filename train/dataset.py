@@ -5,6 +5,7 @@ TruckPoseDataset: 윙바디 트럭 3D 바운딩 박스 추정을 위한 PyTorch 
 
 지원 model_type:
     baseline     : RGB  → 8개 2D 꼭짓점 직접 회귀
+    3dof         : RGB  → (u_c, v_c, theta) 3자유도만 예측 (기하 복원)
     geometry     : RGB  → (u_c, v_c, theta) → 기하학적 8×2D 재투영
     geometry_aux : RGB  → (u_c, v_c, theta) + 1채널 Depth 맵 동시 출력
 
@@ -67,9 +68,11 @@ from torch.utils.data import DataLoader, Dataset
 import torchvision.transforms.functional as TF
 
 # ── 상수 ─────────────────────────────────────────────────────────────────────
-# yolo26n-pose 사전학습 입력 해상도 (train_args['imgsz'] = 640)
-YOLO_IMGSZ     = 640
-# letterbox 패딩 색상 (YOLO 표준: 회색 114)
+# Official SMOKE input resolution
+SMOKE_INPUT_W  = 1280
+SMOKE_INPUT_H  = 384
+DEFAULT_IMG_SIZE = (SMOKE_INPUT_H, SMOKE_INPUT_W)
+# letterbox/affine pad color
 LETTERBOX_PAD  = 114
 ORIG_W, ORIG_H = 1920, 1080  # 렌더링 해상도
 
@@ -101,6 +104,64 @@ _FACE_VIS_EPS = 1e-3  # 가시성 판단 수치 임계값
 def _load_json(path: Path) -> dict:
     with open(path, encoding="utf-8") as f:
         return json.load(f)
+
+
+def _rotation_matrix_y(yaw_rad: float) -> np.ndarray:
+    c = math.cos(yaw_rad)
+    s = math.sin(yaw_rad)
+    return np.array([[c, 0.0, s], [0.0, 1.0, 0.0], [-s, 0.0, c]], dtype=np.float32)
+
+
+def _build_camera_box_corners(
+    h: float,
+    w: float,
+    l: float,
+    x: float,
+    y: float,
+    z: float,
+    ry: float,
+) -> np.ndarray:
+    x_corners = np.array([0, l, l, l, l, 0, 0, 0], dtype=np.float32) - l / 2.0
+    y_corners = np.array([0, 0, h, h, 0, 0, h, h], dtype=np.float32) - h
+    z_corners = np.array([0, 0, 0, w, w, w, w, 0], dtype=np.float32) - w / 2.0
+    corners = np.stack([x_corners, y_corners, z_corners], axis=0)
+    corners = _rotation_matrix_y(ry) @ corners
+    corners += np.array([[x], [y], [z]], dtype=np.float32)
+    return corners.T.astype(np.float32)
+
+
+def _project_points(K: np.ndarray, pts_3d: np.ndarray) -> np.ndarray:
+    proj = (K @ pts_3d.T).T
+    proj_xy = proj[:, :2] / np.clip(proj[:, 2:3], 1e-6, None)
+    return proj_xy.astype(np.float32)
+
+
+def _parse_kitti_p2(calib_path: Path) -> np.ndarray:
+    for line in calib_path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("P2:"):
+            vals = [float(v) for v in line.split()[1:]]
+            p2 = np.array(vals, dtype=np.float32).reshape(3, 4)
+            return p2[:, :3]
+    raise ValueError(f"P2 not found in calib file: {calib_path}")
+
+
+def _parse_kitti_label(label_path: Path) -> dict:
+    line = label_path.read_text(encoding="utf-8").strip().splitlines()[0]
+    parts = line.split()
+    return {
+        "type": parts[0],
+        "truncated": float(parts[1]),
+        "occluded": int(float(parts[2])),
+        "alpha": float(parts[3]),
+        "bbox": np.array([float(v) for v in parts[4:8]], dtype=np.float32),
+        "h": float(parts[8]),
+        "w": float(parts[9]),
+        "l": float(parts[10]),
+        "x": float(parts[11]),
+        "y": float(parts[12]),
+        "z": float(parts[13]),
+        "ry": float(parts[14]),
+    }
 
 
 def _make_seg_mask_from_corners(
@@ -176,20 +237,19 @@ def _make_seg_mask_from_corners(
 
 def letterbox(
     img:         Image.Image,
-    target_size: int = YOLO_IMGSZ,
+    target_size: tuple[int, int] = DEFAULT_IMG_SIZE,
     pad_color:   tuple[int, int, int] = (LETTERBOX_PAD,) * 3,
     resample:    int = Image.BILINEAR,
-) -> tuple[Image.Image, float, int, int]:
+) -> tuple[Image.Image, float, int, int, int, int]:
     """
-    종횡비를 유지하면서 target_size×target_size 로 패딩 리사이즈.
-    yolo26n-pose 사전학습과 동일한 전처리 방식.
+    종횡비를 유지하면서 target_h×target_w 로 패딩 리사이즈.
 
     변환 수식:
-        scale = min(target_size / orig_W, target_size / orig_H)
+        scale = min(target_w / orig_W, target_h / orig_H)
         new_W = int(orig_W * scale)
         new_H = int(orig_H * scale)
-        pad_x = (target_size - new_W) // 2    ← 좌측 패딩
-        pad_y = (target_size - new_H) // 2    ← 상단 패딩
+        pad_x = (target_w - new_W) // 2    ← 좌측 패딩
+        pad_y = (target_h - new_H) // 2    ← 상단 패딩
 
     K 행렬 변환 (호출 측에서 직접 적용):
         fx_new = fx * scale
@@ -208,27 +268,28 @@ def letterbox(
         resample    : PIL 보간법 (default BILINEAR)
 
     Returns:
-        out_img : (target_size, target_size) PIL 이미지
+        out_img : (target_w, target_h) PIL 이미지
         scale   : 균일 스케일 계수  orig → new
         pad_x   : 좌측 패딩 픽셀 수
         pad_y   : 상단 패딩 픽셀 수
     """
+    target_h, target_w = target_size
     orig_W, orig_H = img.size
-    scale  = min(target_size / orig_W, target_size / orig_H)
+    scale  = min(target_w / orig_W, target_h / orig_H)
     new_W  = int(orig_W * scale)
     new_H  = int(orig_H * scale)
-    pad_x  = (target_size - new_W) // 2
-    pad_y  = (target_size - new_H) // 2
+    pad_x  = (target_w - new_W) // 2
+    pad_y  = (target_h - new_H) // 2
 
     resized = img.resize((new_W, new_H), resample)
-    canvas  = Image.new("RGB", (target_size, target_size), pad_color)
+    canvas  = Image.new("RGB", (target_w, target_h), pad_color)
     canvas.paste(resized, (pad_x, pad_y))
-    return canvas, scale, pad_x, pad_y
+    return canvas, scale, pad_x, pad_y, new_W, new_H
 
 
 def letterbox_depth(
     depth_np:    np.ndarray,      # (orig_H, orig_W) float32
-    target_size: int = YOLO_IMGSZ,
+    target_size: tuple[int, int] = DEFAULT_IMG_SIZE,
 ) -> tuple[np.ndarray, float, int, int]:
     """
     깊이 맵 letterbox. 패딩 영역은 0 (무효값) 으로 채움.
@@ -238,16 +299,17 @@ def letterbox_depth(
         out_depth : (target_size, target_size) float32
         scale, pad_x, pad_y : letterbox() 와 동일 의미
     """
+    target_h, target_w = target_size
     orig_H, orig_W = depth_np.shape[:2]
-    scale  = min(target_size / orig_W, target_size / orig_H)
+    scale  = min(target_w / orig_W, target_h / orig_H)
     new_W  = int(orig_W * scale)
     new_H  = int(orig_H * scale)
-    pad_x  = (target_size - new_W) // 2
-    pad_y  = (target_size - new_H) // 2
+    pad_x  = (target_w - new_W) // 2
+    pad_y  = (target_h - new_H) // 2
 
     depth_pil    = Image.fromarray(depth_np, mode="F")
     depth_pil    = depth_pil.resize((new_W, new_H), Image.NEAREST)
-    depth_canvas = np.zeros((target_size, target_size), dtype=np.float32)
+    depth_canvas = np.zeros((target_h, target_w), dtype=np.float32)
     depth_canvas[pad_y:pad_y + new_H, pad_x:pad_x + new_W] = np.array(depth_pil)
     return depth_canvas, scale, pad_x, pad_y
 
@@ -261,7 +323,7 @@ class TruckPoseDataset(Dataset):
     Args:
         root        : 데이터셋 루트 경로 (예: "datasets/v3")
         split       : "train" | "val" | "all"
-        model_type  : "baseline" | "geometry" | "geometry_aux"
+        model_type  : "baseline" | "3dof" | "geometry" | "geometry_aux"
         img_size    : (H, W) 네트워크 입력 해상도.
                       기본 (270, 480) = 원본 1080×1920 의 1/4 스케일.
         num_samples : 학습 샘플 수 제한 (None 이면 전체).
@@ -281,8 +343,8 @@ class TruckPoseDataset(Dataset):
         self,
         root:        str,
         split:       Literal["train", "val", "all"] = "train",
-        model_type:  Literal["baseline", "geometry", "geometry_aux", "baseline_depth"] = "baseline",
-        img_size:    int = YOLO_IMGSZ,   # yolo26n-pose 사전학습 해상도 640
+        model_type:  Literal["baseline", "3dof", "geometry", "geometry_aux", "baseline_depth"] = "baseline",
+        img_size:    tuple[int, int] = DEFAULT_IMG_SIZE,
         num_samples: Optional[int] = None,
         val_ratio:   float = 0.15,
         seed:        int = 42,
@@ -293,7 +355,7 @@ class TruckPoseDataset(Dataset):
         self.root       = Path(root)
         self.split      = split
         self.model_type = model_type
-        self.img_size   = img_size   # 정방형 한 변 길이 (px)
+        self.img_size   = img_size   # (H, W)
         self.augment    = augment and (split == "train")
         self.depth_dir  = depth_dir
         self.mask_dir   = mask_dir
@@ -377,7 +439,7 @@ class TruckPoseDataset(Dataset):
         img_pil  = Image.open(img_path).convert("RGB")
         orig_W, orig_H = img_pil.size  # PIL: (W, H)
 
-        img_lb, scale, pad_x, pad_y = letterbox(
+        img_lb, scale, pad_x, pad_y, _, _ = letterbox(
             img_pil, target_size=self.img_size
         )
 
@@ -467,15 +529,15 @@ class TruckPoseDataset(Dataset):
             depth_t : (1, img_size, img_size) float32
             seg_t   : (1, img_size, img_size) bool
         """
-        S = self.img_size  # 640
+        H_img, W_img = self.img_size
 
         # ── 깊이 맵 (letterbox_depth) ────────────────────────────────────
         depth_path = self.root / self.depth_dir / f"depth_{num_str}.npy"
         if depth_path.exists():
             depth_np_orig = np.load(depth_path).astype(np.float32)   # (H, W)
-            depth_np, _, _, _ = letterbox_depth(depth_np_orig, target_size=S)
+            depth_np, _, _, _ = letterbox_depth(depth_np_orig, target_size=self.img_size)
         else:
-            depth_np = np.zeros((S, S), dtype=np.float32)
+            depth_np = np.zeros((H_img, W_img), dtype=np.float32)
 
         depth_t = torch.from_numpy(depth_np).unsqueeze(0)  # (1, S, S)
 
@@ -486,23 +548,125 @@ class TruckPoseDataset(Dataset):
             if mask_path.exists():
                 mask_pil = Image.open(mask_path).convert("L")
                 # mask 도 letterbox (패딩 영역은 0=False)
-                mask_lb  = Image.new("L", (S, S), 0)
+                mask_lb  = Image.new("L", (W_img, H_img), 0)
                 orig_W, orig_H = mask_pil.size
-                sc   = min(S / orig_W, S / orig_H)
+                sc   = min(W_img / orig_W, H_img / orig_H)
                 nw, nh = int(orig_W * sc), int(orig_H * sc)
-                px, py = (S - nw) // 2, (S - nh) // 2
+                px, py = (W_img - nw) // 2, (H_img - nh) // 2
                 mask_lb.paste(mask_pil.resize((nw, nh), Image.NEAREST), (px, py))
                 seg_np = np.array(mask_lb, dtype=bool)
 
         if seg_np is None:
             # letterbox 좌표 + yaw 기반 face-polygon 마스크 생성
             seg_np = _make_seg_mask_from_corners(
-                corners_uv, corners_vis, S, S, theta_deg=yaw_theta
+                corners_uv, corners_vis, H_img, W_img, theta_deg=yaw_theta
             )
 
         seg_t = torch.from_numpy(seg_np).unsqueeze(0)  # (1, S, S) bool
 
         return depth_t, seg_t
+
+
+class KITTILetterboxDataset(Dataset):
+    """
+    Read the converted KITTI-style dataset exported by export_v3_to_kitti_letterbox.py.
+    Supports baseline/geometry on the same 1280x384 samples used by official SMOKE.
+    """
+
+    def __init__(
+        self,
+        root: str,
+        split: Literal["train", "val", "all"] = "train",
+        model_type: Literal["baseline", "geometry"] = "baseline",
+        img_size: tuple[int, int] = DEFAULT_IMG_SIZE,
+        num_samples: Optional[int] = None,
+        seed: int = 42,
+        augment: bool = False,
+    ):
+        self.root = Path(root)
+        self.split = split
+        self.model_type = model_type
+        self.img_size = img_size
+        self.augment = augment and (split == "train")
+        self.use_depth = False
+
+        if model_type not in ("baseline", "geometry"):
+            raise ValueError(
+                f"KITTILetterboxDataset supports baseline/geometry only (got {model_type!r}). "
+                "Depth-aux models require the original v3 dataset."
+            )
+
+        training_dir = self.root / "training"
+        self.image_dir = training_dir / "image_2"
+        self.label_dir = training_dir / "label_2"
+        self.calib_dir = training_dir / "calib"
+        image_sets = training_dir / "ImageSets"
+        if not image_sets.exists():
+            raise FileNotFoundError(f"ImageSets not found under converted KITTI root: {self.root}")
+
+        if split == "all":
+            ids = sorted(p.stem for p in self.image_dir.glob("*.png"))
+        else:
+            split_file = image_sets / f"{split}.txt"
+            ids = [line.strip() for line in split_file.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+        if num_samples is not None and split == "train":
+            rng = random.Random(seed)
+            ids = rng.sample(ids, min(num_samples, len(ids)))
+
+        self.sample_ids = sorted(ids)
+        if not self.sample_ids:
+            raise ValueError(f"No samples found in converted KITTI dataset for split={split!r}: {self.root}")
+
+    def __len__(self) -> int:
+        return len(self.sample_ids)
+
+    def __getitem__(self, idx: int) -> dict:
+        sid = self.sample_ids[idx]
+        img_path = self.image_dir / f"{sid}.png"
+        label_path = self.label_dir / f"{sid}.txt"
+        calib_path = self.calib_dir / f"{sid}.txt"
+
+        img_t = TF.to_tensor(Image.open(img_path).convert("RGB"))
+        ann = _parse_kitti_label(label_path)
+        K = _parse_kitti_p2(calib_path)
+
+        corners_3d = _build_camera_box_corners(
+            ann["h"], ann["w"], ann["l"], ann["x"], ann["y"], ann["z"], ann["ry"]
+        )
+        corners_2d = _project_points(K, corners_3d)
+        center_3d = np.array([[ann["x"], ann["y"] - ann["h"] / 2.0, ann["z"]]], dtype=np.float32)
+        center_2d = _project_points(K, center_3d)[0]
+        h_cam = float(ann["y"])
+        distance = float(np.linalg.norm([ann["x"], ann["z"]]))
+
+        if self.augment and random.random() < 0.5:
+            img_t, corners_2d, center_2d, K, yaw_deg = _apply_hflip(
+                img_t,
+                corners_2d,
+                center_2d,
+                K,
+                math.degrees(ann["ry"]),
+                self.img_size,
+            )
+            yaw_theta = math.radians(yaw_deg)
+        else:
+            yaw_theta = ann["ry"]
+
+        item = {
+            "image": img_t,
+            "gt_corners_2d": torch.from_numpy(corners_2d.astype(np.float32)),
+            "gt_corners_vis": torch.full((8,), 2, dtype=torch.int8),
+            "gt_corners_3d": torch.from_numpy(corners_3d.astype(np.float32)),
+            "h_cam": torch.tensor(h_cam, dtype=torch.float32),
+            "K": torch.from_numpy(K.astype(np.float32)),
+            "yaw_theta": torch.tensor(yaw_theta, dtype=torch.float32),
+            "center_2d": torch.from_numpy(center_2d.astype(np.float32)),
+            "distance": torch.tensor(distance, dtype=torch.float32),
+            "frame_id": int(sid),
+            "view_category": "",
+        }
+        return item
 
 
 # ── 증강 유틸리티 ─────────────────────────────────────────────────────────────
@@ -513,7 +677,7 @@ def _apply_hflip(
     center_2d:  np.ndarray,     # (2,)
     K:          np.ndarray,     # (3, 3)
     yaw_theta:  float,          # 도 (degrees)
-    img_size:   int,            # 정방형 한 변 (px)
+    img_size:   tuple[int, int], # (H, W)
 ) -> tuple[torch.Tensor, np.ndarray, np.ndarray, np.ndarray, float]:
     """
     좌우 반전 증강. 이미지와 함께 2D 좌표, K 행렬, yaw 를 일관되게 변환.
@@ -526,13 +690,14 @@ def _apply_hflip(
     img_t       = TF.hflip(img_t)
 
     corners_uv  = corners_uv.copy()
-    corners_uv[:, 0] = (img_size - 1) - corners_uv[:, 0]
+    _, img_w = img_size
+    corners_uv[:, 0] = (img_w - 1) - corners_uv[:, 0]
 
     center_2d   = center_2d.copy()
-    center_2d[0] = (img_size - 1) - center_2d[0]
+    center_2d[0] = (img_w - 1) - center_2d[0]
 
     K           = K.copy()
-    K[0, 2]     = (img_size - 1) - K[0, 2]   # cx 반전
+    K[0, 2]     = (img_w - 1) - K[0, 2]   # cx 반전
 
     yaw_theta   = 180.0 - yaw_theta
 
@@ -567,8 +732,8 @@ collate_fn_with_meta = collate_fn
 
 def make_dataloaders(
     root:        str,
-    model_type:  Literal["baseline", "geometry", "geometry_aux", "baseline_depth"] = "baseline",
-    img_size:    int  = YOLO_IMGSZ,   # 640
+    model_type:  Literal["baseline", "3dof", "geometry", "geometry_aux", "baseline_depth"] = "baseline",
+    img_size:    tuple[int, int] = DEFAULT_IMG_SIZE,
     batch_size:  int  = 16,
     num_samples: Optional[int] = None,
     num_workers: int  = 4,
@@ -580,7 +745,7 @@ def make_dataloaders(
 
     Args:
         root        : 데이터셋 루트 경로 (예: "datasets/v3")
-        model_type  : "baseline" | "geometry" | "geometry_aux"
+        model_type  : "baseline" | "3dof" | "geometry" | "geometry_aux"
         img_size    : (H, W) 입력 해상도
         batch_size  : 배치 크기
         num_samples : 학습 샘플 수 제한 (None 이면 전체)
@@ -591,13 +756,21 @@ def make_dataloaders(
     Returns:
         (train_loader, val_loader)
     """
-    train_ds = TruckPoseDataset(
-        root, split="train", model_type=model_type,
+    root_path = Path(root)
+    is_converted_kitti = (
+        (root_path / "training" / "image_2").exists()
+        and (root_path / "training" / "label_2").exists()
+        and (root_path / "training" / "calib").exists()
+    )
+
+    dataset_cls = KITTILetterboxDataset if is_converted_kitti else TruckPoseDataset
+    train_ds = dataset_cls(
+        str(root_path), split="train", model_type=model_type,
         img_size=img_size, num_samples=num_samples,
         augment=augment, seed=seed,
     )
-    val_ds = TruckPoseDataset(
-        root, split="val", model_type=model_type,
+    val_ds = dataset_cls(
+        str(root_path), split="val", model_type=model_type,
         img_size=img_size, augment=False, seed=seed,
     )
 

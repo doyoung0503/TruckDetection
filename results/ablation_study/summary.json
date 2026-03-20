@@ -1,0 +1,20 @@
+{
+  "geometry": {
+    "metrics_mean": {
+      "z_error_m": 0.9409518204629421,
+      "center_error_m": 1.210285184904933,
+      "yaw_error_deg": 32.85719847679138,
+      "adds_m": 2.4932559207081795
+    },
+    "metrics_std": {
+      "z_error_m": 0.0,
+      "center_error_m": 0.0,
+      "yaw_error_deg": 0.0,
+      "adds_m": 0.0
+    },
+    "val_loss_mean": 4.4606465101242065,
+    "val_loss_std": 0.0,
+    "best_epoch_mean": 6.0,
+    "n_seeds": 1
+  }
+}

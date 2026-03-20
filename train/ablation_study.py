@@ -1,13 +1,13 @@
 """
 train/ablation_study.py
 =======================
-5-seed × 4-model 절제 연구 (Ablation Study) 러너.
+5-seed × multi-model 절제 연구 (Ablation Study) 러너.
 
 설계 원칙
 ---------
 - 데이터 split  : split.json 고정 (seed=42, 8:2), 모든 run이 동일 데이터 사용
 - 모델 초기화   : run별로 torch/numpy/random seed를 설정 → 재현 가능
-- 공평성        : 동일 시드에서 4종 모델 모두 같은 난수 상태로 시작
+- 공평성        : 동일 시드에서 선택된 모델 모두 같은 난수 상태로 시작
 - 통계          : 5 seed × 4 model = 20 run → 지표별 mean ± std
 - 중간 저장     : 각 run 완료 시 results/ablation_study/seed_{s}/{model}/history.json
 - Resume        : history.json이 이미 있으면 해당 run 건너뜀 (중단 재시작 가능)
@@ -24,7 +24,7 @@ train/ablation_study.py
     python -m train.ablation_study --seeds 42 0
 
     # 특정 모델만
-    python -m train.ablation_study --type baseline geometry
+    python -m train.ablation_study --type baseline 3dof
 
     # 시각화만 (이미 완료된 결과 기준)
     python -m train.ablation_study --plot-only
@@ -64,7 +64,7 @@ RESULTS_DIR  = ROOT / "results" / "ablation_study"
 
 # ── 실험 설정 ─────────────────────────────────────────────────────────────────
 SEEDS       : list[int] = [42, 0, 1, 2, 3]
-MODEL_TYPES : list[str] = ["baseline", "geometry", "baseline_depth", "geometry_aux"]
+MODEL_TYPES : list[str] = ["baseline", "3dof", "geometry", "baseline_depth", "geometry_aux"]
 
 # SMOKE 논문 표준 하이퍼파라미터
 DEFAULT_EPOCHS      = 100
@@ -229,7 +229,7 @@ def _val_epoch_ext(
 
     Returns:
         avg_loss       : 평균 loss_dict (ratios 포함)
-        avg_metrics    : 전체 평균 지표 (4종)
+        avg_metrics    : 전체 평균 지표 (선택 모델 공통 4개 지표)
         z_stats        : {"mean", "std", "median"} 예측 Z 분포
         heatmap_max    : val 배치 평균 heatmap 최대값
         view_metrics   : {view_category: avg_metrics_dict}
@@ -542,12 +542,12 @@ def _train_one_run_official_baseline(
     output_dir = run_dir / "official_smoke_output"
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    if not torch.cuda.is_available():
-        raise RuntimeError(
-            "Official SMOKE baseline requires CUDA (DCN extension build). "
-            "Current environment has no CUDA device."
-        )
-    smoke_device = "cuda"
+    if torch.cuda.is_available():
+        smoke_device = "cuda"
+    elif torch.backends.mps.is_available():
+        smoke_device = "mps"
+    else:
+        smoke_device = "cpu"
     cmd = [
         sys.executable,
         "-m",
@@ -583,6 +583,8 @@ def _train_one_run_official_baseline(
         "SEED",
         str(seed),
     ]
+    if smoke_device == "mps":
+        cmd.append("--enable-mps-fallback")
 
     print(
         f"    [official baseline] n_train={n_train}, iters/epoch={iters_per_epoch}, "
@@ -941,6 +943,7 @@ def aggregate_runs(all_results: list[dict]) -> dict[str, dict]:
 
 _MODEL_LABEL = {
     "baseline":       "Baseline",
+    "3dof":           "3DoF (u,v,yaw only)",
     "geometry":       "+Geometry (3DoF)",
     "baseline_depth": "+Depth",
     "geometry_aux":   "+Geometry+Depth",
@@ -1019,12 +1022,14 @@ def print_summary(agg: dict[str, dict]) -> None:
 _STYLE: dict[str, dict] = {
     "baseline":       {"color": "#888888", "label": "Baseline",
                        "zorder": 1, "lw": 1.8},
-    "geometry":       {"color": "#2878B5", "label": "+Geometry (3DoF)",
+    "3dof":           {"color": "#4C72B0", "label": "3DoF (u,v,yaw only)",
                        "zorder": 2, "lw": 1.8},
-    "baseline_depth": {"color": "#9AC9DB", "label": "+Depth",
+    "geometry":       {"color": "#2878B5", "label": "+Geometry (3DoF)",
                        "zorder": 3, "lw": 1.8},
+    "baseline_depth": {"color": "#9AC9DB", "label": "+Depth",
+                       "zorder": 4, "lw": 1.8},
     "geometry_aux":   {"color": "#C82423", "label": "+Geometry+Depth (Proposed)",
-                       "zorder": 4, "lw": 2.5},
+                       "zorder": 5, "lw": 2.5},
 }
 
 
@@ -1482,13 +1487,13 @@ def _write_run_bundle(
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
-        description="5-seed × 4-model 절제 연구 러너 (SMOKE/CenterNet 표준)"
+        description="5-seed × multi-model 절제 연구 러너 (SMOKE/CenterNet 표준)"
     )
     p.add_argument("--seeds",   type=int, nargs="+", default=SEEDS,
                    help=f"실험 시드 목록 (default: {SEEDS})")
     p.add_argument("--type",    nargs="+",   default=MODEL_TYPES,
                    choices=MODEL_TYPES,
-                   help="학습할 모델 타입 (default: 4종 모두)")
+                   help=f"학습할 모델 타입 (default: {len(MODEL_TYPES)}종 모두)")
     p.add_argument("--epochs",  type=int,   default=DEFAULT_EPOCHS)
     p.add_argument("--batch",   type=int,   default=DEFAULT_BATCH)
     p.add_argument("--lr",      type=float, default=DEFAULT_LR)

@@ -1,0 +1,24 @@
+
+장치: mps
+시드: [42, 0, 1, 2, 3]
+모델: ['baseline', 'geometry', 'baseline_depth', 'geometry_aux']
+하이퍼파라미터: epochs=100  batch=32  lr=0.00025
+  [split] 기존 split 유지 (train=4000  val=1000)
+
+═════════════════════════════════════════════════════════════════
+  절제 연구: 4 모델 × 5 seed = 20 run
+  epochs=100  batch=32  lr=0.00025  device=mps
+═════════════════════════════════════════════════════════════════
+
+
+[1/20]  모델=baseline  seed=42
+  저장 경로: /Users/doyoung/Documents/Blender/results/ablation_study/seed_42/baseline
+  → 이미 완료된 run 로드 (history 200 ep)
+
+[2/20]  모델=geometry  seed=42
+  저장 경로: /Users/doyoung/Documents/Blender/results/ablation_study/seed_42/geometry
+  → 미완료 run 감지 (1/100 ep) — 이어받기
+    파라미터: 1,643,718  |  train=4000  val=1000
+/Users/doyoung/Documents/Blender/train/ablation_study.py:394: UserWarning: Detected call of `lr_scheduler.step()` before `optimizer.step()`. In PyTorch 1.1.0 and later, you should call them in the opposite order: `optimizer.step()` before `lr_scheduler.step()`.  Failure to do this will result in PyTorch skipping the first value of the learning rate schedule. See more details at https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+  scheduler.step()
+    [resume] ep 1 → 100 이어받기  (best so far: ep=1  val_loss=6.3872)
