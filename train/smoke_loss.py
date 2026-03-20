@@ -78,6 +78,8 @@ FEAT_STRIDE: int = 4
 # 데이터셋 깊이 통계 (train split 3999개 기준, m 단위)
 DEPTH_MEAN: float = 6.15
 DEPTH_STD:  float = 2.48
+OFFICIAL_REG_LOSS_WEIGHT: float = float(_OFFICIAL_SMOKE_DEFAULTS.MODEL.SMOKE_HEAD.LOSS_WEIGHT[1])
+GEOMETRY_REG_BRANCH_COUNT: float = 4.0
 
 
 def geometry_log_dv_reference(
@@ -855,6 +857,7 @@ class SmokeLoss(nn.Module):
         self.depth_max         = depth_max_m
         self.use_depth         = model_type in ("baseline_depth", "geometry_aux")
         self.is_geometry       = model_type in ("geometry", "geometry_aux")
+        self.geometry_reg_normalizer = OFFICIAL_REG_LOSS_WEIGHT * GEOMETRY_REG_BRANCH_COUNT
         self._official_loss_cache: dict[str, object] = {}
         # 기본 통계값이면 모듈 싱글턴 재사용, 커스텀이면 전용 coder 생성
         if depth_mean == DEPTH_MEAN and depth_std == DEPTH_STD:
@@ -1204,7 +1207,12 @@ class SmokeLoss(nn.Module):
             l_3d  = self._corner_loss(outputs, batch, geo_center, stride)
 
             hm_term = self.lambda_heat * l_heat
-            reg_term = self.lambda_off * l_off + self.lambda_3d * l_3d
+            # Geometry combines four regression-style subproblems:
+            #   u-offset, orientation, location/depth reconstruction, log_dv residual.
+            # Averaging them first, then applying the official regression weight
+            # keeps the scale much closer to the baseline's official loss.
+            reg_term_raw = self.lambda_off * l_off + self.lambda_3d * l_3d
+            reg_term = reg_term_raw / self.geometry_reg_normalizer
             total = hm_term + reg_term
             tensor_terms = {
                 "hm_loss": hm_term,
@@ -1214,6 +1222,7 @@ class SmokeLoss(nn.Module):
                 "l_heat": l_heat.item(),
                 "l_off" : l_off.item(),
                 "l_3d"  : l_3d.item(),
+                "l_reg_raw": reg_term_raw.item(),
             }
         else:
             predictions = outputs.get("predictions")
