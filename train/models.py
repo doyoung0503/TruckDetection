@@ -39,6 +39,7 @@ from train.smoke_loss import (
     TRUCK_W,
     build_official_smoke_cfg,
     decode_baseline_official,
+    geometry_log_dv_reference,
 )
 
 
@@ -147,7 +148,7 @@ class GeometryModel(nn.Module):
     Same official backbone/head style as baseline, but only predicts:
       - u offset
       - yaw vector
-      - log_dv
+      - residual log_dv around a dynamic depth prior
     The remaining variables are recovered analytically.
     """
 
@@ -168,7 +169,7 @@ class GeometryModel(nn.Module):
             "heatmap": torch.sigmoid(self.heatmap(feat)),
             "offset": self.offset(feat),
             "yaw": F.normalize(self.yaw_head(feat), dim=1, eps=1e-6),
-            "log_dv": self.log_dv(feat),
+            "log_dv": self.log_dv(feat),  # residual around dynamic log_dv prior
         }
 
 
@@ -221,7 +222,7 @@ class GeometryAuxModel(nn.Module):
             "heatmap": torch.sigmoid(self.heatmap(feat)),
             "offset": self.offset(feat),
             "yaw": F.normalize(self.yaw_head(feat), dim=1, eps=1e-6),
-            "log_dv": self.log_dv(feat),
+            "log_dv": self.log_dv(feat),  # residual around dynamic log_dv prior
             "depth": self.depth_dec(feat),
         }
 
@@ -281,7 +282,9 @@ def decode_predictions(
         u_c = (ix + ox) * stride
 
         log_dv_map = outputs["log_dv"].view(b, 1, -1)
-        log_dv = log_dv_map[:, 0].gather(1, inds).clamp(-4.0, 8.0)
+        log_dv_delta = log_dv_map[:, 0].gather(1, inds)
+        log_dv_ref = geometry_log_dv_reference(K, h_cam, depth_ref_m=depth_mean).unsqueeze(1)
+        log_dv = (log_dv_ref + log_dv_delta).clamp(-4.0, 8.0)
         Z = (fy * h_ref.abs() * torch.exp(-log_dv)).clamp(min=0.5, max=30.0)
         v_c = cy + torch.sign(h_ref) * torch.exp(log_dv)
 

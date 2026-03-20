@@ -630,6 +630,7 @@ class KITTILetterboxDataset(Dataset):
         img_t = TF.to_tensor(Image.open(img_path).convert("RGB"))
         ann = _parse_kitti_label(label_path)
         K = _parse_kitti_p2(calib_path)
+        bbox_2d = ann["bbox"].astype(np.float32).copy()
 
         corners_3d = _build_camera_box_corners(
             ann["h"], ann["w"], ann["l"], ann["x"], ann["y"], ann["z"], ann["ry"]
@@ -650,6 +651,9 @@ class KITTILetterboxDataset(Dataset):
                 self.img_size,
             )
             yaw_theta = math.radians(yaw_deg)
+            x1, y1, x2, y2 = bbox_2d.tolist()
+            img_w = self.img_size[1]
+            bbox_2d = np.array([(img_w - 1) - x2, y1, (img_w - 1) - x1, y2], dtype=np.float32)
         else:
             yaw_theta = ann["ry"]
 
@@ -662,6 +666,7 @@ class KITTILetterboxDataset(Dataset):
             "K": torch.from_numpy(K.astype(np.float32)),
             "yaw_theta": torch.tensor(yaw_theta, dtype=torch.float32),
             "center_2d": torch.from_numpy(center_2d.astype(np.float32)),
+            "bbox_2d": torch.from_numpy(bbox_2d.astype(np.float32)),
             "distance": torch.tensor(distance, dtype=torch.float32),
             "frame_id": int(sid),
             "view_category": "",

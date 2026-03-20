@@ -54,6 +54,7 @@ from train.smoke_loss import (
     _SMOKE_CODER,
     TRUCK_H, FEAT_STRIDE, EPS,
     decode_baseline_official,
+    geometry_log_dv_reference,
 )
 from train.metrics import calculate_metrics, aggregate_metrics
 
@@ -137,12 +138,13 @@ def decode_predictions(
 
     # ── 3D 파라미터 계산 ──────────────────────────────────────────────────
     if is_geometry:
-        # [DoF restriction] Z = fy·|h_ref|·exp(−log_dv),  Y = h_ref (기하 상수)
-        log_dv   = _extract_at(outputs["log_dv"], ix, iy)[:, 0]
-        log_dv_c = log_dv.clamp(-4.0, 8.0)
+        # [DoF restriction] residual log_dv + dynamic prior → Z,  Y = h_ref
+        log_dv_delta = _extract_at(outputs["log_dv"], ix, iy)[:, 0]
 
         h_ref  = h_cam - TRUCK_H / 2
         fy_k   = K[:, 1, 1]
+        log_dv_ref = geometry_log_dv_reference(K, h_cam)
+        log_dv_c = (log_dv_ref + log_dv_delta).clamp(-4.0, 8.0)
 
         pred_z = (fy_k * h_ref.abs() * torch.exp(-log_dv_c)).clamp(min=0.5, max=30.0)
 

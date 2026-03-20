@@ -44,6 +44,7 @@ import sys
 from pathlib import Path
 from typing import Literal
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -77,6 +78,22 @@ FEAT_STRIDE: int = 4
 # 데이터셋 깊이 통계 (train split 3999개 기준, m 단위)
 DEPTH_MEAN: float = 6.15
 DEPTH_STD:  float = 2.48
+
+
+def geometry_log_dv_reference(
+    K: torch.Tensor,
+    h_cam: torch.Tensor,
+    depth_ref_m: float = DEPTH_MEAN,
+) -> torch.Tensor:
+    """
+    Dynamic prior for geometry depth parameterization.
+    For each sample:
+      log_dv_ref = log(fy * |h_cam - H/2| / Z_ref)
+    where Z_ref is the global mean depth prior.
+    """
+    fy = K[:, 1, 1]
+    h_ref = h_cam - TRUCK_H / 2.0
+    return torch.log((fy * h_ref.abs()).clamp(min=EPS) / max(depth_ref_m, EPS))
 
 
 def build_official_smoke_cfg(device: str = "cpu"):
@@ -296,6 +313,7 @@ def _build_official_targets(batch: dict, device: torch.device) -> list[ParamsLis
 
         center_2d = batch["center_2d"][b].detach().cpu().numpy()
         corners_2d = batch["gt_corners_2d"][b].detach().cpu().numpy()
+        bbox_2d = batch.get("bbox_2d")
         K_b = batch["K"][b].detach().cpu()
         h_cam = float(batch["h_cam"][b].detach().cpu())
         yaw = float(batch["yaw_theta"][b].detach().cpu())
@@ -321,18 +339,30 @@ def _build_official_targets(batch: dict, device: torch.device) -> list[ParamsLis
         box3d = _OFFICIAL_BOX_CODER.encode_box3d(rot, dims_lhw, loc_bottom)[0]
 
         point = official_affine_transform(center_2d, trans_mats[b].numpy())
-        corners_feat = torch.as_tensor(
-            [official_affine_transform(pt, trans_mats[b].numpy()) for pt in corners_2d],
-            dtype=torch.float32,
-        )
-        xmins = corners_feat[:, 0].min().item()
-        xmaxs = corners_feat[:, 0].max().item()
-        ymins = corners_feat[:, 1].min().item()
-        ymaxs = corners_feat[:, 1].max().item()
+        if bbox_2d is not None:
+            bbox_np = bbox_2d[b].detach().cpu().numpy().astype(np.float32)
+        else:
+            bbox_np = np.array(
+                [
+                    float(corners_2d[:, 0].min()),
+                    float(corners_2d[:, 1].min()),
+                    float(corners_2d[:, 0].max()),
+                    float(corners_2d[:, 1].max()),
+                ],
+                dtype=np.float32,
+            )
+        bbox_feat = bbox_np.copy()
+        bbox_feat[:2] = official_affine_transform(bbox_feat[:2], trans_mats[b].numpy())
+        bbox_feat[2:] = official_affine_transform(bbox_feat[2:], trans_mats[b].numpy())
+        bbox_feat[[0, 2]] = np.clip(bbox_feat[[0, 2]], 0.0, feat_w - 1.0)
+        bbox_feat[[1, 3]] = np.clip(bbox_feat[[1, 3]], 0.0, feat_h - 1.0)
+        xmins, ymins, xmaxs, ymaxs = [float(v) for v in bbox_feat]
         box_h = ymaxs - ymins
         box_w = xmaxs - xmins
 
-        if 0.0 < point[0] < feat_w and 0.0 < point[1] < feat_h:
+        point_ok = np.isfinite(point).all() and (0.0 < point[0] < feat_w) and (0.0 < point[1] < feat_h)
+        box_ok = np.isfinite(bbox_feat).all() and box_h > 0.0 and box_w > 0.0
+        if point_ok and box_ok:
             point_int = point.astype("int32")
             radius = max(0, int(official_gaussian_radius(box_h, box_w)))
             heat_map[0] = torch.from_numpy(
@@ -965,7 +995,9 @@ class SmokeLoss(nn.Module):
         # geometry 경로: [DoF restriction] Y = h_ref 고정, log_dv → Z
         # ════════════════════════════════════════════════════════════════
         if self.is_geometry:
-            log_dv_pred   = _extract_at(outputs["log_dv"].to(dev), ix, iy)[:, 0]
+            log_dv_delta = _extract_at(outputs["log_dv"].to(dev), ix, iy)[:, 0]
+            log_dv_ref = geometry_log_dv_reference(K, h_cam, depth_ref_m=self.depth_mean)
+            log_dv_pred = log_dv_ref + log_dv_delta
             log_dv_pred_c = log_dv_pred.clamp(-4.0, 8.0)
             Z_pred_geom   = (
                 fy_k * h_ref.abs() * torch.exp(-log_dv_pred_c)
@@ -993,11 +1025,12 @@ class SmokeLoss(nn.Module):
             # L_log_dv: log_dv 직접 지도 [DoF restriction]
             # baseline에는 없는 항목.
             # Z = fy|h_ref|exp(−log_dv) 관계에서 GT log_dv가 명확히 존재.
-            dv_abs    = (v_gt - cy_k).abs().clamp(min=EPS)
+            dv_abs = (v_gt - cy_k).abs().clamp(min=EPS)
             log_dv_gt = torch.log(dv_abs)
+            log_dv_delta_gt = log_dv_gt - log_dv_ref
             if valid.any():
                 total = total + F.l1_loss(
-                    log_dv_pred[valid], log_dv_gt[valid].detach()
+                    log_dv_delta[valid], log_dv_delta_gt[valid].detach()
                 )
 
         # ════════════════════════════════════════════════════════════════
@@ -1144,6 +1177,20 @@ class SmokeLoss(nn.Module):
         outputs: dict,
         batch:   dict,
     ) -> tuple[torch.Tensor, dict]:
+        total, _, ld = self.compute_loss_terms(outputs, batch)
+        return total, ld
+
+    def compute_loss_terms(
+        self,
+        outputs: dict,
+        batch: dict,
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor], dict[str, float]]:
+        """
+        Return both tensor loss terms and scalar logs.
+
+        This is useful when the caller wants the official SMOKE-style training
+        contract: `model(images, targets) -> loss_dict[tensor]`.
+        """
         dev = outputs["heatmap"].device
 
         if self.is_geometry:
@@ -1156,11 +1203,13 @@ class SmokeLoss(nn.Module):
             l_off = self._off_loss(outputs["offset"], geo_center, stride)
             l_3d  = self._corner_loss(outputs, batch, geo_center, stride)
 
-            total = (
-                self.lambda_heat * l_heat
-                + self.lambda_off  * l_off
-                + self.lambda_3d   * l_3d
-            )
+            hm_term = self.lambda_heat * l_heat
+            reg_term = self.lambda_off * l_off + self.lambda_3d * l_3d
+            total = hm_term + reg_term
+            tensor_terms = {
+                "hm_loss": hm_term,
+                "reg_loss": reg_term,
+            }
             ld = {
                 "l_heat": l_heat.item(),
                 "l_off" : l_off.item(),
@@ -1174,6 +1223,10 @@ class SmokeLoss(nn.Module):
             official_loss = self._get_official_loss(dev)
             loss_heatmap, loss_regression = official_loss(predictions, official_targets)
             total = loss_heatmap + loss_regression
+            tensor_terms = {
+                "hm_loss": loss_heatmap,
+                "reg_loss": loss_regression,
+            }
             ld = {
                 "l_heat": loss_heatmap.item(),
                 "l_off": 0.0,
@@ -1182,17 +1235,21 @@ class SmokeLoss(nn.Module):
 
         if self.use_depth and "depth" in outputs:
             l_depth = self._depth_loss(outputs["depth"], batch)
-            total   = total + self.lambda_depth * l_depth
+            depth_term = self.lambda_depth * l_depth
+            total = total + depth_term
+            tensor_terms["depth_loss"] = depth_term
             ld["l_depth"] = l_depth.item()
 
             dev_d = outputs["depth"].device
             foot_center = batch["gt_corners_2d"][:, [0, 1, 4, 5], :].mean(dim=1).to(dev_d)
             l_ground = self._ground_align_loss(outputs["depth"], batch, foot_center)
-            total    = total + self.lambda_ground * l_ground
+            ground_term = self.lambda_ground * l_ground
+            total = total + ground_term
+            tensor_terms["ground_loss"] = ground_term
             ld["l_ground"] = l_ground.item()
 
         ld["total"] = total.item()
-        return total, ld
+        return total, tensor_terms, ld
 
 
 # ── 팩토리 ────────────────────────────────────────────────────────────────────

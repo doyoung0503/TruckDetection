@@ -8,6 +8,8 @@ an external baseline without mixing its legacy code into our internal trainers.
 from __future__ import annotations
 
 import argparse
+import json
+import math
 import os
 import subprocess
 import sys
@@ -17,6 +19,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_SMOKE_DIR = ROOT / "SMOKE-master"
 DEFAULT_DATASET_ROOT = ROOT / "datasets" / "v3" / "kitti_smoke_1280x384_lb"
+DEFAULT_OUTPUT_DIR = ROOT / "results" / "official_smoke"
+
+TRUCK_L = 9.8
+TRUCK_H = 3.3
+TRUCK_W = 2.5
+DEPTH_MEAN = 6.15
+DEPTH_STD = 2.48
+DEFAULT_MAX_ITER = 25000
+DEFAULT_STEPS = (10000, 18000)
 
 
 def _build_command(
@@ -50,6 +61,23 @@ def _requested_device_from_opts(opts: list[str]) -> str | None:
         if opts[i] == "MODEL.DEVICE":
             return str(opts[i + 1]).strip().lower()
     return None
+
+
+def _count_split_samples(dataset_root: Path, split_name: str) -> int | None:
+    split_file = dataset_root / "training" / "ImageSets" / f"{split_name}.txt"
+    if not split_file.exists():
+        return None
+    return len([line for line in split_file.read_text(encoding="utf-8").splitlines() if line.strip()])
+
+
+def _set_opt(opts: list[str], key: str, value: str) -> list[str]:
+    out = list(opts)
+    for i in range(len(out) - 1):
+        if out[i] == key:
+            out[i + 1] = value
+            return out
+    out.extend([key, value])
+    return out
 
 
 def _validate_smoke_repo(smoke_dir: Path) -> None:
@@ -147,8 +175,26 @@ def main() -> None:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=None,
-        help="Optional official SMOKE output directory override.",
+        default=DEFAULT_OUTPUT_DIR,
+        help="Official SMOKE output directory.",
+    )
+    parser.add_argument("--batch", type=int, default=8, help="Batch size override.")
+    parser.add_argument("--train-split", type=str, default="train", help="Training split in ImageSets.")
+    parser.add_argument("--test-split", type=str, default="val", help="Validation/test split in ImageSets.")
+    parser.add_argument("--max-iter", type=int, default=DEFAULT_MAX_ITER, help="Official SMOKE max iteration.")
+    parser.add_argument(
+        "--steps",
+        type=int,
+        nargs=2,
+        default=DEFAULT_STEPS,
+        metavar=("STEP1", "STEP2"),
+        help="Official SMOKE scheduler milestones.",
+    )
+    parser.add_argument(
+        "--checkpoint-period",
+        type=int,
+        default=DEFAULT_STEPS[0],
+        help="Checkpoint period passed to official config.",
     )
     parser.add_argument(
         "opts",
@@ -172,24 +218,59 @@ def main() -> None:
     env["PYTHONPATH"] = (
         f"{smoke_dir}:{prev_pythonpath}" if prev_pythonpath else str(smoke_dir)
     )
-    requested_device = _requested_device_from_opts(args.opts)
+    opts = list(args.opts)
+    opts = _set_opt(opts, "DATASETS.TRAIN_SPLIT", args.train_split)
+    opts = _set_opt(opts, "DATASETS.TEST_SPLIT", args.test_split)
+    opts = _set_opt(opts, "DATASETS.DETECT_CLASSES", "('Car',)")
+    opts = _set_opt(opts, "MODEL.SMOKE_HEAD.DIMENSION_REFERENCE", f"(({TRUCK_L},{TRUCK_H},{TRUCK_W}),)")
+    opts = _set_opt(opts, "MODEL.SMOKE_HEAD.DEPTH_REFERENCE", f"({DEPTH_MEAN},{DEPTH_STD})")
+    opts = _set_opt(opts, "SOLVER.IMS_PER_BATCH", str(args.batch))
+    opts = _set_opt(opts, "SOLVER.MAX_ITERATION", str(args.max_iter))
+    opts = _set_opt(opts, "SOLVER.STEPS", f"({args.steps[0]},{args.steps[1]})")
+    opts = _set_opt(opts, "SOLVER.CHECKPOINT_PERIOD", str(args.checkpoint_period))
+
+    requested_device = _requested_device_from_opts(opts)
     auto_mps_fallback = requested_device == "mps"
     if args.enable_mps_fallback or auto_mps_fallback:
         env["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
+
+    output_dir = args.output_dir.resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    n_train = _count_split_samples(dataset_root, args.train_split)
+    iters_per_epoch = None
+    if n_train is not None and args.batch > 0:
+        iters_per_epoch = math.ceil(n_train / args.batch)
+    meta = {
+        "dataset_root": str(dataset_root),
+        "output_dir": str(output_dir),
+        "batch": args.batch,
+        "train_split": args.train_split,
+        "test_split": args.test_split,
+        "max_iteration": args.max_iter,
+        "steps": list(args.steps),
+        "checkpoint_period": args.checkpoint_period,
+        "dimension_reference": [TRUCK_L, TRUCK_H, TRUCK_W],
+        "depth_reference": [DEPTH_MEAN, DEPTH_STD],
+        "iters_per_epoch": iters_per_epoch,
+    }
+    (output_dir / "run_meta.json").write_text(
+        json.dumps(meta, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
 
     cmd = _build_command(
         smoke_dir=smoke_dir,
         config_file=args.config_file,
         num_gpus=args.num_gpus,
         eval_only=args.eval_only,
-        extra_opts=args.opts,
+        extra_opts=opts,
     )
-    if args.output_dir is not None:
-        cmd += ["OUTPUT_DIR", str(args.output_dir.resolve())]
+    cmd += ["OUTPUT_DIR", str(output_dir)]
 
     print("[official-smoke] cwd:", smoke_dir)
     print("[official-smoke] cmd:", " ".join(cmd))
     print("[official-smoke] dataset:", dataset_root)
+    print("[official-smoke] output:", output_dir)
     if args.enable_mps_fallback or auto_mps_fallback:
         print("[official-smoke] note: PYTORCH_ENABLE_MPS_FALLBACK=1 is enabled.")
 
