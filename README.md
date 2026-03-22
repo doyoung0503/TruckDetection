@@ -1,189 +1,205 @@
 # TruckDetection
 
-Monocular 3D Bounding Box Estimation for trucks using Blender-generated synthetic data and a SMOKE/CenterNet-style ablation study.
+Monocular 3D truck detection experiments built around the official [SMOKE](https://github.com/lzccccc/SMOKE) training code.
 
----
+## What This Repo Runs
 
-## Overview
+This project now supports two training modes on the same KITTI-converted truck dataset:
 
-This project investigates how much geometric prior knowledge helps monocular 3D object detection. A synthetic dataset of truck scenes is generated via Blender, and four model variants are trained and compared to isolate the contribution of each component.
+- `baseline`: official SMOKE training path, launched through `SMOKE-master/tools/plain_train_net.py`
+- `geometry`: official SMOKE training path with a minimal internal fork of the SMOKE head, loss, and inference logic to enforce restricted DoF geometry
 
-**Key idea**: Can we replace learned depth prediction with a simple geometric formula `Z = fy · h_cam / (v_c − cy)` by exploiting known camera height?
+The important design rule is:
 
----
+- `baseline` uses the official SMOKE model/trainer path
+- `geometry` also uses the same official trainer path and differs only inside the patched SMOKE head internals
 
-## Dataset
+## Dataset Expectation
 
-Synthetic data generated with Blender using a Hyundai Porter truck 3D model placed across diverse urban scenes (HDRI backgrounds, randomized pose, lighting, and camera parameters).
+The training code assumes the dataset has already been converted to KITTI format.
 
-| Split | Samples |
-|-------|---------|
-| Train | 4,000   |
-| Val   | 1,000   |
-| Total | 5,000   |
+Default dataset root:
 
-### Sample
+`datasets/v3/kitti_smoke_1280x384_lb`
 
-| Raw Image | Label Visualization |
-|:---------:|:-------------------:|
-| <img src="docs/sample_0728.png" alt="Sample 0728 raw" width="460"> | <img src="docs/sample_0728_labeled.png" alt="Sample 0728 labeled" width="460"> |
+The root should contain at least:
 
-> Sample #0728 — environment: city\_A, distance: 8.15 m, truck: 5.10×1.87×1.92 m (L×W×H)
->
-> Visualization: rear face (red), front face (green), lateral edges (yellow), 2D AABB (white dashed), foot center (cyan +), orientation axes (X/Y/Z)
-
-Each sample includes:
-- RGB image (1920×1080, letterboxed to 640×640 during training)
-- Depth map (1920×1080, float32, meters)
-- Camera intrinsics `K`
-- 3D bounding box corners (world + camera coords)
-- Yaw angle, camera height `h_cam`
-
-Depth statistics (training split): mean = 6.15 m, std = 2.48 m, range = [2.0, 12.8 m]
-
-> Dataset not included in this repo (large files). Generation script: `generate_synthetic_dataset.py`
-
----
-
-## Model Variants (Ablation Study)
-
-All models share a **ResNet-34 backbone** (stride-8, 80×80 feature map) following the SMOKE/CenterNet architecture with **GroupNorm(32)** in all detection heads.
-
-| Model | Predicts | Z source | W/H/L source |
-|-------|----------|----------|--------------|
-| `baseline` | heatmap + offset + Z/W/H/L/yaw | Learned (µ + δ·σ) | Learned (exp-scaled) |
-| `geometry` | heatmap + offset + yaw | Formula: `fy·h_cam/(v_c−cy)` | Fixed prior |
-| `baseline_depth` | baseline + dense depth map | Learned | Learned |
-| `geometry_aux` | geometry + dense depth map | Formula | Fixed prior |
-
-The `geometry` variants use the ground-plane constraint: since the foot center of the truck is always at ground level (`Y_cam = h_cam`), depth can be recovered analytically from the 2D projection.
-
-Baseline depth encoding uses dataset statistics: `Z = µ_z + δ · σ_z` (µ=6.15 m, σ=2.48 m), providing better gradient scaling than unconstrained softplus.
-
----
-
-## Training
-
-Follows the **SMOKE paper** training configuration:
-
-- Optimizer: Adam (no weight decay)
-- Learning rate: 2.5e-4
-- Scheduler: MultiStepLR at **42%** and **67%** of total epochs, γ=0.1
-- Epochs: 200
-- Batch size: 32
-- Gradient clipping: max\_norm=10.0
-- 5 random seeds: [42, 0, 1, 2, 3]
-
-### Loss Functions
-
-The 3D corner loss follows the **SMOKE disentangled loss** formulation:
-
-| Component | Type | Description |
-|-----------|------|-------------|
-| `L_heat` | Modified Focal Loss (α=2, β=4) | Heatmap; GT built with adaptive Gaussian radius (CenterNet IoU formula) |
-| `L_off` | L1 | Sub-pixel offset at GT location |
-| `L_orient` | L1 | GT location+dims + predicted αz→θ |
-| `L_dim` | L1 | GT location+θ + predicted W/H/L (baseline only) |
-| `L_loc` | L1 | GT θ+dims + predicted location |
-| `L_depth` | Masked L1 | Dense depth (aux models only, λ=0.1) |
-
-Yaw is encoded as **observation angle αz** (`αz = θ − arctan(x/z)`), which is more view-invariant than the global yaw angle. At inference: `θ = αz + arctan(X/Z)`.
-
-> Heatmap GT center = foot center (`gt_corners_2d[[0,1,4,5]].mean`), not the geometric center. This is required for the Z formula to be exact.
-
-### Evaluation Metrics
-
-| Metric | Description |
-|--------|-------------|
-| `Z` (m) | MAE of predicted vs GT depth |
-| `ADD-S` (m) | Symmetric Average Distance (nearest-neighbor corner matching) |
-| `hm_max` | Peak value of predicted heatmap; should approach 1.0 early in training |
-| `grad` | Global gradient norm before clipping |
-
----
-
-## Usage
-
-```bash
-# Install dependencies
-pip install torch torchvision pillow matplotlib numpy
-
-# Generate dataset (requires Blender 5.0+)
-blender --background --python generate_synthetic_dataset.py
-
-# Re-render any missing samples
-blender --background --python regen_missing.py
-
-# Run full ablation study (4 models × 5 seeds, 200 epochs)
-python -m train.ablation_study --epochs 200 --batch 32
+```text
+kitti_smoke_1280x384_lb/
+├── training/
+│   ├── image_2/
+│   ├── label_2/
+│   ├── calib/
+│   └── ImageSets/
+└── testing/   # optional, depending on your export/eval setup
 ```
 
-### Official SMOKE Baseline (Paper Code)
+Both launchers automatically link this dataset into `SMOKE-master/datasets/kitti` before training.
 
-The official SMOKE repository is cloned under `external/SMOKE` and can be used
-as the baseline reference implementation from the paper.
+## Current Training Defaults
+
+These defaults are shared by the baseline and geometry launchers unless overridden:
+
+- input: KITTI-converted `1280x384` truck dataset
+- batch size: `8`
+- max iteration: `25000`
+- LR milestones: `10000`, `18000`
+- checkpoint period: `1000` iterations
+- split: `train` / `val`
+- seed-aware output directories
+
+Truck prior values injected into the config:
+
+- dimensions `(L, H, W) = (9.8, 3.3, 2.5)`
+- depth reference `(mean, std) = (6.15, 2.48)`
+
+## Install
 
 ```bash
-# 1) Build official SMOKE extensions once (inside cloned repo)
-cd external/SMOKE
+pip install torch torchvision pillow matplotlib numpy yacs tqdm opencv-python
+```
+
+Build the official SMOKE extensions once:
+
+```bash
+cd SMOKE-master
 python setup.py build develop
-
-# 2) Launch official baseline training from this project root
-cd /path/to/TruckDetection
-python -m train.run_official_smoke_baseline --config-file configs/smoke_gn_vector.yaml
 ```
 
-You can also pass config overrides through the launcher:
+Then return to the project root.
+
+## Run One Baseline Job
 
 ```bash
 python -m train.run_official_smoke_baseline \
-  --config-file configs/smoke_gn_vector.yaml \
-  SOLVER.MAX_ITERATION 5000 SOLVER.IMS_PER_BATCH 8
+  --dataset-root /path/to/kitti_smoke_1280x384_lb \
+  --seed 42
 ```
 
-Results are saved to `results/ablation_study/seed_{s}/{model}/`:
+This launches the official SMOKE training script with truck-specific config overrides.
 
-- `best.pt` — best checkpoint (lowest val loss)
-- `last.pt` — final checkpoint
-- `history.json` — per-epoch loss and metrics
+Default output:
 
----
+`results/baseline/seed_42`
 
-## Project Structure
-
-```
-.
-├── generate_synthetic_dataset.py   # Blender synthetic data generation
-├── regen_missing.py                # Re-render missing samples by index
-├── train/
-│   ├── models.py                   # 4 model architectures (GroupNorm heads)
-│   ├── smoke_loss.py               # Focal loss + disentangled 3D corner loss
-│   ├── ablation_study.py           # Multi-seed ablation runner
-│   ├── smoke_trainer.py            # Single-run training loop
-│   ├── metrics.py                  # Z-Error, ADD-S
-│   └── dataset.py                  # DataLoader
-├── datasets/
-│   └── v3/
-│       ├── images/                 # RGB images (640×640)
-│       ├── depth/                  # Depth maps (.npy + .png)
-│       ├── labels/                 # JSON labels per sample
-│       └── split.json              # Train/val split (seed=42)
-├── results/
-│   └── ablation_study/
-│       └── seed_{s}/{model}/
-│           ├── best.pt
-│           └── history.json
-└── hyundai-porter-truck/           # 3D truck model assets
-```
-
----
-
-## Requirements
-
-- Python 3.10+
-- PyTorch 2.x (MPS or CUDA)
-- Blender 5.0+ (dataset generation only)
+## Run One Geometry Job
 
 ```bash
-pip install torch torchvision pillow matplotlib numpy
+python -m train.run_geometry_smoke \
+  --dataset-root /path/to/kitti_smoke_1280x384_lb \
+  --seed 42
 ```
+
+This also launches `SMOKE-master/tools/plain_train_net.py`, but sets:
+
+- `MODEL.SMOKE_HEAD.MODE geometry`
+- `MODEL.SMOKE_HEAD.REGRESSION_HEADS 4`
+- `MODEL.SMOKE_HEAD.REGRESSION_CHANNEL (1,1,2)`
+
+Default output:
+
+`results/geometry/seed_42`
+
+## Run A Single Selected Model And Seed
+
+If you want one entrypoint that chooses the model for you:
+
+```bash
+python -m train.run_single_smoke_job \
+  --model baseline \
+  --seed 42 \
+  --dataset-root /path/to/kitti_smoke_1280x384_lb
+```
+
+```bash
+python -m train.run_single_smoke_job \
+  --model geometry \
+  --seed 42 \
+  --dataset-root /path/to/kitti_smoke_1280x384_lb
+```
+
+This wrapper delegates to the existing baseline/geometry launchers, so the output format stays identical.
+
+## Output Layout
+
+Baseline:
+
+```text
+results/
+└── baseline/
+    └── seed_42/
+        ├── log.txt
+        ├── run_meta.json
+        ├── model_0001000.pth
+        ├── model_0002000.pth
+        ├── ...
+        └── model_final.pth
+```
+
+Geometry:
+
+```text
+results/
+└── geometry/
+    └── seed_42/
+        ├── log.txt
+        ├── run_meta.json
+        ├── model_0001000.pth
+        ├── model_0002000.pth
+        ├── ...
+        └── model_final.pth
+```
+
+Notes:
+
+- `log.txt` is written by the official SMOKE logger
+- checkpoints are saved every `1000` iterations by default
+- `run_meta.json` records dataset path, seed, steps, checkpoint period, and model type
+
+## Server Quick Start
+
+If the server already has only the converted dataset and this repo:
+
+```bash
+cd /home/dy-jang/projects/TruckDetection-main
+python -m train.run_single_smoke_job \
+  --model geometry \
+  --seed 42 \
+  --dataset-root /home/dy-jang/projects/v3/kitti_smoke_1280x384_lb
+```
+
+Or for the baseline:
+
+```bash
+cd /home/dy-jang/projects/TruckDetection-main
+python -m train.run_single_smoke_job \
+  --model baseline \
+  --seed 42 \
+  --dataset-root /home/dy-jang/projects/v3/kitti_smoke_1280x384_lb
+```
+
+## Main Files
+
+```text
+SMOKE-master/
+└── smoke/
+    └── modeling/heads/smoke_head/
+        ├── smoke_predictor.py   # official predictor + geometry branch
+        ├── loss.py              # official loss + geometry branch
+        └── inference.py         # official postprocess + geometry branch
+
+train/
+├── run_official_smoke_baseline.py  # baseline launcher
+├── run_geometry_smoke.py           # geometry launcher on official plain_train_net
+└── run_single_smoke_job.py         # choose one model + one seed
+```
+
+## Important Scope
+
+This README describes the current official-SMOKE-based training path.
+
+Older custom experimental files such as `train/models.py`, `train/smoke_loss.py`, and `train/smoke_trainer.py` remain in the repo for prior experiments, but the recommended training entrypoints are:
+
+- `train.run_official_smoke_baseline`
+- `train.run_geometry_smoke`
+- `train.run_single_smoke_job`
