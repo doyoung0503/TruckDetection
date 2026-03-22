@@ -30,6 +30,7 @@ class SMOKEPredictor(nn.Module):
     def __init__(self, cfg, in_channels):
         super(SMOKEPredictor, self).__init__()
 
+        self.head_mode = cfg.MODEL.SMOKE_HEAD.MODE
         classes = len(cfg.DATASETS.DETECT_CLASSES)
         regression = cfg.MODEL.SMOKE_HEAD.REGRESSION_HEADS
         regression_channels = cfg.MODEL.SMOKE_HEAD.REGRESSION_CHANNEL
@@ -41,8 +42,18 @@ class SMOKEPredictor(nn.Module):
                 cfg.MODEL.SMOKE_HEAD.REGRESSION_CHANNEL, cfg.MODEL.SMOKE_HEAD.REGRESSION_HEADS
             )
 
-        self.dim_channel = get_channel_spec(regression_channels, name="dim")
-        self.ori_channel = get_channel_spec(regression_channels, name="ori")
+        if self.head_mode == "geometry":
+            if tuple(regression_channels) != (1, 1, 2):
+                raise ValueError(
+                    "Geometry mode expects REGRESSION_CHANNEL=(1, 1, 2), "
+                    f"got {tuple(regression_channels)}"
+                )
+            self.log_dv_channel = slice(0, 1, 1)
+            self.offset_channel = slice(1, 2, 1)
+            self.ori_channel = slice(2, 4, 1)
+        else:
+            self.dim_channel = get_channel_spec(regression_channels, name="dim")
+            self.ori_channel = get_channel_spec(regression_channels, name="ori")
 
         self.class_head = nn.Sequential(
             nn.Conv2d(in_channels,
@@ -89,9 +100,9 @@ class SMOKEPredictor(nn.Module):
         head_regression = self.regression_head(features)
 
         head_class = sigmoid_hm(head_class)
-        # (N, C, H, W)
-        offset_dims = head_regression[:, self.dim_channel, ...].clone()
-        head_regression[:, self.dim_channel, ...] = torch.sigmoid(offset_dims) - 0.5
+        if self.head_mode != "geometry":
+            offset_dims = head_regression[:, self.dim_channel, ...].clone()
+            head_regression[:, self.dim_channel, ...] = torch.sigmoid(offset_dims) - 0.5
 
         vector_ori = head_regression[:, self.ori_channel, ...].clone()
         head_regression[:, self.ori_channel, ...] = F.normalize(vector_ori)

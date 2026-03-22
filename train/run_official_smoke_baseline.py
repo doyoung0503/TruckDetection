@@ -19,7 +19,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_SMOKE_DIR = ROOT / "SMOKE-master"
 DEFAULT_DATASET_ROOT = ROOT / "datasets" / "v3" / "kitti_smoke_1280x384_lb"
-DEFAULT_OUTPUT_DIR = ROOT / "results" / "official_smoke"
+DEFAULT_OUTPUT_ROOT = ROOT / "results"
 
 TRUCK_L = 9.8
 TRUCK_H = 3.3
@@ -28,6 +28,7 @@ DEPTH_MEAN = 6.15
 DEPTH_STD = 2.48
 DEFAULT_MAX_ITER = 25000
 DEFAULT_STEPS = (10000, 18000)
+DEFAULT_CHECKPOINT_PERIOD = 1000
 
 
 def _build_command(
@@ -175,10 +176,11 @@ def main() -> None:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=DEFAULT_OUTPUT_DIR,
-        help="Official SMOKE output directory.",
+        default=None,
+        help="Output directory. If omitted, uses results/baseline/seed_<seed>.",
     )
     parser.add_argument("--batch", type=int, default=8, help="Batch size override.")
+    parser.add_argument("--seed", type=int, default=42, help="Official SMOKE random seed.")
     parser.add_argument("--train-split", type=str, default="train", help="Training split in ImageSets.")
     parser.add_argument("--test-split", type=str, default="val", help="Validation/test split in ImageSets.")
     parser.add_argument("--max-iter", type=int, default=DEFAULT_MAX_ITER, help="Official SMOKE max iteration.")
@@ -193,7 +195,7 @@ def main() -> None:
     parser.add_argument(
         "--checkpoint-period",
         type=int,
-        default=DEFAULT_STEPS[0],
+        default=DEFAULT_CHECKPOINT_PERIOD,
         help="Checkpoint period passed to official config.",
     )
     parser.add_argument(
@@ -228,13 +230,18 @@ def main() -> None:
     opts = _set_opt(opts, "SOLVER.MAX_ITERATION", str(args.max_iter))
     opts = _set_opt(opts, "SOLVER.STEPS", f"({args.steps[0]},{args.steps[1]})")
     opts = _set_opt(opts, "SOLVER.CHECKPOINT_PERIOD", str(args.checkpoint_period))
+    opts = _set_opt(opts, "SEED", str(args.seed))
 
     requested_device = _requested_device_from_opts(opts)
     auto_mps_fallback = requested_device == "mps"
     if args.enable_mps_fallback or auto_mps_fallback:
         env["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
-    output_dir = args.output_dir.resolve()
+    output_dir = (
+        args.output_dir.resolve()
+        if args.output_dir is not None
+        else (DEFAULT_OUTPUT_ROOT / "baseline" / f"seed_{args.seed}").resolve()
+    )
     output_dir.mkdir(parents=True, exist_ok=True)
     n_train = _count_split_samples(dataset_root, args.train_split)
     iters_per_epoch = None
@@ -244,6 +251,8 @@ def main() -> None:
         "dataset_root": str(dataset_root),
         "output_dir": str(output_dir),
         "batch": args.batch,
+        "seed": args.seed,
+        "model_type": "baseline",
         "train_split": args.train_split,
         "test_split": args.test_split,
         "max_iteration": args.max_iter,
@@ -271,6 +280,7 @@ def main() -> None:
     print("[official-smoke] cmd:", " ".join(cmd))
     print("[official-smoke] dataset:", dataset_root)
     print("[official-smoke] output:", output_dir)
+    print("[official-smoke] seed:", args.seed)
     if args.enable_mps_fallback or auto_mps_fallback:
         print("[official-smoke] note: PYTORCH_ENABLE_MPS_FALLBACK=1 is enabled.")
 

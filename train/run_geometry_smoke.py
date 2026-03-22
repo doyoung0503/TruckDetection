@@ -1,276 +1,201 @@
 """
-Run the DoF-restricted geometry model with an official SMOKE-style trainer.
+Launch the restricted-DoF geometry model through official SMOKE training code.
 
-Design goal:
-  - `baseline` stays on untouched SMOKE-master training code.
-  - `geometry` uses the same optimizer / scheduler / checkpointer / iteration
-    trainer contract as SMOKE, while only swapping the detector head/loss.
-  - The only intentional deviation is the dataset loader: we feed batches from
-    this project instead of SMOKE's KITTI loader.
+`baseline` remains the original official path with baseline config values.
+`geometry` also goes through `tools/plain_train_net.py`, but switches the
+official SMOKE head into `geometry` mode so only the internal predictor/loss/
+postprocess behavior changes.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import logging
-import random
+import math
+import os
+import subprocess
 import sys
 from pathlib import Path
-from typing import Any
 
-import numpy as np
-import torch
-import torch.nn as nn
+from train.run_official_smoke_baseline import (
+    _build_command,
+    _count_split_samples,
+    _link_dataset,
+    _requested_device_from_opts,
+    _set_opt,
+    _validate_smoke_repo,
+)
+
 
 ROOT = Path(__file__).resolve().parent.parent
-OFFICIAL_SMOKE_DIR = ROOT / "SMOKE-master"
-if str(OFFICIAL_SMOKE_DIR) not in sys.path:
-    sys.path.insert(0, str(OFFICIAL_SMOKE_DIR))
-
-from smoke.engine.trainer import do_train
-from smoke.solver.build import make_lr_scheduler, make_optimizer
-from smoke.utils.check_point import DetectronCheckpointer
-from smoke.utils.logger import setup_logger
-
-from train.dataset import make_dataloaders
-from train.models import build_smoke_model
-from train.run_official_smoke_baseline import _link_dataset, _validate_smoke_repo
-from train.smoke_loss import build_official_smoke_cfg, build_smoke_loss
-
-
+DEFAULT_SMOKE_DIR = ROOT / "SMOKE-master"
 DEFAULT_DATASET_ROOT = ROOT / "datasets" / "v3" / "kitti_smoke_1280x384_lb"
-DEFAULT_OUTPUT_DIR = ROOT / "results" / "geometry_smoke"
+DEFAULT_OUTPUT_ROOT = ROOT / "results"
+
+TRUCK_L = 9.8
+TRUCK_H = 3.3
+TRUCK_W = 2.5
+DEPTH_MEAN = 6.15
+DEPTH_STD = 2.48
 DEFAULT_MAX_ITER = 25000
 DEFAULT_STEPS = (10000, 18000)
+DEFAULT_CHECKPOINT_PERIOD = 1000
 
 
-def _get_device() -> str:
-    if torch.cuda.is_available():
-        return "cuda"
-    if torch.backends.mps.is_available():
-        return "mps"
-    return "cpu"
-
-
-def _set_seed(seed: int) -> None:
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
-
-
-def _move_to_device(value: Any, device: torch.device) -> Any:
-    if torch.is_tensor(value):
-        return value.to(device)
-    if isinstance(value, dict):
-        return {k: _move_to_device(v, device) for k, v in value.items()}
-    if isinstance(value, list):
-        return [_move_to_device(v, device) for v in value]
-    if isinstance(value, tuple):
-        return tuple(_move_to_device(v, device) for v in value)
-    return value
-
-
-class _BatchTarget:
-    """A tiny target wrapper so official trainer code can call `.to(device)`."""
-
-    def __init__(self, batch: dict[str, Any]):
-        self.batch = batch
-
-    def to(self, device: torch.device):
-        return _BatchTarget(_move_to_device(self.batch, device))
-
-
-class _InfiniteOfficialLoader:
-    """
-    Repeat the project dataloader indefinitely so official iteration-based
-    training semantics stay intact across multiple epochs.
-    """
-
-    def __init__(self, loader):
-        self.loader = loader
-
-    def __iter__(self):
-        while True:
-            for batch in self.loader:
-                yield {
-                    "images": batch["image"],
-                    "targets": [_BatchTarget(batch)],
-                }
-
-
-class GeometryDetector(nn.Module):
-    """
-    Official-SMOKE-compatible training wrapper.
-
-    Training: returns a tensor loss dict, just like SMOKE's detector.
-    Eval: returns the raw geometry outputs for downstream evaluation scripts.
-    """
-
-    def __init__(self):
-        super().__init__()
-        self.model = build_smoke_model("geometry", pretrained=True)
-        self.loss_fn = build_smoke_loss("geometry")
-
-    def forward(self, images, targets=None):
-        outputs = self.model(images)
-        if self.training:
-            if targets is None:
-                raise ValueError("In training mode, targets should be passed")
-            if not isinstance(targets, list) or not targets:
-                raise TypeError("GeometryDetector expects targets as a non-empty list")
-            batch_target = targets[0]
-            if not isinstance(batch_target, _BatchTarget):
-                raise TypeError("GeometryDetector expects _BatchTarget entries")
-            _, tensor_terms, _ = self.loss_fn.compute_loss_terms(outputs, batch_target.batch)
-            return tensor_terms
-        return outputs
-
-    def state_dict(self, *args, **kwargs):
-        return self.model.state_dict(*args, **kwargs)
-
-    def load_state_dict(self, state_dict, strict: bool = True):
-        return self.model.load_state_dict(state_dict, strict=strict)
-
-
-def _build_cfg(
-    *,
-    device: str,
-    batch_size: int,
-    max_iter: int,
-    steps: tuple[int, int],
-    checkpoint_period: int,
-    output_dir: Path,
-) -> Any:
-    cfg = build_official_smoke_cfg(device=device)
-    cfg.defrost()
-    cfg.SOLVER.IMS_PER_BATCH = batch_size
-    cfg.SOLVER.MAX_ITERATION = max_iter
-    cfg.SOLVER.STEPS = steps
-    cfg.SOLVER.CHECKPOINT_PERIOD = checkpoint_period
-    cfg.OUTPUT_DIR = str(output_dir)
-    cfg.freeze()
-    return cfg
-
-
-def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Train geometry with an official-SMOKE-style trainer.")
-    p.add_argument("--smoke-dir", type=Path, default=OFFICIAL_SMOKE_DIR, help="Path to SMOKE-master.")
-    p.add_argument("--dataset-root", type=Path, default=DEFAULT_DATASET_ROOT, help="Converted KITTI dataset root.")
-    p.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR, help="Output directory for checkpoints/logs.")
-    p.add_argument("--device", default=_get_device(), help="Training device.")
-    p.add_argument("--batch", type=int, default=8, help="Batch size.")
-    p.add_argument("--workers", type=int, default=8, help="Dataloader workers.")
-    p.add_argument("--max-iter", type=int, default=DEFAULT_MAX_ITER, help="Official-style max iteration.")
-    p.add_argument(
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Launch the official-SMOKE geometry fork through plain_train_net.py."
+    )
+    parser.add_argument(
+        "--smoke-dir",
+        type=Path,
+        default=DEFAULT_SMOKE_DIR,
+        help="Path to the patched SMOKE-master repository.",
+    )
+    parser.add_argument(
+        "--config-file",
+        type=str,
+        default="configs/smoke_gn_vector.yaml",
+        help="Path (inside SMOKE repo) to the config yaml.",
+    )
+    parser.add_argument(
+        "--num-gpus",
+        type=int,
+        default=1,
+        help="Number of GPUs for the official launcher.",
+    )
+    parser.add_argument(
+        "--eval-only",
+        action="store_true",
+        help="Run geometry eval-only mode via official SMOKE test path.",
+    )
+    parser.add_argument(
+        "--dataset-root",
+        type=Path,
+        default=DEFAULT_DATASET_ROOT,
+        help="Converted KITTI dataset root (contains training/ and testing/).",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=None,
+        help="Output directory. If omitted, uses results/geometry/seed_<seed>.",
+    )
+    parser.add_argument("--batch", type=int, default=8, help="Batch size override.")
+    parser.add_argument("--seed", type=int, default=42, help="Official SMOKE random seed.")
+    parser.add_argument("--train-split", type=str, default="train", help="Training split in ImageSets.")
+    parser.add_argument("--test-split", type=str, default="val", help="Validation/test split in ImageSets.")
+    parser.add_argument("--max-iter", type=int, default=DEFAULT_MAX_ITER, help="Official SMOKE max iteration.")
+    parser.add_argument(
         "--steps",
         type=int,
         nargs=2,
         default=DEFAULT_STEPS,
         metavar=("STEP1", "STEP2"),
-        help="Official-style scheduler milestones.",
+        help="Official SMOKE scheduler milestones.",
     )
-    p.add_argument("--checkpoint-period", type=int, default=DEFAULT_STEPS[0], help="Checkpoint period in iterations.")
-    p.add_argument("--seed", type=int, default=42, help="Random seed.")
-    return p.parse_args()
-
-
-def main() -> None:
-    args = parse_args()
-    _set_seed(args.seed)
+    parser.add_argument(
+        "--checkpoint-period",
+        type=int,
+        default=DEFAULT_CHECKPOINT_PERIOD,
+        help="Checkpoint period passed to official config.",
+    )
+    parser.add_argument(
+        "opts",
+        nargs="*",
+        help="Optional config overrides passed through to plain_train_net.py",
+    )
+    parser.add_argument(
+        "--enable-mps-fallback",
+        action="store_true",
+        help="Set PYTORCH_ENABLE_MPS_FALLBACK=1 for MPS training.",
+    )
+    args = parser.parse_args()
 
     smoke_dir = args.smoke_dir.resolve()
     _validate_smoke_repo(smoke_dir)
     dataset_root = args.dataset_root.resolve()
     _link_dataset(smoke_dir, dataset_root)
 
-    output_dir = args.output_dir.resolve()
+    env = os.environ.copy()
+    prev_pythonpath = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = (
+        f"{smoke_dir}:{prev_pythonpath}" if prev_pythonpath else str(smoke_dir)
+    )
+
+    opts = list(args.opts)
+    opts = _set_opt(opts, "DATASETS.TRAIN_SPLIT", args.train_split)
+    opts = _set_opt(opts, "DATASETS.TEST_SPLIT", args.test_split)
+    opts = _set_opt(opts, "DATASETS.DETECT_CLASSES", "('Car',)")
+    opts = _set_opt(opts, "MODEL.SMOKE_HEAD.MODE", "geometry")
+    opts = _set_opt(opts, "MODEL.SMOKE_HEAD.REGRESSION_HEADS", "4")
+    opts = _set_opt(opts, "MODEL.SMOKE_HEAD.REGRESSION_CHANNEL", "(1,1,2)")
+    opts = _set_opt(opts, "MODEL.SMOKE_HEAD.DIMENSION_REFERENCE", f"(({TRUCK_L},{TRUCK_H},{TRUCK_W}),)")
+    opts = _set_opt(opts, "MODEL.SMOKE_HEAD.DEPTH_REFERENCE", f"({DEPTH_MEAN},{DEPTH_STD})")
+    opts = _set_opt(opts, "SOLVER.IMS_PER_BATCH", str(args.batch))
+    opts = _set_opt(opts, "SOLVER.MAX_ITERATION", str(args.max_iter))
+    opts = _set_opt(opts, "SOLVER.STEPS", f"({args.steps[0]},{args.steps[1]})")
+    opts = _set_opt(opts, "SOLVER.CHECKPOINT_PERIOD", str(args.checkpoint_period))
+    opts = _set_opt(opts, "SEED", str(args.seed))
+
+    requested_device = _requested_device_from_opts(opts)
+    auto_mps_fallback = requested_device == "mps"
+    if args.enable_mps_fallback or auto_mps_fallback:
+        env["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
+
+    output_dir = (
+        args.output_dir.resolve()
+        if args.output_dir is not None
+        else (DEFAULT_OUTPUT_ROOT / "geometry" / f"seed_{args.seed}").resolve()
+    )
     output_dir.mkdir(parents=True, exist_ok=True)
-    logger = setup_logger(str(output_dir), 0)
-    logger.info("Launching geometry training with file logging enabled.")
 
-    train_loader, _ = make_dataloaders(
-        root=str(dataset_root),
-        model_type="geometry",
-        batch_size=args.batch,
-        num_workers=args.workers,
-        augment=True,
-    )
-    iter_loader = _InfiniteOfficialLoader(train_loader)
-    iters_per_epoch = len(train_loader)
-    max_iter = args.max_iter
-    step_1, step_2 = args.steps
-    checkpoint_period = args.checkpoint_period
-
-    cfg = _build_cfg(
-        device=args.device,
-        batch_size=args.batch,
-        max_iter=max_iter,
-        steps=(step_1, step_2),
-        checkpoint_period=checkpoint_period,
-        output_dir=output_dir,
-    )
-
-    model = GeometryDetector().to(torch.device(args.device))
-    optimizer = make_optimizer(cfg, model)
-    scheduler = make_lr_scheduler(cfg, optimizer)
-    arguments = {"iteration": 0}
-    checkpointer = DetectronCheckpointer(
-        cfg, model, optimizer, scheduler, str(output_dir), save_to_disk=True
-    )
-    extra_checkpoint_data = checkpointer.load(cfg.MODEL.WEIGHT)
-    arguments.update(extra_checkpoint_data)
+    n_train = _count_split_samples(dataset_root, args.train_split)
+    iters_per_epoch = None
+    if n_train is not None and args.batch > 0:
+        iters_per_epoch = math.ceil(n_train / args.batch)
 
     meta = {
         "dataset_root": str(dataset_root),
         "output_dir": str(output_dir),
         "batch": args.batch,
-        "workers": args.workers,
-        "iters_per_epoch": iters_per_epoch,
-        "epochs_equivalent": (max_iter / max(iters_per_epoch, 1)),
-        "max_iteration": max_iter,
-        "steps": [step_1, step_2],
-        "checkpoint_period": checkpoint_period,
-        "device": args.device,
         "seed": args.seed,
+        "model_type": "geometry",
+        "train_split": args.train_split,
+        "test_split": args.test_split,
+        "max_iteration": args.max_iter,
+        "steps": list(args.steps),
+        "checkpoint_period": args.checkpoint_period,
+        "dimension_reference": [TRUCK_L, TRUCK_H, TRUCK_W],
+        "depth_reference": [DEPTH_MEAN, DEPTH_STD],
+        "iters_per_epoch": iters_per_epoch,
+        "smoke_head_mode": "geometry",
+        "regression_heads": 4,
+        "regression_channel": [1, 1, 2],
     }
     (output_dir / "run_meta.json").write_text(
         json.dumps(meta, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
 
+    cmd = _build_command(
+        smoke_dir=smoke_dir,
+        config_file=args.config_file,
+        num_gpus=args.num_gpus,
+        eval_only=args.eval_only,
+        extra_opts=opts,
+    )
+    cmd += ["OUTPUT_DIR", str(output_dir)]
+
     print("[geometry-smoke] cwd:", smoke_dir)
+    print("[geometry-smoke] cmd:", " ".join(cmd))
     print("[geometry-smoke] dataset:", dataset_root)
     print("[geometry-smoke] output:", output_dir)
-    print("[geometry-smoke] batch:", args.batch)
-    print("[geometry-smoke] iters/epoch:", iters_per_epoch)
-    print("[geometry-smoke] max_iter:", max_iter)
-    print("[geometry-smoke] steps:", (step_1, step_2))
-    print("[geometry-smoke] checkpoint_period:", checkpoint_period)
-    logging.getLogger("smoke").info(
-        "geometry config | dataset=%s output=%s batch=%d max_iter=%d steps=%s checkpoint_period=%d",
-        dataset_root,
-        output_dir,
-        args.batch,
-        max_iter,
-        (step_1, step_2),
-        checkpoint_period,
-    )
+    print("[geometry-smoke] seed:", args.seed)
+    if args.enable_mps_fallback or auto_mps_fallback:
+        print("[geometry-smoke] note: PYTORCH_ENABLE_MPS_FALLBACK=1 is enabled.")
 
-    do_train(
-        cfg=cfg,
-        distributed=False,
-        model=model,
-        data_loader=iter_loader,
-        optimizer=optimizer,
-        scheduler=scheduler,
-        checkpointer=checkpointer,
-        device=torch.device(args.device),
-        checkpoint_period=checkpoint_period,
-        arguments=arguments,
-    )
+    subprocess.run(cmd, cwd=smoke_dir, env=env, check=True)
 
 
 if __name__ == "__main__":

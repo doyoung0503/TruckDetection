@@ -103,6 +103,7 @@ _C.MODEL.SMOKE_HEAD.PREDICTOR = "SMOKEPredictor"
 _C.MODEL.SMOKE_HEAD.LOSS_TYPE = ("FocalLoss", "DisL1")
 _C.MODEL.SMOKE_HEAD.LOSS_ALPHA = 2
 _C.MODEL.SMOKE_HEAD.LOSS_BETA = 4
+_C.MODEL.SMOKE_HEAD.MODE = "baseline"
 # Channels for regression
 _C.MODEL.SMOKE_HEAD.REGRESSION_HEADS = 8
 # Specific channel for (depth_offset, keypoint_offset, dimension_offset, orientation)
