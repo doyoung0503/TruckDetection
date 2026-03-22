@@ -16,17 +16,22 @@ Outputs (under datasets/v3 by default):
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ProcessPoolExecutor
+from itertools import repeat
 import json
 import math
 import os
 from pathlib import Path
+import shutil
 from typing import Any
 
+import numpy as np
 from PIL import Image
 
 
-ORIG_W = 1920
-ORIG_H = 1080
+BOTTOM_CORNER_IDX = (0, 1, 4, 5)
+REAR_FACE_IDX = (0, 1, 2, 3)
+FRONT_FACE_IDX = (4, 5, 6, 7)
 
 
 def normalize_angle_rad(x: float) -> float:
@@ -60,6 +65,10 @@ def transform_k(k: list[list[float]], scale: float, pad_x: int, pad_y: int) -> l
     cx = float(k[0][2]) * scale + pad_x
     cy = float(k[1][2]) * scale + pad_y
     return [[fx, 0.0, cx], [0.0, fy, cy], [0.0, 0.0, 1.0]]
+
+
+def transform_point_2d(point_uv: list[float], scale: float, pad_x: int, pad_y: int) -> list[float]:
+    return [float(point_uv[0]) * scale + pad_x, float(point_uv[1]) * scale + pad_y]
 
 
 def to_kitti_calib_text(k3: list[list[float]]) -> str:
@@ -100,6 +109,67 @@ def corner_visibility_to_occluded(corners: list[list[float]]) -> int:
     return 3
 
 
+def recover_camera_forward_yaw(
+    center_world: np.ndarray,
+    center_2d: list[float],
+    cam_pos: np.ndarray,
+    k_new: np.ndarray,
+) -> float:
+    dx = float(center_world[0] - cam_pos[0])
+    dy = float(center_world[1] - cam_pos[1])
+    ray = math.atan2(float(center_2d[0]) - float(k_new[0, 2]), float(k_new[0, 0]))
+    return math.atan2(dy, dx) + ray
+
+
+def world_points_to_kitti_camera(
+    world_points: np.ndarray,
+    cam_pos: np.ndarray,
+    camera_forward_yaw: float,
+) -> np.ndarray:
+    forward = np.array(
+        [math.cos(camera_forward_yaw), math.sin(camera_forward_yaw), 0.0],
+        dtype=np.float32,
+    )
+    up = np.array([0.0, 0.0, 1.0], dtype=np.float32)
+    right = np.cross(forward, up)
+
+    delta = world_points.astype(np.float32) - cam_pos.astype(np.float32)[None, :]
+    x = delta @ right
+    y = -(delta @ up)
+    z = delta @ forward
+    return np.stack([x, y, z], axis=1).astype(np.float32)
+
+
+def build_exact_kitti_pose(
+    label: dict[str, Any],
+    center_2d_t: list[float],
+    k_new: np.ndarray,
+) -> tuple[np.ndarray, float, float]:
+    world_corners = np.asarray(label["ground_truth"]["3d_corners"], dtype=np.float32)
+    center_world = world_corners.mean(axis=0)
+    cam_pos = np.asarray(label["metadata"]["cam_pos"], dtype=np.float32)
+
+    camera_forward_yaw = recover_camera_forward_yaw(
+        center_world=center_world,
+        center_2d=center_2d_t,
+        cam_pos=cam_pos,
+        k_new=k_new,
+    )
+    camera_corners = world_points_to_kitti_camera(
+        world_points=world_corners,
+        cam_pos=cam_pos,
+        camera_forward_yaw=camera_forward_yaw,
+    )
+
+    bottom_center = camera_corners[list(BOTTOM_CORNER_IDX)].mean(axis=0)
+    front_center = camera_corners[list(FRONT_FACE_IDX)].mean(axis=0)
+    rear_center = camera_corners[list(REAR_FACE_IDX)].mean(axis=0)
+    front_dir = front_center - rear_center
+    ry = normalize_angle_rad(math.atan2(float(-front_dir[2]), float(front_dir[0])))
+    alpha = normalize_angle_rad(ry - math.atan2(float(bottom_center[0]), float(bottom_center[2])))
+    return camera_corners, ry, alpha
+
+
 def build_kitti_label_from_json(
     label: dict[str, Any],
     scale: float,
@@ -109,14 +179,12 @@ def build_kitti_label_from_json(
     out_h: int,
 ) -> tuple[str, dict[str, Any]]:
     gt = label["ground_truth"]
-    md = label["metadata"]
     td = label["truck_dims"]
-    k_orig = md["K_matrix"]
-    k_new = transform_k(k_orig, scale, pad_x, pad_y)
+    k_orig = label["metadata"]["K_matrix"]
+    k_new = np.asarray(transform_k(k_orig, scale, pad_x, pad_y), dtype=np.float32)
 
-    corners = gt["2d_corners"]
     corners_t = []
-    for c in corners:
+    for c in gt["2d_corners"]:
         u = float(c[0]) * scale + pad_x
         v = float(c[1]) * scale + pad_y
         corners_t.append([u, v, int(c[2])])
@@ -136,26 +204,14 @@ def build_kitti_label_from_json(
     truncated = 0.0 if area_raw <= 1e-6 else max(0.0, min(1.0, 1.0 - area_clip / area_raw))
     occluded = corner_visibility_to_occluded(corners_t)
 
-    foot_idx = [0, 1, 4, 5]
-    u_c = sum(corners_t[i][0] for i in foot_idx) / 4.0
-    v_c = sum(corners_t[i][1] for i in foot_idx) / 4.0
-
-    fx = k_new[0][0]
-    fy = k_new[1][1]
-    cx = k_new[0][2]
-    cy = k_new[1][2]
-    h_cam = float(md["h_cam"])
-    dv = max(1e-6, v_c - cy)
-    z = fy * h_cam / dv
-    x = (u_c - cx) * z / max(1e-6, fx)
-    y = h_cam  # bottom center in camera coordinates
+    center_2d_t = transform_point_2d(gt["truck_center_2d"], scale, pad_x, pad_y)
+    camera_corners, ry, alpha = build_exact_kitti_pose(label=label, center_2d_t=center_2d_t, k_new=k_new)
+    location = camera_corners[list(BOTTOM_CORNER_IDX)].mean(axis=0)
+    x, y, z = (float(v) for v in location)
 
     h = float(td["height"])
     w = float(td["width"])
     l = float(td["length"])
-
-    ry = normalize_angle_rad(math.radians(float(gt["yaw_theta"])))
-    alpha = normalize_angle_rad(ry - math.atan2(x, z))
 
     line = (
         f"Car {truncated:.6f} {occluded:d} {alpha:.6f} "
@@ -163,11 +219,10 @@ def build_kitti_label_from_json(
         f"{h:.6f} {w:.6f} {l:.6f} {x:.6f} {y:.6f} {z:.6f} {ry:.6f}"
     )
 
-    # RTM3D annotation fields
     keypoints = []
     for i in range(8):
         keypoints.extend([corners_t[i][0], corners_t[i][1], float(corners_t[i][2] > 0)])
-    keypoints.extend([u_c, v_c, 1.0])  # center keypoint
+    keypoints.extend([center_2d_t[0], center_2d_t[1], 1.0])
 
     ann = {
         "bbox_xyxy": [xmin, ymin, xmax, ymax],
@@ -176,7 +231,11 @@ def build_kitti_label_from_json(
         "rotation_y": ry,
         "alpha": alpha,
         "keypoints": keypoints,
-        "calib_p2": [fx, 0.0, cx, 0.0, 0.0, fy, cy, 0.0, 0.0, 0.0, 1.0, 0.0],
+        "calib_p2": [
+            float(k_new[0, 0]), 0.0, float(k_new[0, 2]), 0.0,
+            0.0, float(k_new[1, 1]), float(k_new[1, 2]), 0.0,
+            0.0, 0.0, 1.0, 0.0,
+        ],
     }
     return line, ann
 
@@ -191,6 +250,14 @@ def ensure_dirs(paths: list[Path]) -> None:
         p.mkdir(parents=True, exist_ok=True)
 
 
+def remove_paths(paths: list[Path]) -> None:
+    for p in paths:
+        if p.is_symlink() or p.is_file():
+            p.unlink(missing_ok=True)
+        elif p.exists():
+            shutil.rmtree(p, ignore_errors=True)
+
+
 def make_rtm3d_coco(split_ids: list[str], ann_by_id: dict[str, dict[str, Any]]) -> dict[str, Any]:
     cats = [
         {"id": 1, "name": "Car"},
@@ -203,9 +270,7 @@ def make_rtm3d_coco(split_ids: list[str], ann_by_id: dict[str, dict[str, Any]]) 
     for sid in split_ids:
         info = ann_by_id[sid]
         image_id = int(sid)
-        images.append(
-            {"file_name": f"{sid}.png", "id": image_id, "calib": info["calib_p2"]}
-        )
+        images.append({"file_name": f"{sid}.png", "id": image_id, "calib": info["calib_p2"]})
         x1, y1, x2, y2 = info["bbox_xyxy"]
         annotations.append(
             {
@@ -216,7 +281,7 @@ def make_rtm3d_coco(split_ids: list[str], ann_by_id: dict[str, dict[str, Any]]) 
                 "keypoints": info["keypoints"],
                 "image_id": image_id,
                 "bbox": [x1, y1, x2 - x1, y2 - y1],
-                "category_id": 1,  # Car
+                "category_id": 1,
                 "id": ann_id,
                 "dim": info["dim_hwl"],
                 "rotation_y": info["rotation_y"],
@@ -230,12 +295,53 @@ def make_rtm3d_coco(split_ids: list[str], ann_by_id: dict[str, dict[str, Any]]) 
     return {"images": images, "annotations": annotations, "categories": cats}
 
 
+def export_one_sample(job: tuple[str, bool, bool], cfg: dict[str, Any]) -> tuple[str, bool, bool, dict[str, Any]] | None:
+    stem, in_train, in_val = job
+    idx = stem.replace("label_", "")
+    image_name = f"image_{idx}.png"
+    label_name = f"label_{idx}.json"
+    src_img = Path(cfg["images_dir"]) / image_name
+    src_lbl = Path(cfg["labels_dir"]) / label_name
+    if not src_img.exists() or not src_lbl.exists():
+        return None
+
+    label = json.loads(src_lbl.read_text(encoding="utf-8"))
+    img = Image.open(src_img).convert("RGB")
+    out_img, scale, pad_x, pad_y = letterbox_image(img, cfg["out_w"], cfg["out_h"])
+
+    kitti_id = f"{int(idx):06d}"
+    out_img.save(Path(cfg["smoke_img"]) / f"{kitti_id}.png")
+    out_img.save(Path(cfg["smoke_test_img"]) / f"{kitti_id}.png")
+
+    line, ann = build_kitti_label_from_json(
+        label=label,
+        scale=scale,
+        pad_x=pad_x,
+        pad_y=pad_y,
+        out_w=cfg["out_w"],
+        out_h=cfg["out_h"],
+    )
+    write_text(Path(cfg["smoke_lbl"]) / f"{kitti_id}.txt", line + "\n")
+
+    k_new = transform_k(label["metadata"]["K_matrix"], scale, pad_x, pad_y)
+    calib_text = to_kitti_calib_text(k_new)
+    write_text(Path(cfg["smoke_cal"]) / f"{kitti_id}.txt", calib_text)
+    write_text(Path(cfg["smoke_test_cal"]) / f"{kitti_id}.txt", calib_text)
+    write_text(Path(cfg["rtm_lbl"]) / f"{kitti_id}.txt", line + "\n")
+    write_text(Path(cfg["rtm_cal"]) / f"{kitti_id}.txt", calib_text)
+    out_img.save(Path(cfg["rtm_img"]) / f"{kitti_id}.png")
+
+    return kitti_id, in_train, in_val, ann
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, default=Path("datasets/v3"))
     parser.add_argument("--out-w", type=int, default=1280)
     parser.add_argument("--out-h", type=int, default=384)
     parser.add_argument("--max-samples", type=int, default=0, help="0 means all")
+    parser.add_argument("--workers", type=int, default=0, help="0 means os.cpu_count()")
+    parser.add_argument("--overwrite", action="store_true", help="remove previous converted outputs before export")
     args = parser.parse_args()
 
     root = args.root.resolve()
@@ -249,8 +355,9 @@ def main() -> None:
     all_stems = train_stems + [s for s in val_stems if s not in set(train_stems)]
     if args.max_samples > 0:
         all_stems = all_stems[: args.max_samples]
-        train_stems = [s for s in train_stems if s in set(all_stems)]
-        val_stems = [s for s in val_stems if s in set(all_stems)]
+        keep = set(all_stems)
+        train_stems = [s for s in train_stems if s in keep]
+        val_stems = [s for s in val_stems if s in keep]
 
     smoke_root = root / f"kitti_smoke_{args.out_w}x{args.out_h}_lb"
     smoke_train = smoke_root / "training"
@@ -263,11 +370,16 @@ def main() -> None:
     smoke_test_cal = smoke_test / "calib"
     smoke_test_sets = smoke_test / "ImageSets"
 
-    rtm_root = root / f"kitti_format_{args.out_w}x{args.out_h}_lb" / "data" / "kitti"
+    rtm_bundle_root = root / f"kitti_format_{args.out_w}x{args.out_h}_lb"
+    rtm_root = rtm_bundle_root / "data" / "kitti"
     rtm_img = rtm_root / "image"
     rtm_lbl = rtm_root / "label"
     rtm_cal = rtm_root / "calib"
     rtm_ann = rtm_root / "annotations"
+
+    meta_path = root / f"kitti_export_{args.out_w}x{args.out_h}_lb_meta.json"
+    if args.overwrite:
+        remove_paths([smoke_root, rtm_bundle_root, meta_path])
 
     ensure_dirs(
         [
@@ -289,59 +401,52 @@ def main() -> None:
     train_ids: list[str] = []
     val_ids: list[str] = []
     all_ids: list[str] = []
+    train_stem_set = set(train_stems)
+    val_stem_set = set(val_stems)
+    workers = args.workers or (os.cpu_count() or 1)
+    jobs = [(stem, stem in train_stem_set, stem in val_stem_set) for stem in all_stems]
+    cfg = {
+        "images_dir": str(images_dir),
+        "labels_dir": str(labels_dir),
+        "out_w": args.out_w,
+        "out_h": args.out_h,
+        "smoke_img": str(smoke_img),
+        "smoke_lbl": str(smoke_lbl),
+        "smoke_cal": str(smoke_cal),
+        "smoke_test_img": str(smoke_test_img),
+        "smoke_test_cal": str(smoke_test_cal),
+        "rtm_img": str(rtm_img),
+        "rtm_lbl": str(rtm_lbl),
+        "rtm_cal": str(rtm_cal),
+    }
 
     print(f"[convert] total samples to export: {len(all_stems)}")
-    for i, stem in enumerate(all_stems):
-        idx = stem.replace("label_", "")
-        image_name = f"image_{idx}.png"
-        label_name = f"label_{idx}.json"
-        src_img = images_dir / image_name
-        src_lbl = labels_dir / label_name
-        if not src_img.exists() or not src_lbl.exists():
-            continue
+    print(f"[convert] workers: {workers}")
 
-        with src_lbl.open("r", encoding="utf-8") as f:
-            label = json.load(f)
+    if workers <= 1:
+        iterator = (export_one_sample(job, cfg) for job in jobs)
+        executor = None
+    else:
+        chunksize = max(1, len(jobs) // max(1, workers * 4))
+        executor = ProcessPoolExecutor(max_workers=workers)
+        iterator = executor.map(export_one_sample, jobs, repeat(cfg), chunksize=chunksize)
 
-        img = Image.open(src_img).convert("RGB")
-        if img.size != (ORIG_W, ORIG_H):
-            # Still support variable source sizes by dynamic letterbox params.
-            pass
-        out_img, scale, pad_x, pad_y = letterbox_image(img, args.out_w, args.out_h)
-
-        kitti_id = f"{int(idx):06d}"
-        out_img.save(smoke_img / f"{kitti_id}.png")
-        out_img.save(smoke_test_img / f"{kitti_id}.png")
-
-        line, ann = build_kitti_label_from_json(
-            label=label,
-            scale=scale,
-            pad_x=pad_x,
-            pad_y=pad_y,
-            out_w=args.out_w,
-            out_h=args.out_h,
-        )
-        ann_by_id[kitti_id] = ann
-        write_text(smoke_lbl / f"{kitti_id}.txt", line + "\n")
-
-        k_new = transform_k(label["metadata"]["K_matrix"], scale, pad_x, pad_y)
-        calib_text = to_kitti_calib_text(k_new)
-        write_text(smoke_cal / f"{kitti_id}.txt", calib_text)
-        write_text(smoke_test_cal / f"{kitti_id}.txt", calib_text)
-
-        # RTM3D raw KITTI-format files
-        write_text(rtm_lbl / f"{kitti_id}.txt", line + "\n")
-        write_text(rtm_cal / f"{kitti_id}.txt", calib_text)
-        out_img.save(rtm_img / f"{kitti_id}.png")
-
-        all_ids.append(kitti_id)
-        if stem in train_stems:
-            train_ids.append(kitti_id)
-        if stem in val_stems:
-            val_ids.append(kitti_id)
-
-        if (i + 1) % 200 == 0:
-            print(f"[convert] processed {i + 1}/{len(all_stems)}")
+    try:
+        for i, result in enumerate(iterator, start=1):
+            if result is None:
+                continue
+            kitti_id, in_train, in_val, ann = result
+            ann_by_id[kitti_id] = ann
+            all_ids.append(kitti_id)
+            if in_train:
+                train_ids.append(kitti_id)
+            if in_val:
+                val_ids.append(kitti_id)
+            if i % 200 == 0 or i == len(jobs):
+                print(f"[convert] processed {i}/{len(all_stems)}")
+    finally:
+        if executor is not None:
+            executor.shutdown(wait=True)
 
     train_ids = sorted(train_ids)
     val_ids = sorted(val_ids)
@@ -349,24 +454,29 @@ def main() -> None:
     trainval_ids = sorted(set(train_ids + val_ids))
     test_ids = val_ids[:] if val_ids else all_ids[:]
 
-    # SMOKE ImageSets
     write_text(smoke_sets / "train.txt", "\n".join(train_ids) + "\n")
     write_text(smoke_sets / "val.txt", "\n".join(val_ids) + "\n")
     write_text(smoke_sets / "trainval.txt", "\n".join(trainval_ids) + "\n")
     write_text(smoke_sets / "test.txt", "\n".join(test_ids) + "\n")
     write_text(smoke_test_sets / "test.txt", "\n".join(test_ids) + "\n")
 
-    # RTM3D split text
     write_text(rtm_root / "train.txt", "\n".join(train_ids) + "\n")
     write_text(rtm_root / "val.txt", "\n".join(val_ids) + "\n")
     write_text(rtm_root / "trainval.txt", "\n".join(trainval_ids) + "\n")
     write_text(rtm_root / "test.txt", "\n".join(test_ids) + "\n")
 
-    # RTM3D annotations
     train_json = make_rtm3d_coco(train_ids, ann_by_id)
     val_json = make_rtm3d_coco(val_ids, ann_by_id)
     trainval_json = make_rtm3d_coco(trainval_ids, ann_by_id)
-    test_json = {"images": [{"file_name": f"{sid}.png", "id": int(sid), "calib": ann_by_id[sid]["calib_p2"]} for sid in test_ids], "annotations": [], "categories": [{"id": 1, "name": "Car"}, {"id": 2, "name": "Pedestrian"}, {"id": 3, "name": "Cyclist"}]}
+    test_json = {
+        "images": [{"file_name": f"{sid}.png", "id": int(sid), "calib": ann_by_id[sid]["calib_p2"]} for sid in test_ids],
+        "annotations": [],
+        "categories": [
+            {"id": 1, "name": "Car"},
+            {"id": 2, "name": "Pedestrian"},
+            {"id": 3, "name": "Cyclist"},
+        ],
+    }
 
     write_text(rtm_ann / "kitti_train.json", json.dumps(train_json, ensure_ascii=False))
     write_text(rtm_ann / "kitti_val.json", json.dumps(val_json, ensure_ascii=False))
@@ -378,10 +488,11 @@ def main() -> None:
         "out_size": [args.out_w, args.out_h],
         "letterbox_pad_color": [114, 114, 114],
         "num_exported": len(all_ids),
+        "workers": workers,
         "smoke_root": str(smoke_root),
         "rtm3d_root": str(rtm_root),
     }
-    write_text(root / f"kitti_export_{args.out_w}x{args.out_h}_lb_meta.json", json.dumps(meta, indent=2))
+    write_text(meta_path, json.dumps(meta, indent=2))
     print("[convert] done")
     print(f"[convert] SMOKE root: {smoke_root}")
     print(f"[convert] RTM3D root: {rtm_root}")
