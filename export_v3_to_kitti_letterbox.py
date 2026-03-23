@@ -11,6 +11,11 @@ Outputs (under datasets/v3 by default):
 2) RTM3D/KM3D-style kitti_format tree:
    kitti_format_1280x384_lb/
      data/kitti/{image,label,calib,annotations,train.txt,val.txt,trainval.txt,test.txt}
+
+The exporter also performs an internal self-check:
+the generated KITTI 3D label is projected back into the image, and the
+reprojected 2D box is compared against the exported 2D box. This helps catch
+axis-convention bugs such as 90-degree yaw / length-width mismatches.
 """
 
 from __future__ import annotations
@@ -240,6 +245,85 @@ def build_kitti_label_from_json(
     return line, ann
 
 
+def encode_kitti_box3d_numpy(
+    dims_lhw: np.ndarray,
+    loc_xyz: np.ndarray,
+    ry: float,
+) -> np.ndarray:
+    l, h, w = (float(v) for v in dims_lhw)
+    x, y, z = (float(v) for v in loc_xyz)
+
+    x_corners = np.array([0, l, l, l, l, 0, 0, 0], dtype=np.float32) - l / 2.0
+    y_corners = np.array([0, 0, h, h, 0, 0, h, h], dtype=np.float32) - h
+    z_corners = np.array([0, 0, 0, w, w, w, w, 0], dtype=np.float32) - w / 2.0
+    corners_3d = np.stack([x_corners, y_corners, z_corners], axis=0)
+
+    cos_ry = math.cos(ry)
+    sin_ry = math.sin(ry)
+    rot_mat = np.array(
+        [
+            [cos_ry, 0.0, sin_ry],
+            [0.0, 1.0, 0.0],
+            [-sin_ry, 0.0, cos_ry],
+        ],
+        dtype=np.float32,
+    )
+    corners_3d = rot_mat @ corners_3d
+    corners_3d += np.array([x, y, z], dtype=np.float32).reshape(3, 1)
+    return corners_3d
+
+
+def project_box2d_numpy(k3: np.ndarray, corners_3d: np.ndarray) -> np.ndarray:
+    corners_2d = k3 @ corners_3d
+    corners_2d = corners_2d[:2] / np.clip(corners_2d[2:], 1e-7, None)
+    return np.array(
+        [
+            float(corners_2d[0].min()),
+            float(corners_2d[1].min()),
+            float(corners_2d[0].max()),
+            float(corners_2d[1].max()),
+        ],
+        dtype=np.float32,
+    )
+
+
+def clamp_xyxy(box: np.ndarray, out_w: int, out_h: int) -> np.ndarray:
+    return np.array(
+        [
+            np.clip(float(box[0]), 0.0, float(out_w)),
+            np.clip(float(box[1]), 0.0, float(out_h)),
+            np.clip(float(box[2]), 0.0, float(out_w)),
+            np.clip(float(box[3]), 0.0, float(out_h)),
+        ],
+        dtype=np.float32,
+    )
+
+
+def bbox_iou_xyxy(box_a: np.ndarray, box_b: np.ndarray) -> float:
+    xa1, ya1, xa2, ya2 = (float(v) for v in box_a)
+    xb1, yb1, xb2, yb2 = (float(v) for v in box_b)
+    inter_w = max(0.0, min(xa2, xb2) - max(xa1, xb1))
+    inter_h = max(0.0, min(ya2, yb2) - max(ya1, yb1))
+    inter = inter_w * inter_h
+    area_a = max(0.0, xa2 - xa1) * max(0.0, ya2 - ya1)
+    area_b = max(0.0, xb2 - xb1) * max(0.0, yb2 - yb1)
+    union = area_a + area_b - inter
+    return 0.0 if union <= 0.0 else inter / union
+
+
+def compute_selfcheck_iou(ann: dict[str, Any], out_w: int, out_h: int) -> float:
+    k3 = np.asarray(ann["calib_p2"], dtype=np.float32).reshape(3, 4)[:, :3]
+    h, w, l = ann["dim_hwl"]
+    dims_lhw = np.array([l, h, w], dtype=np.float32)
+    loc_xyz = np.asarray(ann["location_xyz"], dtype=np.float32)
+    ry = float(ann["rotation_y"])
+
+    corners_3d = encode_kitti_box3d_numpy(dims_lhw=dims_lhw, loc_xyz=loc_xyz, ry=ry)
+    reproj_box = clamp_xyxy(project_box2d_numpy(k3, corners_3d), out_w, out_h)
+    label_box = clamp_xyxy(np.asarray(ann["bbox_xyxy"], dtype=np.float32), out_w, out_h)
+    return bbox_iou_xyxy(label_box, reproj_box)
+
+
 def write_text(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
@@ -295,7 +379,7 @@ def make_rtm3d_coco(split_ids: list[str], ann_by_id: dict[str, dict[str, Any]]) 
     return {"images": images, "annotations": annotations, "categories": cats}
 
 
-def export_one_sample(job: tuple[str, bool, bool], cfg: dict[str, Any]) -> tuple[str, bool, bool, dict[str, Any]] | None:
+def export_one_sample(job: tuple[str, bool, bool], cfg: dict[str, Any]) -> tuple[str, bool, bool, dict[str, Any], float] | None:
     stem, in_train, in_val = job
     idx = stem.replace("label_", "")
     image_name = f"image_{idx}.png"
@@ -321,6 +405,7 @@ def export_one_sample(job: tuple[str, bool, bool], cfg: dict[str, Any]) -> tuple
         out_w=cfg["out_w"],
         out_h=cfg["out_h"],
     )
+    selfcheck_iou = compute_selfcheck_iou(ann, cfg["out_w"], cfg["out_h"])
     write_text(Path(cfg["smoke_lbl"]) / f"{kitti_id}.txt", line + "\n")
 
     k_new = transform_k(label["metadata"]["K_matrix"], scale, pad_x, pad_y)
@@ -331,7 +416,13 @@ def export_one_sample(job: tuple[str, bool, bool], cfg: dict[str, Any]) -> tuple
     write_text(Path(cfg["rtm_cal"]) / f"{kitti_id}.txt", calib_text)
     out_img.save(Path(cfg["rtm_img"]) / f"{kitti_id}.png")
 
-    return kitti_id, in_train, in_val, ann
+    if cfg["strict_selfcheck"] and selfcheck_iou < cfg["min_selfcheck_iou"]:
+        raise RuntimeError(
+            f"[selfcheck] {kitti_id} reprojection IoU {selfcheck_iou:.4f} "
+            f"is below threshold {cfg['min_selfcheck_iou']:.4f}"
+        )
+
+    return kitti_id, in_train, in_val, ann, selfcheck_iou
 
 
 def main() -> None:
@@ -342,6 +433,17 @@ def main() -> None:
     parser.add_argument("--max-samples", type=int, default=0, help="0 means all")
     parser.add_argument("--workers", type=int, default=0, help="0 means os.cpu_count()")
     parser.add_argument("--overwrite", action="store_true", help="remove previous converted outputs before export")
+    parser.add_argument(
+        "--min-selfcheck-iou",
+        type=float,
+        default=0.99,
+        help="Expected minimum IoU between exported 2D bbox and reprojected 3D bbox.",
+    )
+    parser.add_argument(
+        "--strict-selfcheck",
+        action="store_true",
+        help="Abort export if any sample falls below --min-selfcheck-iou.",
+    )
     args = parser.parse_args()
 
     root = args.root.resolve()
@@ -418,11 +520,16 @@ def main() -> None:
         "rtm_img": str(rtm_img),
         "rtm_lbl": str(rtm_lbl),
         "rtm_cal": str(rtm_cal),
+        "min_selfcheck_iou": args.min_selfcheck_iou,
+        "strict_selfcheck": args.strict_selfcheck,
     }
 
     print(f"[convert] total samples to export: {len(all_stems)}")
     print(f"[convert] workers: {workers}")
+    print(f"[convert] self-check min IoU: {args.min_selfcheck_iou:.4f} (strict={args.strict_selfcheck})")
 
+    selfcheck_ious: list[float] = []
+    low_iou_samples: list[dict[str, Any]] = []
     if workers <= 1:
         iterator = (export_one_sample(job, cfg) for job in jobs)
         executor = None
@@ -435,13 +542,25 @@ def main() -> None:
         for i, result in enumerate(iterator, start=1):
             if result is None:
                 continue
-            kitti_id, in_train, in_val, ann = result
+            kitti_id, in_train, in_val, ann, selfcheck_iou = result
             ann_by_id[kitti_id] = ann
             all_ids.append(kitti_id)
+            selfcheck_ious.append(selfcheck_iou)
             if in_train:
                 train_ids.append(kitti_id)
             if in_val:
                 val_ids.append(kitti_id)
+            if selfcheck_iou < args.min_selfcheck_iou:
+                low_iou_samples.append(
+                    {
+                        "id": kitti_id,
+                        "selfcheck_iou": round(selfcheck_iou, 6),
+                        "bbox_xyxy": ann["bbox_xyxy"],
+                        "dim_hwl": ann["dim_hwl"],
+                        "location_xyz": ann["location_xyz"],
+                        "rotation_y": ann["rotation_y"],
+                    }
+                )
             if i % 200 == 0 or i == len(jobs):
                 print(f"[convert] processed {i}/{len(all_stems)}")
     finally:
@@ -489,11 +608,31 @@ def main() -> None:
         "letterbox_pad_color": [114, 114, 114],
         "num_exported": len(all_ids),
         "workers": workers,
+        "min_selfcheck_iou": args.min_selfcheck_iou,
+        "strict_selfcheck": args.strict_selfcheck,
+        "selfcheck": {
+            "count": len(selfcheck_ious),
+            "bbox_iou_mean": float(np.mean(selfcheck_ious)) if selfcheck_ious else None,
+            "bbox_iou_median": float(np.median(selfcheck_ious)) if selfcheck_ious else None,
+            "bbox_iou_min": float(np.min(selfcheck_ious)) if selfcheck_ious else None,
+            "bbox_iou_max": float(np.max(selfcheck_ious)) if selfcheck_ious else None,
+            "num_below_threshold": len(low_iou_samples),
+            "examples_below_threshold": low_iou_samples[:20],
+        },
         "smoke_root": str(smoke_root),
         "rtm3d_root": str(rtm_root),
     }
     write_text(meta_path, json.dumps(meta, indent=2))
     print("[convert] done")
+    if selfcheck_ious:
+        print(
+            "[convert] self-check IoU "
+            f"mean={np.mean(selfcheck_ious):.4f} "
+            f"median={np.median(selfcheck_ious):.4f} "
+            f"min={np.min(selfcheck_ious):.4f} "
+            f"max={np.max(selfcheck_ious):.4f}"
+        )
+        print(f"[convert] samples below threshold: {len(low_iou_samples)}")
     print(f"[convert] SMOKE root: {smoke_root}")
     print(f"[convert] RTM3D root: {rtm_root}")
 
