@@ -36,6 +36,29 @@ kitti_smoke_1280x384_lb/
 
 Both launchers automatically link this dataset into `SMOKE-master/datasets/kitti` before training.
 
+## Validate A Converted KITTI Dataset
+
+If the server already has the original `v3` source and a generated KITTI export, run the stronger validator before training:
+
+```bash
+python -m train.validate_kitti_conversion \
+  --source-root /home/dy-jang/projects/v3 \
+  --dataset-root /home/dy-jang/projects/v3/kitti_smoke_1280x384_lb \
+  --split train \
+  --workers 8 \
+  --strict
+```
+
+This checks more than bbox IoU. It verifies:
+
+- letterboxed image pixels match a fresh re-export
+- calibration `P2` matches
+- KITTI label fields (`bbox`, `dims`, `loc`, `alpha`, `ry`, truncation, occlusion) match a fresh re-export
+- projected 2D corner set matches the transformed raw `2d_corners`
+- reconstructed 3D corner set matches the source-derived camera-space box
+
+The summary JSON is written under `results/kitti_conversion_validation/` unless you override `--output-json`.
+
 ## Current Training Defaults
 
 These defaults are shared by the baseline and geometry launchers unless overridden:
