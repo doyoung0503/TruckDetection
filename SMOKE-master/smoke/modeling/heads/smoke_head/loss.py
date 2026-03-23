@@ -230,6 +230,7 @@ class GeometrySMOKELossComputation():
         proj_points = targets_variables["proj_points"].to(device=pred_regression.device)
         p_offsets = targets_variables["p_offsets"].to(device=pred_regression.device)
         locations_bottom = targets_variables["locations"].to(device=pred_regression.device)
+        dims_lhw = targets_variables["dimensions"].to(device=pred_regression.device)
         rotys = targets_variables["rotys"].to(device=pred_regression.device)
 
         gt_points_img = self.feature_points_to_image(proj_points, p_offsets, trans_mat)
@@ -237,8 +238,6 @@ class GeometrySMOKELossComputation():
         v_gt = gt_points_img[:, :, 1]
 
         h_cam = locations_bottom[:, :, 1]
-        dims_lhw = self.smoke_coder.dim_ref[0].view(1, 1, 3).to(device=pred_regression.device)
-        dims_lhw = dims_lhw.expand_as(locations_bottom)
         h_ref = h_cam - dims_lhw[:, :, 1] / 2.0
 
         fx = K[:, 0, 0].unsqueeze(1).expand_as(h_cam)

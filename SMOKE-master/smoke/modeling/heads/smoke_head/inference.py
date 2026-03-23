@@ -121,11 +121,19 @@ class GeometryPostProcessor(nn.Module):
         K = torch.stack([t.get_field("K") for t in targets])
         size = torch.stack([torch.tensor(t.size) for t in targets])
         h_cam = torch.stack([t.get_field("h_cam") for t in targets]).float()
+        dimensions = []
+        for t in targets:
+            if t.has_field("dimensions"):
+                dimensions.append(t.get_field("dimensions").float())
+            else:
+                dimensions.append(torch.empty(3).fill_(float("nan")))
+        dimensions = torch.stack(dimensions)
 
         return dict(trans_mat=trans_mat,
                     K=K,
                     size=size,
-                    h_cam=h_cam)
+                    h_cam=h_cam,
+                    dimensions=dimensions)
 
     @staticmethod
     def feature_points_to_image(points, offsets, trans_mats):
@@ -176,12 +184,14 @@ class GeometryPostProcessor(nn.Module):
         obj_id = torch.arange(batch_size, device=pred_heatmap.device).unsqueeze(1).repeat(1, self.max_detection).flatten()
         Ks = target_variables["K"].to(device=pred_heatmap.device)[obj_id]
         h_cam = target_variables["h_cam"].to(device=pred_heatmap.device)[obj_id]
+        known_dims = target_variables["dimensions"].to(device=pred_heatmap.device)[obj_id]
 
         fx = Ks[:, 0, 0]
         fy = Ks[:, 1, 1]
         cx = Ks[:, 0, 2]
 
-        dims = self.smoke_coder.dim_ref[0].view(1, 3).to(device=pred_heatmap.device).repeat(pred_points_img.shape[0], 1)
+        dims_default = self.smoke_coder.dim_ref[0].view(1, 3).to(device=pred_heatmap.device).repeat(pred_points_img.shape[0], 1)
+        dims = torch.where(torch.isfinite(known_dims), known_dims, dims_default)
         h_ref = h_cam - dims[:, 1] / 2.0
         log_dv_ref = torch.log((fy * h_ref.abs()).clamp(min=1e-7) / self.depth_mean)
         pred_log_dv = (log_dv_ref + pred_log_dv_delta).clamp(-4.0, 8.0)

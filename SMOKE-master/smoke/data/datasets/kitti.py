@@ -131,6 +131,7 @@ class KITTIDataset(Dataset):
             target.add_field("K", K)
             if len(anns) > 0:
                 target.add_field("h_cam", np.float32(anns[0]["locations"][1]))
+                target.add_field("dimensions", np.array(anns[0]["dimensions"], dtype=np.float32))
             if self.transforms is not None:
                 img, target = self.transforms(img, target)
 
