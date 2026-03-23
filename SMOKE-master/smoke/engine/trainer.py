@@ -102,8 +102,14 @@ def do_train(
                     memory=torch.cuda.max_memory_allocated() / 1024.0 / 1024.0
                 )
             )
-        # fixme: do we need checkpoint_period here
-        if iteration in cfg.SOLVER.STEPS:
+        should_save_periodic = (
+            checkpoint_period > 0
+            and iteration % checkpoint_period == 0
+            and iteration != max_iter
+        )
+        should_save_step = iteration in cfg.SOLVER.STEPS and iteration != max_iter
+
+        if should_save_periodic or should_save_step:
             checkpointer.save("model_{:07d}".format(iteration), **arguments)
         if iteration == max_iter:
             checkpointer.save("model_final", **arguments)
