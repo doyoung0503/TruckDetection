@@ -101,15 +101,15 @@ class SMOKECoder():
         if len(rotys.shape) == 2:
             rotys = rotys.flatten()
         if len(dims.shape) == 3:
-            dims = dims.view(-1, 3)
+            dims = dims.reshape(-1, 3)
         if len(locs.shape) == 3:
-            locs = locs.view(-1, 3)
+            locs = locs.reshape(-1, 3)
 
         device = rotys.device
         N = rotys.shape[0]
         ry = self.rad_to_matrix(rotys, N)
 
-        dims = dims.view(-1, 1).repeat(1, 8)
+        dims = dims.reshape(-1, 1).repeat(1, 8)
         dims[::3, :4], dims[2::3, :4] = 0.5 * dims[::3, :4], 0.5 * dims[2::3, :4]
         dims[::3, 4:], dims[2::3, 4:] = -0.5 * dims[::3, 4:], -0.5 * dims[2::3, 4:]
         dims[1::3, :4], dims[1::3, 4:] = 0., -dims[1::3, 4:]
@@ -117,7 +117,7 @@ class SMOKECoder():
                               [4, 5, 0, 1, 6, 7, 2, 3],
                               [4, 5, 6, 0, 1, 2, 3, 7]]).repeat(N, 1).to(device=device)
         box_3d_object = torch.gather(dims, 1, index)
-        box_3d = torch.matmul(ry, box_3d_object.view(N, 3, -1))
+        box_3d = torch.matmul(ry, box_3d_object.reshape(N, 3, -1))
         box_3d += locs.unsqueeze(-1).repeat(1, 1, 8)
 
         return box_3d

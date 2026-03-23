@@ -1,0 +1,32 @@
+{
+  "dataset_root": "/home/dy-jang/projects/v3/kitti_smoke_1280x384_lb",
+  "output_dir": "/home/dy-jang/projects/TruckDetection-main/results/geometry/seed_42",
+  "batch": 8,
+  "seed": 42,
+  "model_type": "geometry",
+  "train_split": "train",
+  "test_split": "val",
+  "max_iteration": 25000,
+  "steps": [
+    10000,
+    18000
+  ],
+  "checkpoint_period": 1000,
+  "dimension_reference": [
+    9.8,
+    3.3,
+    2.5
+  ],
+  "depth_reference": [
+    6.15,
+    2.48
+  ],
+  "iters_per_epoch": 500,
+  "smoke_head_mode": "geometry",
+  "regression_heads": 4,
+  "regression_channel": [
+    1,
+    1,
+    2
+  ]
+}
