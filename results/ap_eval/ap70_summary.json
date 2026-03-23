@@ -1,0 +1,80 @@
+{
+  "baseline": {
+    "status": "missing_checkpoints",
+    "message": "No baseline model_*.pth checkpoints were found on this machine, so baseline AP@0.7 could not be evaluated."
+  },
+  "geometry": [
+    {
+      "model": "geometry",
+      "iteration": 10000,
+      "metrics": {
+        "car_detection_AP": {
+          "easy": 0.0,
+          "moderate": 0.0,
+          "hard": 0.409113
+        },
+        "car_orientation_AOS": {
+          "easy": 0.0,
+          "moderate": 0.0,
+          "hard": 0.125885
+        },
+        "car_detection_BEV_AP": {
+          "easy": 0.0,
+          "moderate": 0.0,
+          "hard": 0.0
+        },
+        "car_orientation_BEV_AHS": {
+          "easy": 0.0,
+          "moderate": 0.0,
+          "hard": 0.0
+        },
+        "car_detection_3D_AP": {
+          "easy": 0.0,
+          "moderate": 0.0,
+          "hard": 0.0
+        },
+        "car_orientation_3D_AHS": {
+          "easy": 0.0,
+          "moderate": 0.0,
+          "hard": 0.0
+        }
+      }
+    },
+    {
+      "model": "geometry",
+      "iteration": 18000,
+      "metrics": {
+        "car_detection_AP": {
+          "easy": 0.0,
+          "moderate": 0.140449,
+          "hard": 1.594227
+        },
+        "car_orientation_AOS": {
+          "easy": 0.0,
+          "moderate": 0.056315,
+          "hard": 0.355149
+        },
+        "car_detection_BEV_AP": {
+          "easy": 0.0,
+          "moderate": 0.0,
+          "hard": 0.0
+        },
+        "car_orientation_BEV_AHS": {
+          "easy": 0.0,
+          "moderate": 0.0,
+          "hard": 0.0
+        },
+        "car_detection_3D_AP": {
+          "easy": 0.0,
+          "moderate": 0.0,
+          "hard": 0.0
+        },
+        "car_orientation_3D_AHS": {
+          "easy": 0.0,
+          "moderate": 0.0,
+          "hard": 0.0
+        }
+      }
+    }
+  ]
+}

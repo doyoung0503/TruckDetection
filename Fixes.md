@@ -37,3 +37,73 @@
 ### Future Rule
 - 이후 코드 변경이 생기면 이 파일에 새 섹션을 추가한다.
 - 섹션 제목은 커밋 단위로 작성하고, 최소한 `Reason`, `Code Change`, `Verification or Logs`를 남긴다.
+
+## 2026-03-23 - feat: add local AP@0.70 evaluation workflow for SMOKE checkpoints and record geometry checkpoint results
+
+### Reason
+- 요청 사항은 baseline, geometry 모델의 저장된 체크포인트를 기준으로 IoU 0.7 AP를 iter 단위로 비교하는 것이었다.
+- 로컬 점검 결과 geometry 체크포인트는 `results/geometry/seed_42/`에 있었지만, baseline 체크포인트 `model_*.pth`는 이 머신에서 찾을 수 없었다.
+- 공식 SMOKE의 eval-only 경로는 현재 데이터셋 구조와 바로 맞지 않았다.
+- 기본 `paths_catalog.py`는 `kitti_test -> datasets/kitti/testing/`을 가리켜 `val` split 평가 시 `testing/ImageSets/val.txt`를 찾다가 실패했다.
+- 또한 저장소에는 KITTI native evaluator 소스가 없어 AP 계산 바이너리 `evaluate_object_3d_offline`를 직접 빌드할 수 없는 상태였다.
+- 공식 `kitti_eval.py`는 마지막 단계에서 `../smoke/data/datasets/evaluation/kitti/kitti_eval`로 `chdir`하는데, 현재 실행 기준에서는 이 상대 경로가 맞지 않아 추론은 끝나도 평가 단계에서 종료됐다.
+
+### Code Change
+- `train/paths_catalog_val.py`
+- validation AP 평가 전용 dataset catalog를 추가했다.
+- `kitti_test`를 `datasets/kitti/training/`으로 매핑해서 공식 SMOKE eval-only가 `training/ImageSets/val.txt`와 `training/label_2`를 사용하도록 맞췄다.
+
+- `SMOKE-master/smoke/data/datasets/evaluation/kitti/kitti_eval/evaluate_object_3d_offline.cpp`
+- `SMOKE-master/smoke/data/datasets/evaluation/kitti/kitti_eval/mail.h`
+- KITTI native evaluator 소스와 헤더를 추가해 로컬에서 AP를 직접 계산할 수 있게 했다.
+- 컴파일은 conda include 경로(`/home/dy-jang/anaconda3/include`)를 사용해 boost 헤더를 찾도록 처리했다.
+- 참고로 이 경로는 `.gitignore`의 `datasets/` 패턴에 걸리므로 커밋 시 force add가 필요하다.
+
+### Evaluation Workflow
+- geometry 체크포인트 `model_0010000.pth`, `model_0018000.pth`에 대해 공식 SMOKE `--eval-only` 추론을 먼저 실행했다.
+- 추론 결과 prediction txt를 만든 뒤, native evaluator를 직접 호출해 AP를 계산했다.
+- plot 생성 단계에서 `gnuplot`, `pdfcrop`가 없어 경고가 있었지만, AP 수치 텍스트 출력 자체는 정상 생성됐다.
+
+### Results Included
+- `results/ap_eval/ap70_summary.json`
+  - iter 단위 AP 요약 JSON
+- `results/ap_eval/geometry_ap70_by_iter.png`
+  - iter 단위 시각화 PNG
+- `results/ap_eval/geometry/model_0010000_ap.txt`
+  - geometry 10000 iter AP 원문
+- `results/ap_eval/geometry/model_0018000_ap.txt`
+  - geometry 18000 iter AP 원문
+- `results/ap_eval/geometry/model_0010000_eval.log`
+  - geometry 10000 iter eval-only 실행 로그
+- `results/ap_eval/geometry/model_0018000_eval.log`
+  - geometry 18000 iter eval-only 실행 로그
+- `results/ap_eval/geometry/model_0010000/log.txt`
+  - 공식 SMOKE output dir 내부 로그
+- `results/ap_eval/geometry/model_0018000/log.txt`
+  - 공식 SMOKE output dir 내부 로그
+
+### Measured AP@0.70
+- geometry `iter 10000`
+- 2D AP: `easy 0.0000 / moderate 0.0000 / hard 0.4091`
+- BEV AP: `easy 0.0000 / moderate 0.0000 / hard 0.0000`
+- 3D AP: `easy 0.0000 / moderate 0.0000 / hard 0.0000`
+
+- geometry `iter 18000`
+- 2D AP: `easy 0.0000 / moderate 0.1404 / hard 1.5942`
+- BEV AP: `easy 0.0000 / moderate 0.0000 / hard 0.0000`
+- 3D AP: `easy 0.0000 / moderate 0.0000 / hard 0.0000`
+
+### Baseline Status
+- baseline 관련 로그는 있었지만 이 머신에서 실제 baseline 체크포인트 `model_*.pth`는 찾지 못했다.
+- 따라서 이번 결과물은 geometry만 실측했고, `results/ap_eval/ap70_summary.json`에도 baseline 상태를 `missing_checkpoints`로 남겼다.
+- baseline 체크포인트 경로가 확보되면 같은 평가 흐름으로 동일 그래프에 바로 추가할 수 있다.
+
+### Artifact Policy
+- 중간 prediction txt와 임시 eval 폴더는 최종 커밋에서 제외했다.
+- 최종 비교에 필요한 요약 결과, 원문 AP 텍스트, 실행 로그, 시각화만 남겼다.
+- native evaluator 바이너리 `evaluate_object_3d_offline` 자체는 생성 산출물이라 커밋 대상에서 제외했다.
+
+### Verification or Logs
+- geometry checkpoint 추론 후 native evaluator 직접 실행으로 AP 텍스트를 생성했다.
+- 최종 요약은 `results/ap_eval/ap70_summary.json`에 저장했다.
+- 최종 시각화는 `results/ap_eval/geometry_ap70_by_iter.png`에 저장했다.

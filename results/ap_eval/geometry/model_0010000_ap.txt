@@ -1,0 +1,7 @@
+  done.
+car_detection_AP : 0.000000 0.000000 0.409113
+car_orientation_AOS : 0.000000 0.000000 0.125885
+car_detection_BEV_AP : 0.000000 0.000000 0.000000
+car_orientation_BEV_AHS : 0.000000 0.000000 0.000000
+car_detection_3D_AP : 0.000000 0.000000 0.000000
+car_orientation_3D_AHS : 0.000000 0.000000 0.000000
