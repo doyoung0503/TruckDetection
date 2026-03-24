@@ -164,3 +164,22 @@
 ### Verification or Logs
 - `git status --short --untracked-files=all`로 동기화 대상 파일을 점검했다.
 - `git fetch origin` 후 `origin/main` 대비 로컬 작업트리를 비교해 최신 원격 변경과 로컬 산출물을 함께 정리했다.
+
+## 2026-03-24 - docs: split repository landing page and detailed structure guide
+
+### Reason
+- 요청 사항은 프로젝트 전체 구조를 설명하는 상세 문서와, GitHub 프로젝트 첫 화면에 표시할 간결한 문서를 분리하는 것이었다.
+- 기존 `README.md`는 실행 방법 중심이어서 저장소 전체 구조와 역할 분리가 한눈에 보이기 어려웠다.
+
+### Code Change
+- `README.md`
+- GitHub 첫 화면용 요약 문서로 재구성했다.
+- 프로젝트 개요, 빠른 시작 경로, 핵심 진입점, 상세 문서 링크를 중심으로 정리했다.
+
+- `Readme.md`
+- 저장소 구조 설명용 상세 문서를 새로 추가했다.
+- 루트 파일, `SMOKE-master/`, `train/`, `tools/`, `results/`, `logs/`, `external/` 등 실제 디렉터리 역할과 현재 권장 workflow를 문서화했다.
+
+### Verification or Logs
+- 현재 저장소의 최상위 파일/디렉터리와 `train/`, `tools/` 구성 기준으로 문서를 작성했다.
+- 상세 문서에는 현재 권장 엔트리포인트와 산출물 위치를 함께 정리했다.

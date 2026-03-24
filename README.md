@@ -1,97 +1,42 @@
 # TruckDetection
 
-Monocular 3D truck detection experiments built around the official [SMOKE](https://github.com/lzccccc/SMOKE) training code.
+Monocular 3D truck detection experiments built around the official SMOKE training code.
 
-## What This Repo Runs
+## Overview
 
-This project now supports two training modes on the same KITTI-converted truck dataset:
+This repository currently centers on two official-SMOKE-based training paths running on the same KITTI-converted truck dataset.
 
-- `baseline`: official SMOKE training path, launched through `SMOKE-master/tools/plain_train_net.py`
-- `geometry`: official SMOKE training path with a minimal internal fork of the SMOKE head, loss, and inference logic to enforce restricted DoF geometry
+- `baseline`: official SMOKE training path
+- `geometry`: restricted-DoF geometry variant that still uses the official trainer, but patches the internal head/loss/inference path
 
-The important design rule is:
+The repo also includes dataset conversion, conversion validation, qualitative visualization, checkpoint inspection, and experiment management utilities.
 
-- `baseline` uses the official SMOKE model/trainer path
-- `geometry` also uses the same official trainer path and differs only inside the patched SMOKE head internals
+## Start Here
 
-## Dataset Expectation
+- Detailed project guide: [Readme.md](Readme.md)
+- Commit-by-commit change log: [Fixes.md](Fixes.md)
 
-The training code assumes the dataset has already been converted to KITTI format.
+## Main Workflow
 
-Default dataset root:
+1. Convert the source dataset to KITTI format.
+2. Validate the converted dataset before training.
+3. Train either `baseline` or `geometry`.
+4. Save logs, checkpoints, qualitative overlays, and subset evaluations under `results/` and `logs/`.
 
-`datasets/v3/kitti_smoke_1280x384_lb`
+## Quick Commands
 
-The root should contain at least:
-
-```text
-kitti_smoke_1280x384_lb/
-├── training/
-│   ├── image_2/
-│   ├── label_2/
-│   ├── calib/
-│   └── ImageSets/
-└── testing/   # optional, depending on your export/eval setup
-```
-
-Both launchers automatically link this dataset into `SMOKE-master/datasets/kitti` before training.
-
-## Validate A Converted KITTI Dataset
-
-If the server already has the original `v3` source and a generated KITTI export, run the stronger validator before training:
+Validate a converted KITTI dataset:
 
 ```bash
 python -m train.validate_kitti_conversion \
-  --source-root /home/dy-jang/projects/v3 \
-  --dataset-root /home/dy-jang/projects/v3/kitti_smoke_1280x384_lb \
+  --source-root /path/to/v3 \
+  --dataset-root /path/to/kitti_smoke_1280x384_lb \
   --split train \
   --workers 8 \
   --strict
 ```
 
-This checks more than bbox IoU. It verifies:
-
-- letterboxed image pixels match a fresh re-export
-- calibration `P2` matches
-- KITTI label fields (`bbox`, `dims`, `loc`, `alpha`, `ry`, truncation, occlusion) match a fresh re-export
-- projected 2D corner set matches the transformed raw `2d_corners`
-- reconstructed 3D corner set matches the source-derived camera-space box
-
-The summary JSON is written under `results/kitti_conversion_validation/` unless you override `--output-json`.
-
-## Current Training Defaults
-
-These defaults are shared by the baseline and geometry launchers unless overridden:
-
-- input: KITTI-converted `1280x384` truck dataset
-- batch size: `8`
-- max iteration: `25000`
-- LR milestones: `10000`, `18000`
-- checkpoint period: `1000` iterations
-- split: `train` / `val`
-- seed-aware output directories
-
-Truck prior values injected into the config:
-
-- dimensions `(L, H, W) = (9.8, 3.3, 2.5)`
-- depth reference `(mean, std) = (6.15, 2.48)`
-
-## Install
-
-```bash
-pip install torch torchvision pillow matplotlib numpy yacs tqdm opencv-python
-```
-
-Build the official SMOKE extensions once:
-
-```bash
-cd SMOKE-master
-python setup.py build develop
-```
-
-Then return to the project root.
-
-## Run One Baseline Job
+Run baseline:
 
 ```bash
 python -m train.run_official_smoke_baseline \
@@ -99,13 +44,7 @@ python -m train.run_official_smoke_baseline \
   --seed 42
 ```
 
-This launches the official SMOKE training script with truck-specific config overrides.
-
-Default output:
-
-`results/baseline/seed_42`
-
-## Run One Geometry Job
+Run geometry:
 
 ```bash
 python -m train.run_geometry_smoke \
@@ -113,116 +52,17 @@ python -m train.run_geometry_smoke \
   --seed 42
 ```
 
-This also launches `SMOKE-master/tools/plain_train_net.py`, but sets:
+## Key Paths
 
-- `MODEL.SMOKE_HEAD.MODE geometry`
-- `MODEL.SMOKE_HEAD.REGRESSION_HEADS 4`
-- `MODEL.SMOKE_HEAD.REGRESSION_CHANNEL (1,1,2)`
+- `SMOKE-master/`: official SMOKE codebase used for the active training path
+- `train/`: launchers, validators, evaluation helpers, and legacy local experiments
+- `tools/`: extra inspection utilities
+- `results/`: checkpoints, logs, evaluation outputs, qualitative images
+- `logs/`: supervisor logs and long-running training logs
+- `Fixes.md`: ongoing record of why code changed and how it was verified
 
-Default output:
+## Notes
 
-`results/geometry/seed_42`
-
-## Run A Single Selected Model And Seed
-
-If you want one entrypoint that chooses the model for you:
-
-```bash
-python -m train.run_single_smoke_job \
-  --model baseline \
-  --seed 42 \
-  --dataset-root /path/to/kitti_smoke_1280x384_lb
-```
-
-```bash
-python -m train.run_single_smoke_job \
-  --model geometry \
-  --seed 42 \
-  --dataset-root /path/to/kitti_smoke_1280x384_lb
-```
-
-This wrapper delegates to the existing baseline/geometry launchers, so the output format stays identical.
-
-## Output Layout
-
-Baseline:
-
-```text
-results/
-└── baseline/
-    └── seed_42/
-        ├── log.txt
-        ├── run_meta.json
-        ├── model_0001000.pth
-        ├── model_0002000.pth
-        ├── ...
-        └── model_final.pth
-```
-
-Geometry:
-
-```text
-results/
-└── geometry/
-    └── seed_42/
-        ├── log.txt
-        ├── run_meta.json
-        ├── model_0001000.pth
-        ├── model_0002000.pth
-        ├── ...
-        └── model_final.pth
-```
-
-Notes:
-
-- `log.txt` is written by the official SMOKE logger
-- checkpoints are saved every `1000` iterations by default
-- `run_meta.json` records dataset path, seed, steps, checkpoint period, and model type
-
-## Server Quick Start
-
-If the server already has only the converted dataset and this repo:
-
-```bash
-cd /home/dy-jang/projects/TruckDetection-main
-python -m train.run_single_smoke_job \
-  --model geometry \
-  --seed 42 \
-  --dataset-root /home/dy-jang/projects/v3/kitti_smoke_1280x384_lb
-```
-
-Or for the baseline:
-
-```bash
-cd /home/dy-jang/projects/TruckDetection-main
-python -m train.run_single_smoke_job \
-  --model baseline \
-  --seed 42 \
-  --dataset-root /home/dy-jang/projects/v3/kitti_smoke_1280x384_lb
-```
-
-## Main Files
-
-```text
-SMOKE-master/
-└── smoke/
-    └── modeling/heads/smoke_head/
-        ├── smoke_predictor.py   # official predictor + geometry branch
-        ├── loss.py              # official loss + geometry branch
-        └── inference.py         # official postprocess + geometry branch
-
-train/
-├── run_official_smoke_baseline.py  # baseline launcher
-├── run_geometry_smoke.py           # geometry launcher on official plain_train_net
-└── run_single_smoke_job.py         # choose one model + one seed
-```
-
-## Important Scope
-
-This README describes the current official-SMOKE-based training path.
-
-Older custom experimental files such as `train/models.py`, `train/smoke_loss.py`, and `train/smoke_trainer.py` remain in the repo for prior experiments, but the recommended training entrypoints are:
-
-- `train.run_official_smoke_baseline`
-- `train.run_geometry_smoke`
-- `train.run_single_smoke_job`
+- Heavy artifacts such as datasets and model weights are intentionally excluded from Git tracking.
+- The recommended entrypoints are `train.run_official_smoke_baseline`, `train.run_geometry_smoke`, and `train.run_single_smoke_job`.
+- Older local experimental modules still remain in the repo, but the official-SMOKE path is the current default.
