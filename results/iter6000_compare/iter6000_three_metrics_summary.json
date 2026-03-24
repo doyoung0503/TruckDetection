@@ -1,0 +1,207 @@
+{
+  "sample_ids": [
+    "000550",
+    "002668",
+    "004457"
+  ],
+  "tmp_dataset_root": "/tmp/kitti_iter6000_three_eval",
+  "paths_catalog": "/tmp/paths_catalog_iter6000_three_abs.py",
+  "baseline": {
+    "checkpoint": "/home/dy-jang/projects/TruckDetection-main/results/baseline/seed_42/model_0006000.pth",
+    "output_dir": "/home/dy-jang/projects/TruckDetection-main/results/single_infer/baseline_0006000_three_custom",
+    "prediction_dir": "/home/dy-jang/projects/TruckDetection-main/results/single_infer/baseline_0006000_three_custom/inference/kitti_test/data",
+    "visualization_dir": "/home/dy-jang/projects/TruckDetection-main/results/kitti_vis_compare/baseline_0006000_three_custom",
+    "visualizations": [
+      "/home/dy-jang/projects/TruckDetection-main/results/kitti_vis_compare/baseline_0006000_three_custom/000550_compare.png",
+      "/home/dy-jang/projects/TruckDetection-main/results/kitti_vis_compare/baseline_0006000_three_custom/002668_compare.png",
+      "/home/dy-jang/projects/TruckDetection-main/results/kitti_vis_compare/baseline_0006000_three_custom/004457_compare.png",
+      "/home/dy-jang/projects/TruckDetection-main/results/kitti_vis_compare/baseline_0006000_three_custom/contact_sheet.png"
+    ],
+    "eval": {
+      "log": "/home/dy-jang/projects/TruckDetection-main/results/single_infer/baseline_0006000_three_custom_eval.log",
+      "return_code": 1
+    },
+    "samples": [
+      {
+        "sample_id": "000550",
+        "gt_count": 1,
+        "pred_count": 1,
+        "score": 0.8360000252723694,
+        "bbox_iou_2d": 0.9087321809332025,
+        "bev_iou": 0.39317459291819024,
+        "ate_m": 0.7315971702993863,
+        "aoe_rad": 0.023166949264526338,
+        "aoe_deg": 1.3273684170510658,
+        "gt_ry": -3.034967,
+        "pred_ry": -3.0118000507354736,
+        "gt_xyz": [
+          0.240907,
+          1.690322,
+          8.766218
+        ],
+        "pred_xyz": [
+          0.257099986076355,
+          1.76010000705719,
+          9.49429988861084
+        ]
+      },
+      {
+        "sample_id": "002668",
+        "gt_count": 1,
+        "pred_count": 1,
+        "score": 0.8319000005722046,
+        "bbox_iou_2d": 0.9458436332850452,
+        "bev_iou": 0.5319128755034211,
+        "ate_m": 0.48853642252205925,
+        "aoe_rad": 0.15082500114440922,
+        "aoe_deg": 8.64163601063046,
+        "gt_ry": -0.200475,
+        "pred_ry": -0.3513000011444092,
+        "gt_xyz": [
+          -0.296834,
+          1.053768,
+          3.646219
+        ],
+        "pred_xyz": [
+          -0.3303999900817871,
+          1.0546000003814697,
+          4.133600234985352
+        ]
+      },
+      {
+        "sample_id": "004457",
+        "gt_count": 1,
+        "pred_count": 1,
+        "score": 0.8179000020027161,
+        "bbox_iou_2d": 0.9342478242919864,
+        "bev_iou": 0.8086359781220505,
+        "ate_m": 0.4745745346627209,
+        "aoe_rad": 0.028361996566772518,
+        "aoe_deg": 1.625022701840596,
+        "gt_ry": -1.667738,
+        "pred_ry": -1.6960999965667725,
+        "gt_xyz": [
+          0.33657,
+          1.773879,
+          7.557641
+        ],
+        "pred_xyz": [
+          0.3100999891757965,
+          1.837399959564209,
+          8.027199745178223
+        ]
+      }
+    ],
+    "aggregate": {
+      "num_samples": 3,
+      "matched_samples": 3,
+      "mean_bbox_iou_2d": 0.9296078795034113,
+      "mean_bev_iou": 0.577907815514554,
+      "mean_ate_m": 0.5649027091613888,
+      "mean_aoe_deg": 3.864675709840707,
+      "bev_ap_0.7_subset": 0.1111111111111111
+    }
+  },
+  "geometry": {
+    "checkpoint": "/home/dy-jang/projects/TruckDetection-main/results/geometry/seed_42/model_0006000.pth",
+    "output_dir": "/home/dy-jang/projects/TruckDetection-main/results/single_infer/geometry_0006000_three_custom",
+    "prediction_dir": "/home/dy-jang/projects/TruckDetection-main/results/single_infer/geometry_0006000_three_custom/inference/kitti_test/data",
+    "visualization_dir": "/home/dy-jang/projects/TruckDetection-main/results/kitti_vis_compare/geometry_0006000_three_custom",
+    "visualizations": [
+      "/home/dy-jang/projects/TruckDetection-main/results/kitti_vis_compare/geometry_0006000_three_custom/000550_compare.png",
+      "/home/dy-jang/projects/TruckDetection-main/results/kitti_vis_compare/geometry_0006000_three_custom/002668_compare.png",
+      "/home/dy-jang/projects/TruckDetection-main/results/kitti_vis_compare/geometry_0006000_three_custom/004457_compare.png",
+      "/home/dy-jang/projects/TruckDetection-main/results/kitti_vis_compare/geometry_0006000_three_custom/contact_sheet.png"
+    ],
+    "eval": {
+      "log": "/home/dy-jang/projects/TruckDetection-main/results/single_infer/geometry_0006000_three_custom_eval.log",
+      "return_code": 1
+    },
+    "samples": [
+      {
+        "sample_id": "000550",
+        "gt_count": 1,
+        "pred_count": 1,
+        "score": 0.6931999921798706,
+        "bbox_iou_2d": 0.39933512803376037,
+        "bev_iou": 0.22425296646873258,
+        "ate_m": 0.8163188852987148,
+        "aoe_rad": 1.6084670371932983,
+        "aoe_deg": 92.158372717088,
+        "gt_ry": -3.034967,
+        "pred_ry": -1.4264999628067017,
+        "gt_xyz": [
+          0.240907,
+          1.690322,
+          8.766218
+        ],
+        "pred_xyz": [
+          0.32589998841285706,
+          1.6902999877929688,
+          9.578100204467773
+        ]
+      },
+      {
+        "sample_id": "002668",
+        "gt_count": 1,
+        "pred_count": 1,
+        "score": 0.5584999918937683,
+        "bbox_iou_2d": 0.7022327155383535,
+        "bev_iou": 0.28015229633160543,
+        "ate_m": 0.4024302791962704,
+        "aoe_rad": 0.9907250179290772,
+        "aoe_deg": 56.76436218535894,
+        "gt_ry": -0.200475,
+        "pred_ry": -1.1912000179290771,
+        "gt_xyz": [
+          -0.296834,
+          1.053768,
+          3.646219
+        ],
+        "pred_xyz": [
+          -0.39809998869895935,
+          1.0537999868392944,
+          4.035699844360352
+        ]
+      },
+      {
+        "sample_id": "004457",
+        "gt_count": 1,
+        "pred_count": 1,
+        "score": 0.600600004196167,
+        "bbox_iou_2d": 0.8754608381276913,
+        "bev_iou": 0.6342403795902599,
+        "ate_m": 0.7726994141678454,
+        "aoe_rad": 0.0074379835968017005,
+        "aoe_deg": 0.42616506818427324,
+        "gt_ry": -1.667738,
+        "pred_ry": -1.6603000164031982,
+        "gt_xyz": [
+          0.33657,
+          1.773879,
+          7.557641
+        ],
+        "pred_xyz": [
+          0.43220001459121704,
+          1.773900032043457,
+          8.324399948120117
+        ]
+      }
+    ],
+    "aggregate": {
+      "num_samples": 3,
+      "matched_samples": 3,
+      "mean_bbox_iou_2d": 0.6590095605666018,
+      "mean_bev_iou": 0.37954854746353267,
+      "mean_ate_m": 0.6638161928876102,
+      "mean_aoe_deg": 49.78296665687707,
+      "bev_ap_0.7_subset": 0.0
+    }
+  },
+  "notes": [
+    "BEV AP is computed as AP@0.7 on the requested three-sample subset, not the full validation split.",
+    "ATE is Euclidean center distance in meters between GT and the best matching prediction by 2D IoU per image.",
+    "AOE is absolute wrapped yaw error in degrees using ry.",
+    "plain_train_net.py can return non-zero because the bundled KITTI evaluator does a bad relative chdir after predictions are already written."
+  ]
+}

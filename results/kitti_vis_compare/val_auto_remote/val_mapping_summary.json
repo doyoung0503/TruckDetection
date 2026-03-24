@@ -1,0 +1,8 @@
+{
+  "count": 1000,
+  "missing_images_without_labels": 0,
+  "bbox_iou_mean": 0.9973673941750626,
+  "bbox_iou_median": 0.9970147621847627,
+  "bbox_iou_min": 0.9934836071494852,
+  "bbox_iou_max": 0.9999999039362321
+}

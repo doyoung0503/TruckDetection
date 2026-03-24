@@ -107,3 +107,60 @@
 - geometry checkpoint 추론 후 native evaluator 직접 실행으로 AP 텍스트를 생성했다.
 - 최종 요약은 `results/ap_eval/ap70_summary.json`에 저장했다.
 - 최종 시각화는 `results/ap_eval/geometry_ap70_by_iter.png`에 저장했다.
+
+## 2026-03-24 - chore: sync local geometry/baseline research artifacts, validators, and qualitative results to GitHub
+
+### Reason
+- 로컬 작업트리에는 GitHub `origin/main` 이후 반영된 geometry known-dimension 경로, KITTI 변환 검증기, 강화된 시각화 코드, 학습 로그, supervisor 스크립트, 정성/정량 비교 결과가 누적되어 있었다.
+- 요청 사항은 가중치 파일과 데이터셋처럼 무거운 산출물을 제외하고 현재 로컬 상태를 GitHub에 동기화하는 것이었다.
+
+### Code Change
+- `SMOKE-master/smoke/data/datasets/kitti.py`
+- `SMOKE-master/smoke/modeling/heads/smoke_head/loss.py`
+- `SMOKE-master/smoke/modeling/heads/smoke_head/inference.py`
+- geometry 경로가 sample-wise known dimensions를 train/val/inference에 사용할 수 있도록 로컬 반영 상태를 동기화했다.
+
+- `train/validate_kitti_conversion.py`
+- `train/visualize_kitti_mapping_and_predictions.py`
+- `tools/inspect_smoke_predictions.py`
+- KITTI 변환 검증, GT/prediction overlay, qualitative review를 위한 로컬 도구를 포함했다.
+
+- `logs/supervise_smoke_runs.sh`
+- `logs/supervise_smoke_runs.log`
+- `logs/geometry_seed42.log`
+- `logs/baseline_seed42.log`
+- 중단 복구용 supervisor와 최신 학습 로그 snapshot을 포함했다.
+
+### Results and Logs Included
+- `results/kitti_conversion_validation/*.json`
+- 최신 KITTI 변환 검증 요약 결과를 포함했다.
+- `results/kitti_vis_compare/**`
+- geometry/baseline 샘플 추론과 GT 비교 시각화 PNG를 포함했다.
+- `results/single_infer/**`
+- 단일/소수 샘플 추론 결과 txt와 eval 로그를 포함했다.
+- `results/iter6000_compare/iter6000_three_metrics_summary.json`
+- baseline/geometry `iter 6000`의 3개 샘플 비교 지표 요약을 포함했다.
+- `results/baseline/seed_42/log.txt`
+- `results/baseline/seed_42/run_meta.json`
+- `results/geometry/seed_42/log.txt`
+- `results/geometry/seed_42/last_checkpoint`
+- 현재 학습 진행 상태 snapshot을 포함했다.
+
+### Local Cleanup Reflected
+- 이전 geometry AP 실험 산출물 일부를 로컬에서 제거한 현재 상태를 반영했다.
+- 삭제 반영 항목:
+  - `logs/geometry_run.log`
+  - `logs/geometry_smoke_seed42.log`
+  - `logs/geometry_smoke_seed42_retry.log`
+  - `results/ap_eval/geometry/model_0010000/*`
+  - `results/ap_eval/geometry/model_0018000/*`
+  - `results/ap_eval/geometry_ap70_by_iter.png`
+  - `results/ablation_study/seed_42/geometry/history.json`
+
+### Artifact Policy
+- `.gitignore` 기준으로 `datasets/`, `*.pth`, `*.pt`, `*.ckpt`는 계속 제외했다.
+- 따라서 학습 체크포인트, 모델 가중치, 원본/변환 데이터셋은 이번 동기화 대상에 포함하지 않았다.
+
+### Verification or Logs
+- `git status --short --untracked-files=all`로 동기화 대상 파일을 점검했다.
+- `git fetch origin` 후 `origin/main` 대비 로컬 작업트리를 비교해 최신 원격 변경과 로컬 산출물을 함께 정리했다.

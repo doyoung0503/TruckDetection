@@ -1,0 +1,3 @@
+[2026-03-23 22:32:45 KST] Queued training chain started
+[2026-03-23 22:32:45 KST] Planned follow-up jobs: baseline seed_42 -> baseline seed_40 -> geometry seed_40
+[2026-03-23 22:32:45 KST] Waiting for current geometry seed_42 training to finish: /home/dy-jang/projects/TruckDetection-main/results/geometry/seed_42
