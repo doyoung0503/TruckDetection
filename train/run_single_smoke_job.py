@@ -76,7 +76,7 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_DATASET_ROOT,
         help="Converted KITTI dataset root.",
     )
-    parser.add_argument("--config-file", type=str, default="configs/smoke_gn_vector.yaml", help="Official config path.")
+    parser.add_argument("--config-file", type=str, default=None, help="Optional config path. If omitted, each launcher uses its model-specific default config.")
     parser.add_argument("--num-gpus", type=int, default=1, help="Number of GPUs for the official launcher.")
     parser.add_argument(
         "--output-dir",
@@ -84,19 +84,19 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Optional explicit output directory. If omitted, the delegated launcher keeps its default seed/model layout.",
     )
-    parser.add_argument("--batch", type=int, default=8, help="Batch size.")
-    parser.add_argument("--train-split", type=str, default="train", help="Training split name.")
-    parser.add_argument("--test-split", type=str, default="val", help="Validation/test split name.")
-    parser.add_argument("--max-iter", type=int, default=25000, help="Max iteration.")
+    parser.add_argument("--batch", type=int, default=None, help="Optional batch size override.")
+    parser.add_argument("--train-split", type=str, default=None, help="Optional training split override.")
+    parser.add_argument("--test-split", type=str, default=None, help="Optional validation/test split override.")
+    parser.add_argument("--max-iter", type=int, default=None, help="Optional max iteration override.")
     parser.add_argument(
         "--steps",
         type=int,
         nargs=2,
-        default=(10000, 18000),
+        default=None,
         metavar=("STEP1", "STEP2"),
-        help="LR scheduler milestones.",
+        help="Optional LR scheduler milestone override.",
     )
-    parser.add_argument("--checkpoint-period", type=int, default=1000, help="Checkpoint period in iterations.")
+    parser.add_argument("--checkpoint-period", type=int, default=None, help="Optional checkpoint period override.")
     parser.add_argument("--eval-only", action="store_true", help="Run delegated launcher in eval-only mode.")
     parser.add_argument("--enable-mps-fallback", action="store_true", help="Pass through MPS fallback flag.")
     parser.add_argument(

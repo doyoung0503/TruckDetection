@@ -21,8 +21,10 @@ from train.run_official_smoke_baseline import (
     _build_command,
     _count_split_samples,
     _link_dataset,
+    _load_effective_cfg,
     _requested_device_from_opts,
     _set_opt,
+    _set_opt_if_value,
     _validate_smoke_repo,
 )
 
@@ -31,6 +33,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_SMOKE_DIR = ROOT / "SMOKE-master"
 DEFAULT_DATASET_ROOT = ROOT / "datasets" / "v3" / "kitti_smoke_1280x384_lb"
 DEFAULT_OUTPUT_ROOT = ROOT / "results"
+DEFAULT_CONFIG_FILE = "configs/smoke_geometry_b16_60ep.yaml"
 
 TRUCK_L = 9.8
 TRUCK_H = 3.3
@@ -55,7 +58,7 @@ def main() -> None:
     parser.add_argument(
         "--config-file",
         type=str,
-        default="configs/smoke_gn_vector.yaml",
+        default=DEFAULT_CONFIG_FILE,
         help="Path (inside SMOKE repo) to the config yaml.",
     )
     parser.add_argument(
@@ -81,24 +84,24 @@ def main() -> None:
         default=None,
         help="Output directory. If omitted, uses results/geometry/seed_<seed>.",
     )
-    parser.add_argument("--batch", type=int, default=8, help="Batch size override.")
+    parser.add_argument("--batch", type=int, default=None, help="Optional batch size override.")
     parser.add_argument("--seed", type=int, default=42, help="Official SMOKE random seed.")
-    parser.add_argument("--train-split", type=str, default="train", help="Training split in ImageSets.")
-    parser.add_argument("--test-split", type=str, default="val", help="Validation/test split in ImageSets.")
-    parser.add_argument("--max-iter", type=int, default=DEFAULT_MAX_ITER, help="Official SMOKE max iteration.")
+    parser.add_argument("--train-split", type=str, default=None, help="Optional training split override.")
+    parser.add_argument("--test-split", type=str, default=None, help="Optional validation/test split override.")
+    parser.add_argument("--max-iter", type=int, default=None, help="Optional max iteration override.")
     parser.add_argument(
         "--steps",
         type=int,
         nargs=2,
-        default=DEFAULT_STEPS,
+        default=None,
         metavar=("STEP1", "STEP2"),
-        help="Official SMOKE scheduler milestones.",
+        help="Optional scheduler milestone override.",
     )
     parser.add_argument(
         "--checkpoint-period",
         type=int,
-        default=DEFAULT_CHECKPOINT_PERIOD,
-        help="Checkpoint period passed to official config.",
+        default=None,
+        help="Optional checkpoint period override.",
     )
     parser.add_argument(
         "opts",
@@ -124,19 +127,32 @@ def main() -> None:
     )
 
     opts = list(args.opts)
-    opts = _set_opt(opts, "DATASETS.TRAIN_SPLIT", args.train_split)
-    opts = _set_opt(opts, "DATASETS.TEST_SPLIT", args.test_split)
+    opts = _set_opt_if_value(opts, "DATASETS.TRAIN_SPLIT", args.train_split)
+    opts = _set_opt_if_value(opts, "DATASETS.TEST_SPLIT", args.test_split)
     opts = _set_opt(opts, "DATASETS.DETECT_CLASSES", "('Car',)")
     opts = _set_opt(opts, "MODEL.SMOKE_HEAD.MODE", "geometry")
     opts = _set_opt(opts, "MODEL.SMOKE_HEAD.REGRESSION_HEADS", "4")
     opts = _set_opt(opts, "MODEL.SMOKE_HEAD.REGRESSION_CHANNEL", "(1,1,2)")
     opts = _set_opt(opts, "MODEL.SMOKE_HEAD.DIMENSION_REFERENCE", f"(({TRUCK_L},{TRUCK_H},{TRUCK_W}),)")
     opts = _set_opt(opts, "MODEL.SMOKE_HEAD.DEPTH_REFERENCE", f"({DEPTH_MEAN},{DEPTH_STD})")
-    opts = _set_opt(opts, "SOLVER.IMS_PER_BATCH", str(args.batch))
-    opts = _set_opt(opts, "SOLVER.MAX_ITERATION", str(args.max_iter))
-    opts = _set_opt(opts, "SOLVER.STEPS", f"({args.steps[0]},{args.steps[1]})")
-    opts = _set_opt(opts, "SOLVER.CHECKPOINT_PERIOD", str(args.checkpoint_period))
+    opts = _set_opt_if_value(
+        opts, "SOLVER.IMS_PER_BATCH", None if args.batch is None else str(args.batch)
+    )
+    opts = _set_opt_if_value(
+        opts, "SOLVER.MAX_ITERATION", None if args.max_iter is None else str(args.max_iter)
+    )
+    opts = _set_opt_if_value(
+        opts,
+        "SOLVER.STEPS",
+        None if args.steps is None else f"({args.steps[0]},{args.steps[1]})",
+    )
+    opts = _set_opt_if_value(
+        opts,
+        "SOLVER.CHECKPOINT_PERIOD",
+        None if args.checkpoint_period is None else str(args.checkpoint_period),
+    )
     opts = _set_opt(opts, "SEED", str(args.seed))
+    effective_cfg = _load_effective_cfg(smoke_dir, args.config_file, opts)
 
     requested_device = _requested_device_from_opts(opts)
     auto_mps_fallback = requested_device == "mps"
@@ -150,22 +166,30 @@ def main() -> None:
     )
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    n_train = _count_split_samples(dataset_root, args.train_split)
+    train_split = str(effective_cfg.DATASETS.TRAIN_SPLIT)
+    test_split = str(effective_cfg.DATASETS.TEST_SPLIT)
+    batch_size = int(effective_cfg.SOLVER.IMS_PER_BATCH)
+    max_iter = int(effective_cfg.SOLVER.MAX_ITERATION)
+    steps = tuple(int(step) for step in effective_cfg.SOLVER.STEPS)
+    checkpoint_period = int(effective_cfg.SOLVER.CHECKPOINT_PERIOD)
+
+    n_train = _count_split_samples(dataset_root, train_split)
     iters_per_epoch = None
-    if n_train is not None and args.batch > 0:
-        iters_per_epoch = math.ceil(n_train / args.batch)
+    if n_train is not None and batch_size > 0:
+        iters_per_epoch = math.ceil(n_train / batch_size)
 
     meta = {
         "dataset_root": str(dataset_root),
         "output_dir": str(output_dir),
-        "batch": args.batch,
+        "config_file": args.config_file,
+        "batch": batch_size,
         "seed": args.seed,
         "model_type": "geometry",
-        "train_split": args.train_split,
-        "test_split": args.test_split,
-        "max_iteration": args.max_iter,
-        "steps": list(args.steps),
-        "checkpoint_period": args.checkpoint_period,
+        "train_split": train_split,
+        "test_split": test_split,
+        "max_iteration": max_iter,
+        "steps": list(steps),
+        "checkpoint_period": checkpoint_period,
         "dimension_reference": [TRUCK_L, TRUCK_H, TRUCK_W],
         "depth_reference": [DEPTH_MEAN, DEPTH_STD],
         "iters_per_epoch": iters_per_epoch,
