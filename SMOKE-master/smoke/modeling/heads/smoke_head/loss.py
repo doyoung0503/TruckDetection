@@ -179,6 +179,7 @@ class GeometrySMOKELossComputation():
         trans_mat = torch.stack([t.get_field("trans_mat") for t in targets])
         K = torch.stack([t.get_field("K") for t in targets])
         reg_mask = torch.stack([t.get_field("reg_mask") for t in targets])
+        flip_mask = torch.stack([t.get_field("flip_mask") for t in targets])
 
         return heatmaps, dict(
             cls_ids=cls_ids,
@@ -190,6 +191,7 @@ class GeometrySMOKELossComputation():
             trans_mat=trans_mat,
             K=K,
             reg_mask=reg_mask,
+            flip_mask=flip_mask,
         )
 
     @staticmethod
@@ -232,6 +234,7 @@ class GeometrySMOKELossComputation():
         locations_bottom = targets_variables["locations"].to(device=pred_regression.device)
         dims_lhw = targets_variables["dimensions"].to(device=pred_regression.device)
         rotys = targets_variables["rotys"].to(device=pred_regression.device)
+        flip_mask = targets_variables["flip_mask"].to(device=pred_regression.device)
 
         gt_points_img = self.feature_points_to_image(proj_points, p_offsets, trans_mat)
         u_gt = gt_points_img[:, :, 0]
@@ -259,6 +262,7 @@ class GeometrySMOKELossComputation():
         pred_rotys, _ = self.smoke_coder.decode_orientation(
             pred_orientation.reshape(-1, 2),
             locations_bottom.reshape(-1, 3),
+            flip_mask=flip_mask.reshape(-1),
         )
         pred_rotys = pred_rotys.reshape_as(rotys)
 
@@ -292,6 +296,156 @@ class GeometrySMOKELossComputation():
         return hm_loss, reg_loss
 
 
+class GeometryV2SMOKELossComputation():
+    """
+    SMOKE-style geometry loss with reduced DoF.
+
+    The predictor still outputs:
+      - log_dv residual
+      - horizontal center offset
+      - orientation vector
+
+    but the regression objective is decomposed following the official SMOKE
+    philosophy:
+      - orientation loss
+      - dimension loss
+      - location loss
+
+    Since object dimensions are assumed known, the dimension term is zero.
+    """
+
+    def __init__(self, smoke_coder, cls_loss, loss_weight, max_objs):
+        self.smoke_coder = smoke_coder
+        self.cls_loss = cls_loss
+        self.loss_weight = loss_weight
+        self.max_objs = max_objs
+        self.depth_mean = float(smoke_coder.depth_ref[0].item())
+
+    def prepare_targets(self, targets):
+        heatmaps = torch.stack([t.get_field("hm") for t in targets])
+        cls_ids = torch.stack([t.get_field("cls_ids") for t in targets])
+        proj_points = torch.stack([t.get_field("proj_p") for t in targets])
+        p_offsets = torch.stack([t.get_field("p_offsets") for t in targets])
+        dimensions = torch.stack([t.get_field("dimensions") for t in targets])
+        locations = torch.stack([t.get_field("locations") for t in targets])
+        rotys = torch.stack([t.get_field("rotys") for t in targets])
+        trans_mat = torch.stack([t.get_field("trans_mat") for t in targets])
+        K = torch.stack([t.get_field("K") for t in targets])
+        reg_mask = torch.stack([t.get_field("reg_mask") for t in targets])
+        flip_mask = torch.stack([t.get_field("flip_mask") for t in targets])
+
+        return heatmaps, dict(
+            cls_ids=cls_ids,
+            proj_points=proj_points,
+            p_offsets=p_offsets,
+            dimensions=dimensions,
+            locations=locations,
+            rotys=rotys,
+            trans_mat=trans_mat,
+            K=K,
+            reg_mask=reg_mask,
+            flip_mask=flip_mask,
+        )
+
+    @staticmethod
+    def feature_points_to_image(points, offsets, trans_mats):
+        device = points.device
+        batch, max_objs, _ = points.shape
+        points = points.float() + offsets.float()
+        points_extend = torch.cat(
+            [points.reshape(-1, 2), torch.ones(batch * max_objs, 1, device=device)],
+            dim=1,
+        ).unsqueeze(-1)
+        trans_inv = trans_mats.float().inverse().unsqueeze(1).repeat(1, max_objs, 1, 1).reshape(-1, 3, 3)
+        image_points = torch.matmul(trans_inv, points_extend).squeeze(-1)
+        return image_points[:, :2].reshape(batch, max_objs, 2)
+
+    def __call__(self, predictions, targets):
+        pred_heatmap, pred_regression = predictions[0], predictions[1]
+        targets_heatmap, targets_variables = self.prepare_targets(targets)
+        hm_loss = self.cls_loss(pred_heatmap, targets_heatmap) * self.loss_weight[0]
+
+        batch, channel = pred_regression.shape[0], pred_regression.shape[1]
+        pred_regression_pois = select_point_of_interest(
+            batch,
+            targets_variables["proj_points"],
+            pred_regression,
+        ).view(batch, -1, channel)
+
+        reg_mask = targets_variables["reg_mask"].bool()
+        if reg_mask.sum() == 0:
+            return hm_loss, hm_loss.new_tensor(0.0)
+
+        pred_log_dv_delta = pred_regression_pois[:, :, 0]
+        pred_off_u = pred_regression_pois[:, :, 1]
+        pred_orientation = pred_regression_pois[:, :, 2:4]
+
+        K = targets_variables["K"].to(device=pred_regression.device)
+        trans_mat = targets_variables["trans_mat"].to(device=pred_regression.device)
+        proj_points = targets_variables["proj_points"].to(device=pred_regression.device)
+        dims_lhw = targets_variables["dimensions"].to(device=pred_regression.device)
+        locations_bottom = targets_variables["locations"].to(device=pred_regression.device)
+        rotys = targets_variables["rotys"].to(device=pred_regression.device)
+        flip_mask = targets_variables["flip_mask"].to(device=pred_regression.device)
+
+        h_cam = locations_bottom[:, :, 1]
+        h_ref = h_cam - dims_lhw[:, :, 1] / 2.0
+
+        fx = K[:, 0, 0].unsqueeze(1).expand_as(h_cam)
+        fy = K[:, 1, 1].unsqueeze(1).expand_as(h_cam)
+        cx = K[:, 0, 2].unsqueeze(1).expand_as(h_cam)
+
+        log_dv_ref = torch.log((fy * h_ref.abs()).clamp(min=1e-7) / self.depth_mean)
+        pred_log_dv = (log_dv_ref + pred_log_dv_delta).clamp(-4.0, 8.0)
+        pred_z = (fy * h_ref.abs() * torch.exp(-pred_log_dv)).clamp(min=0.5, max=120.0)
+
+        pred_offsets = torch.stack([pred_off_u, torch.zeros_like(pred_off_u)], dim=2)
+        pred_points_img = self.feature_points_to_image(proj_points, pred_offsets, trans_mat)
+        pred_u = pred_points_img[:, :, 0]
+        pred_x = (pred_u - cx) * pred_z / fx.clamp(min=1e-7)
+        pred_locations_bottom = torch.stack([pred_x, h_cam, pred_z], dim=2)
+
+        pred_rotys = self.smoke_coder.decode_orientation(
+            pred_orientation.reshape(-1, 2),
+            locations_bottom.reshape(-1, 3),
+            flip_mask=flip_mask.reshape(-1),
+        )
+        pred_rotys = pred_rotys.reshape_as(rotys)
+
+        gt_box3d = self.smoke_coder.encode_box3d(
+            rotys.reshape(-1),
+            dims_lhw.reshape(-1, 3),
+            locations_bottom.reshape(-1, 3),
+        )
+        pred_box3d_orient = self.smoke_coder.encode_box3d(
+            pred_rotys.reshape(-1),
+            dims_lhw.reshape(-1, 3),
+            locations_bottom.reshape(-1, 3),
+        )
+        pred_box3d_loc = self.smoke_coder.encode_box3d(
+            rotys.reshape(-1),
+            dims_lhw.reshape(-1, 3),
+            pred_locations_bottom.reshape(-1, 3),
+        )
+
+        box_mask = reg_mask.reshape(-1, 1, 1).expand_as(gt_box3d)
+        reg_loss_ori = F.l1_loss(
+            pred_box3d_orient * box_mask,
+            gt_box3d * box_mask,
+            reduction="sum",
+        ) / (self.loss_weight[1] * self.max_objs)
+
+        reg_loss_dim = hm_loss.new_tensor(0.0)
+
+        reg_loss_loc = F.l1_loss(
+            pred_box3d_loc * box_mask,
+            gt_box3d * box_mask,
+            reduction="sum",
+        ) / (self.loss_weight[1] * self.max_objs)
+
+        return hm_loss, reg_loss_ori + reg_loss_dim + reg_loss_loc
+
+
 def make_smoke_loss_evaluator(cfg):
     smoke_coder = SMOKECoder(
         cfg.MODEL.SMOKE_HEAD.DEPTH_REFERENCE,
@@ -305,6 +459,13 @@ def make_smoke_loss_evaluator(cfg):
 
     if cfg.MODEL.SMOKE_HEAD.MODE == "geometry":
         loss_evaluator = GeometrySMOKELossComputation(
+            smoke_coder,
+            cls_loss=focal_loss,
+            loss_weight=cfg.MODEL.SMOKE_HEAD.LOSS_WEIGHT,
+            max_objs=cfg.DATASETS.MAX_OBJECTS,
+        )
+    elif cfg.MODEL.SMOKE_HEAD.MODE == "geometry_v2":
+        loss_evaluator = GeometryV2SMOKELossComputation(
             smoke_coder,
             cls_loss=focal_loss,
             loss_weight=cfg.MODEL.SMOKE_HEAD.LOSS_WEIGHT,

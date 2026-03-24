@@ -30,6 +30,8 @@ def _build_command(args: argparse.Namespace) -> list[str]:
         module = "train.run_official_smoke_baseline"
     elif args.model == "geometry":
         module = "train.run_geometry_smoke"
+    elif args.model == "geometry_v2":
+        module = "train.run_geometry_smoke_v2"
     else:
         raise ValueError(f"Unsupported model type: {args.model}")
 
@@ -62,7 +64,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--model",
-        choices=("baseline", "geometry"),
+        choices=("baseline", "geometry", "geometry_v2"),
         required=True,
         help="Which model launcher to run.",
     )

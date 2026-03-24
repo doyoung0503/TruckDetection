@@ -42,10 +42,10 @@ class SMOKEPredictor(nn.Module):
                 cfg.MODEL.SMOKE_HEAD.REGRESSION_CHANNEL, cfg.MODEL.SMOKE_HEAD.REGRESSION_HEADS
             )
 
-        if self.head_mode == "geometry":
+        if self.head_mode in ("geometry", "geometry_v2"):
             if tuple(regression_channels) != (1, 1, 2):
                 raise ValueError(
-                    "Geometry mode expects REGRESSION_CHANNEL=(1, 1, 2), "
+                    "Geometry modes expect REGRESSION_CHANNEL=(1, 1, 2), "
                     f"got {tuple(regression_channels)}"
                 )
             self.log_dv_channel = slice(0, 1, 1)
@@ -100,7 +100,7 @@ class SMOKEPredictor(nn.Module):
         head_regression = self.regression_head(features)
 
         head_class = sigmoid_hm(head_class)
-        if self.head_mode != "geometry":
+        if self.head_mode not in ("geometry", "geometry_v2"):
             offset_dims = head_regression[:, self.dim_channel, ...].clone()
             head_regression[:, self.dim_channel, ...] = torch.sigmoid(offset_dims) - 0.5
 

@@ -237,7 +237,7 @@ def make_smoke_post_processor(cfg):
         cfg.MODEL.DEVICE,
     )
 
-    if cfg.MODEL.SMOKE_HEAD.MODE == "geometry":
+    if cfg.MODEL.SMOKE_HEAD.MODE in ("geometry", "geometry_v2"):
         postprocessor = GeometryPostProcessor(
             smoke_coder,
             cfg.MODEL.SMOKE_HEAD.REGRESSION_HEADS,
