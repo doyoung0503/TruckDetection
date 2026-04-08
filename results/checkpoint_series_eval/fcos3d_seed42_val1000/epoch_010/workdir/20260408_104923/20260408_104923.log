@@ -1,0 +1,601 @@
+2026/04/08 10:49:23 - mmengine - INFO - 
+------------------------------------------------------------
+System environment:
+    sys.platform: linux
+    Python: 3.10.20 (main, Mar 11 2026, 17:46:40) [GCC 14.3.0]
+    CUDA available: True
+    MUSA available: False
+    numpy_random_seed: 80076369
+    GPU 0: NVIDIA RTX A6000
+    CUDA_HOME: /usr/local/cuda
+    NVCC: Cuda compilation tools, release 11.7, V11.7.99
+    GCC: gcc (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0
+    PyTorch: 2.1.2+cu121
+    PyTorch compiling details: PyTorch built with:
+  - GCC 9.3
+  - C++ Version: 201703
+  - Intel(R) oneAPI Math Kernel Library Version 2022.2-Product Build 20220804 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v3.1.1 (Git Hash 64f6bcbcbab628e96f33a62c3e975f8535a7bde4)
+  - OpenMP 201511 (a.k.a. OpenMP 4.5)
+  - LAPACK is enabled (usually provided by MKL)
+  - NNPACK is enabled
+  - CPU capability usage: AVX512
+  - CUDA Runtime 12.1
+  - NVCC architecture flags: -gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;-gencode;arch=compute_70,code=sm_70;-gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_80,code=sm_80;-gencode;arch=compute_86,code=sm_86;-gencode;arch=compute_90,code=sm_90
+  - CuDNN 8.9.2
+  - Magma 2.6.1
+  - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, CUDA_VERSION=12.1, CUDNN_VERSION=8.9.2, CXX_COMPILER=/opt/rh/devtoolset-9/root/usr/bin/c++, CXX_FLAGS= -D_GLIBCXX_USE_CXX11_ABI=0 -fabi-version=11 -fvisibility-inlines-hidden -DUSE_PTHREADPOOL -DNDEBUG -DUSE_KINETO -DLIBKINETO_NOROCTRACER -DUSE_FBGEMM -DUSE_QNNPACK -DUSE_PYTORCH_QNNPACK -DUSE_XNNPACK -DSYMBOLICATE_MOBILE_DEBUG_HANDLE -O2 -fPIC -Wall -Wextra -Werror=return-type -Werror=non-virtual-dtor -Werror=bool-operation -Wnarrowing -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas -Wno-unused-parameter -Wno-unused-function -Wno-unused-result -Wno-strict-overflow -Wno-strict-aliasing -Wno-stringop-overflow -Wno-psabi -Wno-error=pedantic -Wno-error=old-style-cast -Wno-invalid-partial-specialization -Wno-unused-private-field -Wno-aligned-allocation-unavailable -Wno-missing-braces -fdiagnostics-color=always -faligned-new -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Werror=format -Werror=cast-function-type -Wno-stringop-overflow, LAPACK_INFO=mkl, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, TORCH_DISABLE_GPU_ASSERTS=ON, TORCH_VERSION=2.1.2, USE_CUDA=ON, USE_CUDNN=ON, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=1, USE_NNPACK=ON, USE_OPENMP=ON, USE_ROCM=OFF, 
+
+    TorchVision: 0.16.2+cu121
+    OpenCV: 4.11.0
+    MMEngine: 0.10.7
+
+Runtime environment:
+    cudnn_benchmark: False
+    mp_cfg: {'mp_start_method': 'fork', 'opencv_num_threads': 0}
+    dist_cfg: {'backend': 'nccl'}
+    seed: 80076369
+    Distributed launcher: none
+    Distributed training: False
+    GPU number: 1
+------------------------------------------------------------
+
+2026/04/08 10:49:24 - mmengine - INFO - Config:
+auto_scale_lr = dict(base_batch_size=16, enable=False)
+backend_args = None
+class_names = [
+    'Car',
+]
+custom_hooks = [
+    dict(
+        depth_index=2,
+        stage2_weight=1.0,
+        switch_epoch=6,
+        type='DepthWeightSchedulerHook'),
+]
+custom_imports = dict(
+    allow_failed_imports=False, imports=[
+        'truck_hooks',
+    ])
+data_root = '/home/dy-jang/projects/v3/kitti_mmdet3d_fcos3d/'
+dataset_type = 'KittiDataset'
+default_hooks = dict(
+    checkpoint=dict(
+        by_epoch=True,
+        interval=1,
+        max_keep_ckpts=12,
+        save_last=True,
+        type='CheckpointHook'),
+    logger=dict(interval=20, type='LoggerHook'),
+    param_scheduler=dict(type='ParamSchedulerHook'),
+    sampler_seed=dict(type='DistSamplerSeedHook'),
+    timer=dict(type='IterTimerHook'),
+    visualization=dict(type='Det3DVisualizationHook'))
+default_scope = 'mmdet3d'
+env_cfg = dict(
+    cudnn_benchmark=False,
+    dist_cfg=dict(backend='nccl'),
+    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0))
+eval_pipeline = [
+    dict(backend_args=None, type='LoadImageFromFileMono3D'),
+    dict(keys=[
+        'img',
+    ], type='Pack3DDetInputs'),
+]
+input_modality = dict(use_camera=True, use_lidar=False)
+launcher = 'none'
+load_from = '/home/dy-jang/projects/TruckDetection-main/results/fcos3d/seed_42/epoch_10.pth'
+log_level = 'INFO'
+log_processor = dict(by_epoch=True, type='LogProcessor', window_size=50)
+metainfo = dict(classes=[
+    'Car',
+])
+model = dict(
+    backbone=dict(
+        dcn=dict(deform_groups=1, fallback_on_stride=False, type='DCNv2'),
+        depth=101,
+        frozen_stages=0,
+        init_cfg=dict(
+            checkpoint='open-mmlab://detectron2/resnet101_caffe',
+            type='Pretrained'),
+        norm_cfg=dict(requires_grad=False, type='BN'),
+        norm_eval=True,
+        num_stages=4,
+        out_indices=(
+            0,
+            1,
+            2,
+            3,
+        ),
+        stage_with_dcn=(
+            False,
+            False,
+            True,
+            True,
+        ),
+        style='caffe',
+        type='mmdet.ResNet'),
+    bbox_head=dict(
+        attr_branch=(256, ),
+        bbox_code_size=7,
+        bbox_coder=dict(
+            base_depths=((
+                5.9990189126,
+                2.4878107717,
+            ), ),
+            base_dims=((
+                5.103683,
+                1.918924,
+                1.868429,
+            ), ),
+            code_size=7,
+            type='FCOS3DBBoxCoder'),
+        center_sampling=True,
+        centerness_on_reg=True,
+        cls_branch=(256, ),
+        conv_bias=True,
+        dcn_on_last_conv=True,
+        diff_rad_by_sin=True,
+        dir_branch=(256, ),
+        dir_limit_offset=0,
+        dir_offset=0.7854,
+        feat_channels=256,
+        group_reg_dims=(
+            2,
+            1,
+            3,
+            1,
+        ),
+        in_channels=256,
+        loss_attr=dict(
+            loss_weight=1.0, type='mmdet.CrossEntropyLoss', use_sigmoid=False),
+        loss_bbox=dict(
+            beta=0.1111111111111111,
+            loss_weight=1.0,
+            type='mmdet.SmoothL1Loss'),
+        loss_centerness=dict(
+            loss_weight=1.0, type='mmdet.CrossEntropyLoss', use_sigmoid=True),
+        loss_cls=dict(
+            alpha=0.25,
+            gamma=2.0,
+            loss_weight=1.0,
+            type='mmdet.FocalLoss',
+            use_sigmoid=True),
+        loss_dir=dict(
+            loss_weight=1.0, type='mmdet.CrossEntropyLoss', use_sigmoid=False),
+        norm_on_bbox=True,
+        num_classes=1,
+        pred_attrs=False,
+        pred_velo=False,
+        reg_branch=(
+            (256, ),
+            (256, ),
+            (256, ),
+            (256, ),
+        ),
+        stacked_convs=2,
+        strides=[
+            8,
+            16,
+            32,
+            64,
+            128,
+        ],
+        type='FCOSMono3DHead',
+        use_direction_classifier=True),
+    data_preprocessor=dict(
+        bgr_to_rgb=False,
+        mean=[
+            103.53,
+            116.28,
+            123.675,
+        ],
+        pad_size_divisor=32,
+        std=[
+            1.0,
+            1.0,
+            1.0,
+        ],
+        type='Det3DDataPreprocessor'),
+    neck=dict(
+        add_extra_convs='on_output',
+        in_channels=[
+            256,
+            512,
+            1024,
+            2048,
+        ],
+        num_outs=5,
+        out_channels=256,
+        relu_before_extra_convs=True,
+        start_level=1,
+        type='mmdet.FPN'),
+    test_cfg=dict(
+        max_per_img=200,
+        min_bbox_size=0,
+        nms_across_levels=False,
+        nms_pre=1000,
+        nms_thr=0.8,
+        score_thr=0.05,
+        use_rotate_nms=True),
+    train_cfg=dict(
+        allowed_border=0,
+        code_weight=[
+            1.0,
+            1.0,
+            0.2,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+        ],
+        debug=False,
+        pos_weight=-1),
+    type='FCOSMono3D')
+optim_wrapper = dict(
+    accumulative_counts=16,
+    clip_grad=dict(max_norm=35, norm_type=2),
+    optimizer=dict(lr=0.002, momentum=0.9, type='SGD', weight_decay=0.0001),
+    paramwise_cfg=dict(bias_decay_mult=0.0, bias_lr_mult=2.0),
+    type='OptimWrapper')
+param_scheduler = [
+    dict(
+        begin=0,
+        by_epoch=False,
+        end=500,
+        start_factor=0.3333333333333333,
+        type='LinearLR'),
+    dict(
+        begin=0,
+        by_epoch=True,
+        end=12,
+        gamma=0.1,
+        milestones=[
+            8,
+            11,
+        ],
+        type='MultiStepLR'),
+]
+resume = False
+test_cfg = dict(type='TestLoop')
+test_dataloader = dict(
+    batch_size=1,
+    dataset=dict(
+        ann_file='v3_infos_val.pkl',
+        backend_args=None,
+        box_type_3d='Camera',
+        data_prefix=dict(img='training/image_2'),
+        data_root='/home/dy-jang/projects/v3/kitti_mmdet3d_fcos3d',
+        load_type='fov_image_based',
+        metainfo=dict(classes=[
+            'Car',
+        ]),
+        modality=dict(use_camera=True, use_lidar=False),
+        pipeline=[
+            dict(backend_args=None, type='LoadImageFromFileMono3D'),
+            dict(keep_ratio=True, scale=(
+                1280,
+                384,
+            ), type='mmdet.Resize'),
+            dict(keys=[
+                'img',
+            ], type='Pack3DDetInputs'),
+        ],
+        test_mode=True,
+        type='KittiDataset'),
+    drop_last=False,
+    num_workers=2,
+    persistent_workers=True,
+    sampler=dict(shuffle=False, type='DefaultSampler'))
+test_evaluator = dict(
+    ann_file='/home/dy-jang/projects/v3/kitti_mmdet3d_fcos3d/v3_infos_val.pkl',
+    backend_args=None,
+    format_only=True,
+    metric='bbox',
+    submission_prefix=
+    '/home/dy-jang/projects/TruckDetection-main/results/checkpoint_series_eval/fcos3d_seed42_val1000/epoch_010/submission',
+    type='KittiMetric')
+test_pipeline = [
+    dict(backend_args=None, type='LoadImageFromFileMono3D'),
+    dict(keep_ratio=True, scale=(
+        1280,
+        384,
+    ), type='mmdet.Resize'),
+    dict(keys=[
+        'img',
+    ], type='Pack3DDetInputs'),
+]
+train_cfg = dict(max_epochs=12, type='EpochBasedTrainLoop', val_interval=1)
+train_dataloader = dict(
+    batch_size=2,
+    dataset=dict(
+        ann_file='v3_infos_train.pkl',
+        backend_args=None,
+        box_type_3d='Camera',
+        data_prefix=dict(img='training/image_2'),
+        data_root='/home/dy-jang/projects/v3/kitti_mmdet3d_fcos3d/',
+        load_type='fov_image_based',
+        metainfo=dict(classes=[
+            'Car',
+        ]),
+        modality=dict(use_camera=True, use_lidar=False),
+        pipeline=[
+            dict(backend_args=None, type='LoadImageFromFileMono3D'),
+            dict(
+                type='LoadAnnotations3D',
+                with_attr_label=False,
+                with_bbox=True,
+                with_bbox_3d=True,
+                with_bbox_depth=True,
+                with_label=True,
+                with_label_3d=True),
+            dict(keep_ratio=True, scale=(
+                1280,
+                384,
+            ), type='mmdet.Resize'),
+            dict(flip_ratio_bev_horizontal=0.5, type='RandomFlip3D'),
+            dict(
+                keys=[
+                    'img',
+                    'gt_bboxes',
+                    'gt_bboxes_labels',
+                    'gt_bboxes_3d',
+                    'gt_labels_3d',
+                    'centers_2d',
+                    'depths',
+                ],
+                type='Pack3DDetInputs'),
+        ],
+        test_mode=False,
+        type='KittiDataset'),
+    num_workers=2,
+    persistent_workers=True,
+    sampler=dict(shuffle=True, type='DefaultSampler'))
+train_pipeline = [
+    dict(backend_args=None, type='LoadImageFromFileMono3D'),
+    dict(
+        type='LoadAnnotations3D',
+        with_attr_label=False,
+        with_bbox=True,
+        with_bbox_3d=True,
+        with_bbox_depth=True,
+        with_label=True,
+        with_label_3d=True),
+    dict(keep_ratio=True, scale=(
+        1280,
+        384,
+    ), type='mmdet.Resize'),
+    dict(flip_ratio_bev_horizontal=0.5, type='RandomFlip3D'),
+    dict(
+        keys=[
+            'img',
+            'gt_bboxes',
+            'gt_bboxes_labels',
+            'gt_bboxes_3d',
+            'gt_labels_3d',
+            'centers_2d',
+            'depths',
+        ],
+        type='Pack3DDetInputs'),
+]
+val_cfg = dict(type='ValLoop')
+val_dataloader = dict(
+    batch_size=1,
+    dataset=dict(
+        ann_file='v3_infos_val.pkl',
+        backend_args=None,
+        box_type_3d='Camera',
+        data_prefix=dict(img='training/image_2'),
+        data_root='/home/dy-jang/projects/v3/kitti_mmdet3d_fcos3d/',
+        load_type='fov_image_based',
+        metainfo=dict(classes=[
+            'Car',
+        ]),
+        modality=dict(use_camera=True, use_lidar=False),
+        pipeline=[
+            dict(backend_args=None, type='LoadImageFromFileMono3D'),
+            dict(keep_ratio=True, scale=(
+                1280,
+                384,
+            ), type='mmdet.Resize'),
+            dict(keys=[
+                'img',
+            ], type='Pack3DDetInputs'),
+        ],
+        test_mode=True,
+        type='KittiDataset'),
+    drop_last=False,
+    num_workers=2,
+    persistent_workers=True,
+    sampler=dict(shuffle=False, type='DefaultSampler'))
+val_evaluator = dict(
+    ann_file='/home/dy-jang/projects/v3/kitti_mmdet3d_fcos3d/v3_infos_val.pkl',
+    backend_args=None,
+    metric='bbox',
+    type='KittiMetric')
+vis_backends = [
+    dict(type='LocalVisBackend'),
+]
+visualizer = dict(
+    name='visualizer',
+    type='Det3DLocalVisualizer',
+    vis_backends=[
+        dict(type='LocalVisBackend'),
+    ])
+work_dir = '/home/dy-jang/projects/TruckDetection-main/results/checkpoint_series_eval/fcos3d_seed42_val1000/epoch_010/workdir'
+
+2026/04/08 10:49:24 - mmengine - INFO - Distributed training is not used, all SyncBatchNorm (SyncBN) layers in the model will be automatically reverted to BatchNormXd layers if they are used.
+2026/04/08 10:49:24 - mmengine - INFO - Hooks will be executed in the following order:
+before_run:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+before_train:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+before_train_epoch:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(NORMAL      ) DistSamplerSeedHook                
+(NORMAL      ) DepthWeightSchedulerHook           
+ -------------------- 
+before_train_iter:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+after_train_iter:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(BELOW_NORMAL) LoggerHook                         
+(LOW         ) ParamSchedulerHook                 
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+after_train_epoch:
+(NORMAL      ) IterTimerHook                      
+(LOW         ) ParamSchedulerHook                 
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+before_val:
+(VERY_HIGH   ) RuntimeInfoHook                    
+ -------------------- 
+before_val_epoch:
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+before_val_iter:
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+after_val_iter:
+(NORMAL      ) IterTimerHook                      
+(NORMAL      ) Det3DVisualizationHook             
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+after_val_epoch:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(BELOW_NORMAL) LoggerHook                         
+(LOW         ) ParamSchedulerHook                 
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+after_val:
+(VERY_HIGH   ) RuntimeInfoHook                    
+ -------------------- 
+after_train:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+before_test:
+(VERY_HIGH   ) RuntimeInfoHook                    
+ -------------------- 
+before_test_epoch:
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+before_test_iter:
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+after_test_iter:
+(NORMAL      ) IterTimerHook                      
+(NORMAL      ) Det3DVisualizationHook             
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+after_test_epoch:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+after_test:
+(VERY_HIGH   ) RuntimeInfoHook                    
+ -------------------- 
+after_run:
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+2026/04/08 10:49:25 - mmengine - INFO - ------------------------------
+2026/04/08 10:49:25 - mmengine - INFO - The length of test dataset: 1000
+2026/04/08 10:49:25 - mmengine - INFO - The number of instances per category in the dataset:
++----------+--------+
+| category | number |
++----------+--------+
+| Car      | 1000   |
++----------+--------+
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.0.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.1.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.2.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.3.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.4.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.5.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.6.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.7.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.8.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.9.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.10.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.11.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.12.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.13.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.14.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.15.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.16.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.17.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.18.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.19.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.20.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.21.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.22.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer4.0.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer4.1.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack backbone.layer4.2.conv2 is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack bbox_head.cls_convs.1.conv is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - ModulatedDeformConvPack bbox_head.reg_convs.1.conv is upgraded to version 2.
+2026/04/08 10:49:25 - mmengine - INFO - Load checkpoint from /home/dy-jang/projects/TruckDetection-main/results/fcos3d/seed_42/epoch_10.pth
+2026/04/08 10:49:26 - mmengine - INFO - Epoch(test) [  20/1000]    eta: 0:00:52  time: 0.0533  data_time: 0.0031  memory: 427  
+2026/04/08 10:49:27 - mmengine - INFO - Epoch(test) [  40/1000]    eta: 0:00:40  time: 0.0419  data_time: 0.0019  memory: 427  
+2026/04/08 10:49:27 - mmengine - INFO - Epoch(test) [  60/1000]    eta: 0:00:35  time: 0.0304  data_time: 0.0008  memory: 427  
+2026/04/08 10:49:28 - mmengine - INFO - Epoch(test) [  80/1000]    eta: 0:00:33  time: 0.0305  data_time: 0.0008  memory: 427  
+2026/04/08 10:49:28 - mmengine - INFO - Epoch(test) [ 100/1000]    eta: 0:00:31  time: 0.0304  data_time: 0.0008  memory: 427  
+2026/04/08 10:49:29 - mmengine - INFO - Epoch(test) [ 120/1000]    eta: 0:00:30  time: 0.0302  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:30 - mmengine - INFO - Epoch(test) [ 140/1000]    eta: 0:00:28  time: 0.0302  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:30 - mmengine - INFO - Epoch(test) [ 160/1000]    eta: 0:00:27  time: 0.0302  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:31 - mmengine - INFO - Epoch(test) [ 180/1000]    eta: 0:00:26  time: 0.0302  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:31 - mmengine - INFO - Epoch(test) [ 200/1000]    eta: 0:00:26  time: 0.0302  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:32 - mmengine - INFO - Epoch(test) [ 220/1000]    eta: 0:00:25  time: 0.0301  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:33 - mmengine - INFO - Epoch(test) [ 240/1000]    eta: 0:00:24  time: 0.0302  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:33 - mmengine - INFO - Epoch(test) [ 260/1000]    eta: 0:00:23  time: 0.0302  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:34 - mmengine - INFO - Epoch(test) [ 280/1000]    eta: 0:00:22  time: 0.0301  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:34 - mmengine - INFO - Epoch(test) [ 300/1000]    eta: 0:00:22  time: 0.0300  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:35 - mmengine - INFO - Epoch(test) [ 320/1000]    eta: 0:00:21  time: 0.0300  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:36 - mmengine - INFO - Epoch(test) [ 340/1000]    eta: 0:00:20  time: 0.0301  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:36 - mmengine - INFO - Epoch(test) [ 360/1000]    eta: 0:00:20  time: 0.0302  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:37 - mmengine - INFO - Epoch(test) [ 380/1000]    eta: 0:00:19  time: 0.0302  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:38 - mmengine - INFO - Epoch(test) [ 400/1000]    eta: 0:00:18  time: 0.0302  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:38 - mmengine - INFO - Epoch(test) [ 420/1000]    eta: 0:00:18  time: 0.0301  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:39 - mmengine - INFO - Epoch(test) [ 440/1000]    eta: 0:00:17  time: 0.0301  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:39 - mmengine - INFO - Epoch(test) [ 460/1000]    eta: 0:00:16  time: 0.0301  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:40 - mmengine - INFO - Epoch(test) [ 480/1000]    eta: 0:00:16  time: 0.0302  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:41 - mmengine - INFO - Epoch(test) [ 500/1000]    eta: 0:00:15  time: 0.0300  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:41 - mmengine - INFO - Epoch(test) [ 520/1000]    eta: 0:00:14  time: 0.0300  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:42 - mmengine - INFO - Epoch(test) [ 540/1000]    eta: 0:00:14  time: 0.0301  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:42 - mmengine - INFO - Epoch(test) [ 560/1000]    eta: 0:00:13  time: 0.0301  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:43 - mmengine - INFO - Epoch(test) [ 580/1000]    eta: 0:00:12  time: 0.0301  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:44 - mmengine - INFO - Epoch(test) [ 600/1000]    eta: 0:00:12  time: 0.0301  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:44 - mmengine - INFO - Epoch(test) [ 620/1000]    eta: 0:00:11  time: 0.0301  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:45 - mmengine - INFO - Epoch(test) [ 640/1000]    eta: 0:00:11  time: 0.0301  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:45 - mmengine - INFO - Epoch(test) [ 660/1000]    eta: 0:00:10  time: 0.0301  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:46 - mmengine - INFO - Epoch(test) [ 680/1000]    eta: 0:00:09  time: 0.0301  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:47 - mmengine - INFO - Epoch(test) [ 700/1000]    eta: 0:00:09  time: 0.0301  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:47 - mmengine - INFO - Epoch(test) [ 720/1000]    eta: 0:00:08  time: 0.0301  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:48 - mmengine - INFO - Epoch(test) [ 740/1000]    eta: 0:00:08  time: 0.0302  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:48 - mmengine - INFO - Epoch(test) [ 760/1000]    eta: 0:00:07  time: 0.0302  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:49 - mmengine - INFO - Epoch(test) [ 780/1000]    eta: 0:00:06  time: 0.0302  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:50 - mmengine - INFO - Epoch(test) [ 800/1000]    eta: 0:00:06  time: 0.0302  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:50 - mmengine - INFO - Epoch(test) [ 820/1000]    eta: 0:00:05  time: 0.0301  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:51 - mmengine - INFO - Epoch(test) [ 840/1000]    eta: 0:00:04  time: 0.0301  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:51 - mmengine - INFO - Epoch(test) [ 860/1000]    eta: 0:00:04  time: 0.0302  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:52 - mmengine - INFO - Epoch(test) [ 880/1000]    eta: 0:00:03  time: 0.0302  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:53 - mmengine - INFO - Epoch(test) [ 900/1000]    eta: 0:00:03  time: 0.0302  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:53 - mmengine - INFO - Epoch(test) [ 920/1000]    eta: 0:00:02  time: 0.0302  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:54 - mmengine - INFO - Epoch(test) [ 940/1000]    eta: 0:00:01  time: 0.0302  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:54 - mmengine - INFO - Epoch(test) [ 960/1000]    eta: 0:00:01  time: 0.0302  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:55 - mmengine - INFO - Epoch(test) [ 980/1000]    eta: 0:00:00  time: 0.0302  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:56 - mmengine - INFO - Epoch(test) [1000/1000]    eta: 0:00:00  time: 0.0301  data_time: 0.0007  memory: 427  
+2026/04/08 10:49:56 - mmengine - INFO - results are saved in /home/dy-jang/projects/TruckDetection-main/results/checkpoint_series_eval/fcos3d_seed42_val1000/epoch_010
+2026/04/08 10:49:56 - mmengine - INFO - Epoch(test) [1000/1000]    data_time: 0.0008  time: 0.0306

@@ -1,0 +1,629 @@
+[2026-04-07 16:54:45,476] smoke INFO: Using 1 GPUs
+[2026-04-07 16:54:45,476] smoke INFO: Collecting environment info
+[2026-04-07 16:54:47,147] smoke INFO: 
+PyTorch version: 2.5.1+cu121
+Is debug build: False
+CUDA used to build PyTorch: 12.1
+ROCM used to build PyTorch: N/A
+
+OS: Ubuntu 22.04.4 LTS (x86_64)
+GCC version: (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0
+Clang version: Could not collect
+CMake version: Could not collect
+Libc version: glibc-2.35
+
+Python version: 3.12.7 | packaged by Anaconda, Inc. | (main, Oct  4 2024, 13:27:36) [GCC 11.2.0] (64-bit runtime)
+Python platform: Linux-6.8.0-106-generic-x86_64-with-glibc2.35
+Is CUDA available: False
+CUDA runtime version: No CUDA
+CUDA_MODULE_LOADING set to: N/A
+GPU models and configuration: No CUDA
+Nvidia driver version: No CUDA
+cuDNN version: No CUDA
+HIP runtime version: N/A
+MIOpen runtime version: N/A
+Is XNNPACK available: True
+
+CPU:
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           48 bits physical, 48 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  32
+On-line CPU(s) list:                     0-31
+Vendor ID:                               AuthenticAMD
+Model name:                              AMD Ryzen 9 7950X3D 16-Core Processor
+CPU family:                              25
+Model:                                   97
+Thread(s) per core:                      2
+Core(s) per socket:                      16
+Socket(s):                               1
+Stepping:                                2
+CPU max MHz:                             5759.0000
+CPU min MHz:                             545.0000
+BogoMIPS:                                8383.69
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good amd_lbr_v2 nopl nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba perfmon_v2 ibrs ibpb stibp ibrs_enhanced vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk avx512_bf16 clzero irperf xsaveerptr rdpru wbnoinvd cppc amd_ibpb_ret arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic vgif x2avic v_spec_ctrl vnmi avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq rdpid overflow_recov succor smca fsrm flush_l1d ibpb_exit_to_user
+Virtualization:                          AMD-V
+L1d cache:                               512 KiB (16 instances)
+L1i cache:                               512 KiB (16 instances)
+L2 cache:                                16 MiB (16 instances)
+L3 cache:                                128 MiB (2 instances)
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0-31
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+Vulnerability Meltdown:                  Not affected
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Reg file data sampling:    Not affected
+Vulnerability Retbleed:                  Not affected
+Vulnerability Spec rstack overflow:      Mitigation; Safe RET
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; STIBP always-on; PBRSB-eIBRS Not affected; BHI Not affected
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsa:                       Vulnerable: Clear CPU buffers attempted, no microcode
+Vulnerability Tsx async abort:           Not affected
+Vulnerability Vmscape:                   Mitigation; IBPB before exit to userspace
+
+Versions of relevant libraries:
+[pip3] flake8==7.0.0
+[pip3] mypy==1.11.2
+[pip3] mypy-extensions==1.0.0
+[pip3] numpy==1.26.4
+[pip3] numpydoc==1.7.0
+[pip3] torch==2.5.1+cu121
+[pip3] torchvision==0.20.1+cu121
+[pip3] triton==3.1.0
+[conda] _anaconda_depends         2024.10             py312_mkl_0  
+[conda] blas                      1.0                         mkl  
+[conda] mkl                       2023.1.0         h213fc3f_46344  
+[conda] mkl-service               2.4.0           py312h5eee18b_1  
+[conda] mkl_fft                   1.3.10          py312h5eee18b_0  
+[conda] mkl_random                1.2.7           py312h526ad5a_0  
+[conda] numpy                     1.26.4          py312hc5e2394_0  
+[conda] numpy-base                1.26.4          py312h0da6c21_0  
+[conda] numpydoc                  1.7.0           py312h06a4308_0  
+[conda] torch                     2.5.1+cu121              pypi_0    pypi
+[conda] torchvision               0.20.1+cu121             pypi_0    pypi
+[conda] triton                    3.1.0                    pypi_0    pypi
+        Pillow (10.4.0)
+[2026-04-07 16:54:47,147] smoke INFO: Namespace(config_file='configs/smoke_geometry_v2_b16_60ep.yaml', eval_only=True, ckpt=None, num_gpus=1, num_machines=1, machine_rank=0, dist_url='tcp://127.0.0.1:50173', opts=['MODEL.WEIGHT', '/home/dy-jang/projects/TruckDetection-main/results/geometry_v2/seed_64/model_0014000.pth', 'PATHS_CATALOG', '/home/dy-jang/projects/TruckDetection-main/results/best3d_eval_takamatsu100/geometry_v2_seed64/paths_catalog_eval_training_root.py', 'DATASETS.TEST_SPLIT', 'val', 'DATASETS.DETECT_CLASSES', "('Car',)", 'MODEL.SMOKE_HEAD.MODE', 'geometry_v2', 'MODEL.SMOKE_HEAD.REGRESSION_HEADS', '4', 'MODEL.SMOKE_HEAD.REGRESSION_CHANNEL', '(1,1,2)', 'MODEL.SMOKE_HEAD.DIMENSION_REFERENCE', '((9.8,3.3,2.5),)', 'MODEL.SMOKE_HEAD.DEPTH_REFERENCE', '(6.15,2.48)', 'SEED', '64', 'OUTPUT_DIR', '/home/dy-jang/projects/TruckDetection-main/results/best3d_eval_takamatsu100/geometry_v2_seed64/model_0014000'])
+[2026-04-07 16:54:47,147] smoke INFO: Loaded configuration file configs/smoke_geometry_v2_b16_60ep.yaml
+[2026-04-07 16:54:47,147] smoke INFO: 
+MODEL:
+  WEIGHT: "catalog://ImageNetPretrained/DLA34"
+  SMOKE_HEAD:
+    MODE: "geometry_v2"
+    REGRESSION_HEADS: 4
+    REGRESSION_CHANNEL: (1, 1, 2)
+    DIMENSION_REFERENCE: ((9.8, 3.3, 2.5),)
+    DEPTH_REFERENCE: (6.15, 2.48)
+INPUT:
+  FLIP_PROB_TRAIN: 0.5
+  SHIFT_SCALE_PROB_TRAIN: 0.3
+DATASETS:
+  DETECT_CLASSES: ("Car",)
+  TRAIN: ("kitti_train",)
+  TEST: ("kitti_test",)
+  TRAIN_SPLIT: "train"
+  TEST_SPLIT: "val"
+SOLVER:
+  BASE_LR: 2.5e-4
+  STEPS: (6250, 10000)
+  MAX_ITERATION: 15000
+  CHECKPOINT_PERIOD: 1000
+  IMS_PER_BATCH: 16
+
+[2026-04-07 16:54:47,148] smoke INFO: Running with config:
+CUDNN_BENCHMARK: True
+DATALOADER:
+  ASPECT_RATIO_GROUPING: False
+  NUM_WORKERS: 4
+  SIZE_DIVISIBILITY: 0
+DATASETS:
+  DETECT_CLASSES: ('Car',)
+  MAX_OBJECTS: 30
+  TEST: ('kitti_test',)
+  TEST_SPLIT: val
+  TRAIN: ('kitti_train',)
+  TRAIN_SPLIT: train
+INPUT:
+  FLIP_PROB_TRAIN: 0.5
+  HEIGHT_TEST: 384
+  HEIGHT_TRAIN: 384
+  PIXEL_MEAN: [0.485, 0.456, 0.406]
+  PIXEL_STD: [0.229, 0.224, 0.225]
+  SHIFT_SCALE_PROB_TRAIN: 0.3
+  SHIFT_SCALE_TRAIN: (0.2, 0.4)
+  TO_BGR: True
+  WIDTH_TEST: 1280
+  WIDTH_TRAIN: 1280
+MODEL:
+  BACKBONE:
+    BACKBONE_OUT_CHANNELS: 64
+    CONV_BODY: DLA-34-DCN
+    DOWN_RATIO: 4
+    FREEZE_CONV_BODY_AT: 0
+    USE_NORMALIZATION: GN
+  DEVICE: cuda
+  GROUP_NORM:
+    DIM_PER_GP: -1
+    EPSILON: 1e-05
+    NUM_GROUPS: 32
+  SMOKE_HEAD:
+    DEPTH_REFERENCE: (6.15, 2.48)
+    DIMENSION_REFERENCE: ((9.8, 3.3, 2.5),)
+    LOSS_ALPHA: 2
+    LOSS_BETA: 4
+    LOSS_TYPE: ('FocalLoss', 'DisL1')
+    LOSS_WEIGHT: (1.0, 10.0)
+    MODE: geometry_v2
+    NUM_CHANNEL: 256
+    PREDICTOR: SMOKEPredictor
+    REGRESSION_CHANNEL: (1, 1, 2)
+    REGRESSION_HEADS: 4
+    USE_NMS: False
+    USE_NORMALIZATION: GN
+  SMOKE_ON: True
+  WEIGHT: /home/dy-jang/projects/TruckDetection-main/results/geometry_v2/seed_64/model_0014000.pth
+OUTPUT_DIR: /home/dy-jang/projects/TruckDetection-main/results/best3d_eval_takamatsu100/geometry_v2_seed64/model_0014000
+PATHS_CATALOG: /home/dy-jang/projects/TruckDetection-main/results/best3d_eval_takamatsu100/geometry_v2_seed64/paths_catalog_eval_training_root.py
+SEED: 64
+SOLVER:
+  BASE_LR: 0.00025
+  BIAS_LR_FACTOR: 2
+  CHECKPOINT_PERIOD: 1000
+  EVALUATE_PERIOD: 20
+  IMS_PER_BATCH: 16
+  LOAD_OPTIMIZER_SCHEDULER: True
+  MASTER_BATCH: -1
+  MAX_ITERATION: 15000
+  OPTIMIZER: Adam
+  STEPS: (6250, 10000)
+TEST:
+  DETECTIONS_PER_IMG: 50
+  DETECTIONS_THRESHOLD: 0.25
+  IMS_PER_BATCH: 1
+  PRED_2D: True
+  SINGLE_GPU_TEST: True
+[2026-04-07 16:56:21,522] smoke INFO: Using 1 GPUs
+[2026-04-07 16:56:21,522] smoke INFO: Collecting environment info
+[2026-04-07 16:56:23,427] smoke INFO: 
+PyTorch version: 2.5.1+cu121
+Is debug build: False
+CUDA used to build PyTorch: 12.1
+ROCM used to build PyTorch: N/A
+
+OS: Ubuntu 22.04.4 LTS (x86_64)
+GCC version: (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0
+Clang version: Could not collect
+CMake version: Could not collect
+Libc version: glibc-2.35
+
+Python version: 3.12.7 | packaged by Anaconda, Inc. | (main, Oct  4 2024, 13:27:36) [GCC 11.2.0] (64-bit runtime)
+Python platform: Linux-6.8.0-106-generic-x86_64-with-glibc2.35
+Is CUDA available: True
+CUDA runtime version: Could not collect
+CUDA_MODULE_LOADING set to: LAZY
+GPU models and configuration: GPU 0: NVIDIA RTX A6000
+Nvidia driver version: 555.42.06
+cuDNN version: Probably one of the following:
+/usr/local/cuda-11.7/targets/x86_64-linux/lib/libcudnn.so.8.5.0
+/usr/local/cuda-11.7/targets/x86_64-linux/lib/libcudnn_adv_infer.so.8.5.0
+/usr/local/cuda-11.7/targets/x86_64-linux/lib/libcudnn_adv_train.so.8.5.0
+/usr/local/cuda-11.7/targets/x86_64-linux/lib/libcudnn_cnn_infer.so.8.5.0
+/usr/local/cuda-11.7/targets/x86_64-linux/lib/libcudnn_cnn_train.so.8.5.0
+/usr/local/cuda-11.7/targets/x86_64-linux/lib/libcudnn_ops_infer.so.8.5.0
+/usr/local/cuda-11.7/targets/x86_64-linux/lib/libcudnn_ops_train.so.8.5.0
+HIP runtime version: N/A
+MIOpen runtime version: N/A
+Is XNNPACK available: True
+
+CPU:
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           48 bits physical, 48 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  32
+On-line CPU(s) list:                     0-31
+Vendor ID:                               AuthenticAMD
+Model name:                              AMD Ryzen 9 7950X3D 16-Core Processor
+CPU family:                              25
+Model:                                   97
+Thread(s) per core:                      2
+Core(s) per socket:                      16
+Socket(s):                               1
+Stepping:                                2
+CPU max MHz:                             5759.0000
+CPU min MHz:                             545.0000
+BogoMIPS:                                8383.69
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good amd_lbr_v2 nopl nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba perfmon_v2 ibrs ibpb stibp ibrs_enhanced vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk avx512_bf16 clzero irperf xsaveerptr rdpru wbnoinvd cppc amd_ibpb_ret arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic vgif x2avic v_spec_ctrl vnmi avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq rdpid overflow_recov succor smca fsrm flush_l1d ibpb_exit_to_user
+Virtualization:                          AMD-V
+L1d cache:                               512 KiB (16 instances)
+L1i cache:                               512 KiB (16 instances)
+L2 cache:                                16 MiB (16 instances)
+L3 cache:                                128 MiB (2 instances)
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0-31
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+Vulnerability Meltdown:                  Not affected
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Reg file data sampling:    Not affected
+Vulnerability Retbleed:                  Not affected
+Vulnerability Spec rstack overflow:      Mitigation; Safe RET
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; STIBP always-on; PBRSB-eIBRS Not affected; BHI Not affected
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsa:                       Vulnerable: Clear CPU buffers attempted, no microcode
+Vulnerability Tsx async abort:           Not affected
+Vulnerability Vmscape:                   Mitigation; IBPB before exit to userspace
+
+Versions of relevant libraries:
+[pip3] flake8==7.0.0
+[pip3] mypy==1.11.2
+[pip3] mypy-extensions==1.0.0
+[pip3] numpy==1.26.4
+[pip3] numpydoc==1.7.0
+[pip3] torch==2.5.1+cu121
+[pip3] torchvision==0.20.1+cu121
+[pip3] triton==3.1.0
+[conda] _anaconda_depends         2024.10             py312_mkl_0  
+[conda] blas                      1.0                         mkl  
+[conda] mkl                       2023.1.0         h213fc3f_46344  
+[conda] mkl-service               2.4.0           py312h5eee18b_1  
+[conda] mkl_fft                   1.3.10          py312h5eee18b_0  
+[conda] mkl_random                1.2.7           py312h526ad5a_0  
+[conda] numpy                     1.26.4          py312hc5e2394_0  
+[conda] numpy-base                1.26.4          py312h0da6c21_0  
+[conda] numpydoc                  1.7.0           py312h06a4308_0  
+[conda] torch                     2.5.1+cu121              pypi_0    pypi
+[conda] torchvision               0.20.1+cu121             pypi_0    pypi
+[conda] triton                    3.1.0                    pypi_0    pypi
+        Pillow (10.4.0)
+[2026-04-07 16:56:23,427] smoke INFO: Namespace(config_file='configs/smoke_geometry_v2_b16_60ep.yaml', eval_only=True, ckpt=None, num_gpus=1, num_machines=1, machine_rank=0, dist_url='tcp://127.0.0.1:50173', opts=['MODEL.WEIGHT', '/home/dy-jang/projects/TruckDetection-main/results/geometry_v2/seed_64/model_0014000.pth', 'PATHS_CATALOG', '/home/dy-jang/projects/TruckDetection-main/results/best3d_eval_takamatsu100/geometry_v2_seed64/paths_catalog_eval_training_root.py', 'DATASETS.TEST_SPLIT', 'val', 'DATASETS.DETECT_CLASSES', "('Car',)", 'MODEL.SMOKE_HEAD.MODE', 'geometry_v2', 'MODEL.SMOKE_HEAD.REGRESSION_HEADS', '4', 'MODEL.SMOKE_HEAD.REGRESSION_CHANNEL', '(1,1,2)', 'MODEL.SMOKE_HEAD.DIMENSION_REFERENCE', '((9.8,3.3,2.5),)', 'MODEL.SMOKE_HEAD.DEPTH_REFERENCE', '(6.15,2.48)', 'SEED', '64', 'OUTPUT_DIR', '/home/dy-jang/projects/TruckDetection-main/results/best3d_eval_takamatsu100/geometry_v2_seed64/model_0014000'])
+[2026-04-07 16:56:23,427] smoke INFO: Loaded configuration file configs/smoke_geometry_v2_b16_60ep.yaml
+[2026-04-07 16:56:23,427] smoke INFO: 
+MODEL:
+  WEIGHT: "catalog://ImageNetPretrained/DLA34"
+  SMOKE_HEAD:
+    MODE: "geometry_v2"
+    REGRESSION_HEADS: 4
+    REGRESSION_CHANNEL: (1, 1, 2)
+    DIMENSION_REFERENCE: ((9.8, 3.3, 2.5),)
+    DEPTH_REFERENCE: (6.15, 2.48)
+INPUT:
+  FLIP_PROB_TRAIN: 0.5
+  SHIFT_SCALE_PROB_TRAIN: 0.3
+DATASETS:
+  DETECT_CLASSES: ("Car",)
+  TRAIN: ("kitti_train",)
+  TEST: ("kitti_test",)
+  TRAIN_SPLIT: "train"
+  TEST_SPLIT: "val"
+SOLVER:
+  BASE_LR: 2.5e-4
+  STEPS: (6250, 10000)
+  MAX_ITERATION: 15000
+  CHECKPOINT_PERIOD: 1000
+  IMS_PER_BATCH: 16
+
+[2026-04-07 16:56:23,427] smoke INFO: Running with config:
+CUDNN_BENCHMARK: True
+DATALOADER:
+  ASPECT_RATIO_GROUPING: False
+  NUM_WORKERS: 4
+  SIZE_DIVISIBILITY: 0
+DATASETS:
+  DETECT_CLASSES: ('Car',)
+  MAX_OBJECTS: 30
+  TEST: ('kitti_test',)
+  TEST_SPLIT: val
+  TRAIN: ('kitti_train',)
+  TRAIN_SPLIT: train
+INPUT:
+  FLIP_PROB_TRAIN: 0.5
+  HEIGHT_TEST: 384
+  HEIGHT_TRAIN: 384
+  PIXEL_MEAN: [0.485, 0.456, 0.406]
+  PIXEL_STD: [0.229, 0.224, 0.225]
+  SHIFT_SCALE_PROB_TRAIN: 0.3
+  SHIFT_SCALE_TRAIN: (0.2, 0.4)
+  TO_BGR: True
+  WIDTH_TEST: 1280
+  WIDTH_TRAIN: 1280
+MODEL:
+  BACKBONE:
+    BACKBONE_OUT_CHANNELS: 64
+    CONV_BODY: DLA-34-DCN
+    DOWN_RATIO: 4
+    FREEZE_CONV_BODY_AT: 0
+    USE_NORMALIZATION: GN
+  DEVICE: cuda
+  GROUP_NORM:
+    DIM_PER_GP: -1
+    EPSILON: 1e-05
+    NUM_GROUPS: 32
+  SMOKE_HEAD:
+    DEPTH_REFERENCE: (6.15, 2.48)
+    DIMENSION_REFERENCE: ((9.8, 3.3, 2.5),)
+    LOSS_ALPHA: 2
+    LOSS_BETA: 4
+    LOSS_TYPE: ('FocalLoss', 'DisL1')
+    LOSS_WEIGHT: (1.0, 10.0)
+    MODE: geometry_v2
+    NUM_CHANNEL: 256
+    PREDICTOR: SMOKEPredictor
+    REGRESSION_CHANNEL: (1, 1, 2)
+    REGRESSION_HEADS: 4
+    USE_NMS: False
+    USE_NORMALIZATION: GN
+  SMOKE_ON: True
+  WEIGHT: /home/dy-jang/projects/TruckDetection-main/results/geometry_v2/seed_64/model_0014000.pth
+OUTPUT_DIR: /home/dy-jang/projects/TruckDetection-main/results/best3d_eval_takamatsu100/geometry_v2_seed64/model_0014000
+PATHS_CATALOG: /home/dy-jang/projects/TruckDetection-main/results/best3d_eval_takamatsu100/geometry_v2_seed64/paths_catalog_eval_training_root.py
+SEED: 64
+SOLVER:
+  BASE_LR: 0.00025
+  BIAS_LR_FACTOR: 2
+  CHECKPOINT_PERIOD: 1000
+  EVALUATE_PERIOD: 20
+  IMS_PER_BATCH: 16
+  LOAD_OPTIMIZER_SCHEDULER: True
+  MASTER_BATCH: -1
+  MAX_ITERATION: 15000
+  OPTIMIZER: Adam
+  STEPS: (6250, 10000)
+TEST:
+  DETECTIONS_PER_IMG: 50
+  DETECTIONS_THRESHOLD: 0.25
+  IMS_PER_BATCH: 1
+  PRED_2D: True
+  SINGLE_GPU_TEST: True
+[2026-04-07 16:56:23,628] smoke.utils.check_point INFO: Loading checkpoint from /home/dy-jang/projects/TruckDetection-main/results/geometry_v2/seed_64/model_0014000.pth
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.base_layer.0.weight                                loaded from backbone.body.base.base_layer.0.weight                                of shape (16, 3, 7, 7)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.base_layer.1.bias                                  loaded from backbone.body.base.base_layer.1.bias                                  of shape (16,)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.base_layer.1.weight                                loaded from backbone.body.base.base_layer.1.weight                                of shape (16,)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level0.0.weight                                    loaded from backbone.body.base.level0.0.weight                                    of shape (16, 16, 3, 3)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level0.1.bias                                      loaded from backbone.body.base.level0.1.bias                                      of shape (16,)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level0.1.weight                                    loaded from backbone.body.base.level0.1.weight                                    of shape (16,)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level1.0.weight                                    loaded from backbone.body.base.level1.0.weight                                    of shape (32, 16, 3, 3)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level1.1.bias                                      loaded from backbone.body.base.level1.1.bias                                      of shape (32,)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level1.1.weight                                    loaded from backbone.body.base.level1.1.weight                                    of shape (32,)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level2.project.0.weight                            loaded from backbone.body.base.level2.project.0.weight                            of shape (64, 32, 1, 1)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level2.project.1.bias                              loaded from backbone.body.base.level2.project.1.bias                              of shape (64,)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level2.project.1.weight                            loaded from backbone.body.base.level2.project.1.weight                            of shape (64,)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level2.root.conv.weight                            loaded from backbone.body.base.level2.root.conv.weight                            of shape (64, 128, 1, 1)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level2.root.norm.bias                              loaded from backbone.body.base.level2.root.norm.bias                              of shape (64,)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level2.root.norm.weight                            loaded from backbone.body.base.level2.root.norm.weight                            of shape (64,)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level2.tree1.conv1.weight                          loaded from backbone.body.base.level2.tree1.conv1.weight                          of shape (64, 32, 3, 3)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level2.tree1.conv2.weight                          loaded from backbone.body.base.level2.tree1.conv2.weight                          of shape (64, 64, 3, 3)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level2.tree1.norm1.bias                            loaded from backbone.body.base.level2.tree1.norm1.bias                            of shape (64,)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level2.tree1.norm1.weight                          loaded from backbone.body.base.level2.tree1.norm1.weight                          of shape (64,)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level2.tree1.norm2.bias                            loaded from backbone.body.base.level2.tree1.norm2.bias                            of shape (64,)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level2.tree1.norm2.weight                          loaded from backbone.body.base.level2.tree1.norm2.weight                          of shape (64,)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level2.tree2.conv1.weight                          loaded from backbone.body.base.level2.tree2.conv1.weight                          of shape (64, 64, 3, 3)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level2.tree2.conv2.weight                          loaded from backbone.body.base.level2.tree2.conv2.weight                          of shape (64, 64, 3, 3)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level2.tree2.norm1.bias                            loaded from backbone.body.base.level2.tree2.norm1.bias                            of shape (64,)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level2.tree2.norm1.weight                          loaded from backbone.body.base.level2.tree2.norm1.weight                          of shape (64,)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level2.tree2.norm2.bias                            loaded from backbone.body.base.level2.tree2.norm2.bias                            of shape (64,)
+[2026-04-07 16:56:23,723] smoke.utils.model_serialization INFO: backbone.body.base.level2.tree2.norm2.weight                          loaded from backbone.body.base.level2.tree2.norm2.weight                          of shape (64,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.project.0.weight                            loaded from backbone.body.base.level3.project.0.weight                            of shape (128, 64, 1, 1)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.project.1.bias                              loaded from backbone.body.base.level3.project.1.bias                              of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.project.1.weight                            loaded from backbone.body.base.level3.project.1.weight                            of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.project.0.weight                      loaded from backbone.body.base.level3.tree1.project.0.weight                      of shape (128, 64, 1, 1)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.project.1.bias                        loaded from backbone.body.base.level3.tree1.project.1.bias                        of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.project.1.weight                      loaded from backbone.body.base.level3.tree1.project.1.weight                      of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.root.conv.weight                      loaded from backbone.body.base.level3.tree1.root.conv.weight                      of shape (128, 256, 1, 1)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.root.norm.bias                        loaded from backbone.body.base.level3.tree1.root.norm.bias                        of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.root.norm.weight                      loaded from backbone.body.base.level3.tree1.root.norm.weight                      of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.tree1.conv1.weight                    loaded from backbone.body.base.level3.tree1.tree1.conv1.weight                    of shape (128, 64, 3, 3)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.tree1.conv2.weight                    loaded from backbone.body.base.level3.tree1.tree1.conv2.weight                    of shape (128, 128, 3, 3)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.tree1.norm1.bias                      loaded from backbone.body.base.level3.tree1.tree1.norm1.bias                      of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.tree1.norm1.weight                    loaded from backbone.body.base.level3.tree1.tree1.norm1.weight                    of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.tree1.norm2.bias                      loaded from backbone.body.base.level3.tree1.tree1.norm2.bias                      of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.tree1.norm2.weight                    loaded from backbone.body.base.level3.tree1.tree1.norm2.weight                    of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.tree2.conv1.weight                    loaded from backbone.body.base.level3.tree1.tree2.conv1.weight                    of shape (128, 128, 3, 3)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.tree2.conv2.weight                    loaded from backbone.body.base.level3.tree1.tree2.conv2.weight                    of shape (128, 128, 3, 3)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.tree2.norm1.bias                      loaded from backbone.body.base.level3.tree1.tree2.norm1.bias                      of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.tree2.norm1.weight                    loaded from backbone.body.base.level3.tree1.tree2.norm1.weight                    of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.tree2.norm2.bias                      loaded from backbone.body.base.level3.tree1.tree2.norm2.bias                      of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree1.tree2.norm2.weight                    loaded from backbone.body.base.level3.tree1.tree2.norm2.weight                    of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.root.conv.weight                      loaded from backbone.body.base.level3.tree2.root.conv.weight                      of shape (128, 448, 1, 1)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.root.norm.bias                        loaded from backbone.body.base.level3.tree2.root.norm.bias                        of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.root.norm.weight                      loaded from backbone.body.base.level3.tree2.root.norm.weight                      of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.tree1.conv1.weight                    loaded from backbone.body.base.level3.tree2.tree1.conv1.weight                    of shape (128, 128, 3, 3)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.tree1.conv2.weight                    loaded from backbone.body.base.level3.tree2.tree1.conv2.weight                    of shape (128, 128, 3, 3)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.tree1.norm1.bias                      loaded from backbone.body.base.level3.tree2.tree1.norm1.bias                      of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.tree1.norm1.weight                    loaded from backbone.body.base.level3.tree2.tree1.norm1.weight                    of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.tree1.norm2.bias                      loaded from backbone.body.base.level3.tree2.tree1.norm2.bias                      of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.tree1.norm2.weight                    loaded from backbone.body.base.level3.tree2.tree1.norm2.weight                    of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.tree2.conv1.weight                    loaded from backbone.body.base.level3.tree2.tree2.conv1.weight                    of shape (128, 128, 3, 3)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.tree2.conv2.weight                    loaded from backbone.body.base.level3.tree2.tree2.conv2.weight                    of shape (128, 128, 3, 3)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.tree2.norm1.bias                      loaded from backbone.body.base.level3.tree2.tree2.norm1.bias                      of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.tree2.norm1.weight                    loaded from backbone.body.base.level3.tree2.tree2.norm1.weight                    of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.tree2.norm2.bias                      loaded from backbone.body.base.level3.tree2.tree2.norm2.bias                      of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level3.tree2.tree2.norm2.weight                    loaded from backbone.body.base.level3.tree2.tree2.norm2.weight                    of shape (128,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.project.0.weight                            loaded from backbone.body.base.level4.project.0.weight                            of shape (256, 128, 1, 1)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.project.1.bias                              loaded from backbone.body.base.level4.project.1.bias                              of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.project.1.weight                            loaded from backbone.body.base.level4.project.1.weight                            of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.project.0.weight                      loaded from backbone.body.base.level4.tree1.project.0.weight                      of shape (256, 128, 1, 1)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.project.1.bias                        loaded from backbone.body.base.level4.tree1.project.1.bias                        of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.project.1.weight                      loaded from backbone.body.base.level4.tree1.project.1.weight                      of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.root.conv.weight                      loaded from backbone.body.base.level4.tree1.root.conv.weight                      of shape (256, 512, 1, 1)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.root.norm.bias                        loaded from backbone.body.base.level4.tree1.root.norm.bias                        of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.root.norm.weight                      loaded from backbone.body.base.level4.tree1.root.norm.weight                      of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.tree1.conv1.weight                    loaded from backbone.body.base.level4.tree1.tree1.conv1.weight                    of shape (256, 128, 3, 3)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.tree1.conv2.weight                    loaded from backbone.body.base.level4.tree1.tree1.conv2.weight                    of shape (256, 256, 3, 3)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.tree1.norm1.bias                      loaded from backbone.body.base.level4.tree1.tree1.norm1.bias                      of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.tree1.norm1.weight                    loaded from backbone.body.base.level4.tree1.tree1.norm1.weight                    of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.tree1.norm2.bias                      loaded from backbone.body.base.level4.tree1.tree1.norm2.bias                      of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.tree1.norm2.weight                    loaded from backbone.body.base.level4.tree1.tree1.norm2.weight                    of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.tree2.conv1.weight                    loaded from backbone.body.base.level4.tree1.tree2.conv1.weight                    of shape (256, 256, 3, 3)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.tree2.conv2.weight                    loaded from backbone.body.base.level4.tree1.tree2.conv2.weight                    of shape (256, 256, 3, 3)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.tree2.norm1.bias                      loaded from backbone.body.base.level4.tree1.tree2.norm1.bias                      of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.tree2.norm1.weight                    loaded from backbone.body.base.level4.tree1.tree2.norm1.weight                    of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.tree2.norm2.bias                      loaded from backbone.body.base.level4.tree1.tree2.norm2.bias                      of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree1.tree2.norm2.weight                    loaded from backbone.body.base.level4.tree1.tree2.norm2.weight                    of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.root.conv.weight                      loaded from backbone.body.base.level4.tree2.root.conv.weight                      of shape (256, 896, 1, 1)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.root.norm.bias                        loaded from backbone.body.base.level4.tree2.root.norm.bias                        of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.root.norm.weight                      loaded from backbone.body.base.level4.tree2.root.norm.weight                      of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.tree1.conv1.weight                    loaded from backbone.body.base.level4.tree2.tree1.conv1.weight                    of shape (256, 256, 3, 3)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.tree1.conv2.weight                    loaded from backbone.body.base.level4.tree2.tree1.conv2.weight                    of shape (256, 256, 3, 3)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.tree1.norm1.bias                      loaded from backbone.body.base.level4.tree2.tree1.norm1.bias                      of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.tree1.norm1.weight                    loaded from backbone.body.base.level4.tree2.tree1.norm1.weight                    of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.tree1.norm2.bias                      loaded from backbone.body.base.level4.tree2.tree1.norm2.bias                      of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.tree1.norm2.weight                    loaded from backbone.body.base.level4.tree2.tree1.norm2.weight                    of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.tree2.conv1.weight                    loaded from backbone.body.base.level4.tree2.tree2.conv1.weight                    of shape (256, 256, 3, 3)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.tree2.conv2.weight                    loaded from backbone.body.base.level4.tree2.tree2.conv2.weight                    of shape (256, 256, 3, 3)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.tree2.norm1.bias                      loaded from backbone.body.base.level4.tree2.tree2.norm1.bias                      of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.tree2.norm1.weight                    loaded from backbone.body.base.level4.tree2.tree2.norm1.weight                    of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.tree2.norm2.bias                      loaded from backbone.body.base.level4.tree2.tree2.norm2.bias                      of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level4.tree2.tree2.norm2.weight                    loaded from backbone.body.base.level4.tree2.tree2.norm2.weight                    of shape (256,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level5.project.0.weight                            loaded from backbone.body.base.level5.project.0.weight                            of shape (512, 256, 1, 1)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level5.project.1.bias                              loaded from backbone.body.base.level5.project.1.bias                              of shape (512,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level5.project.1.weight                            loaded from backbone.body.base.level5.project.1.weight                            of shape (512,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level5.root.conv.weight                            loaded from backbone.body.base.level5.root.conv.weight                            of shape (512, 1280, 1, 1)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level5.root.norm.bias                              loaded from backbone.body.base.level5.root.norm.bias                              of shape (512,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level5.root.norm.weight                            loaded from backbone.body.base.level5.root.norm.weight                            of shape (512,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level5.tree1.conv1.weight                          loaded from backbone.body.base.level5.tree1.conv1.weight                          of shape (512, 256, 3, 3)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level5.tree1.conv2.weight                          loaded from backbone.body.base.level5.tree1.conv2.weight                          of shape (512, 512, 3, 3)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level5.tree1.norm1.bias                            loaded from backbone.body.base.level5.tree1.norm1.bias                            of shape (512,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level5.tree1.norm1.weight                          loaded from backbone.body.base.level5.tree1.norm1.weight                          of shape (512,)
+[2026-04-07 16:56:23,724] smoke.utils.model_serialization INFO: backbone.body.base.level5.tree1.norm2.bias                            loaded from backbone.body.base.level5.tree1.norm2.bias                            of shape (512,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.base.level5.tree1.norm2.weight                          loaded from backbone.body.base.level5.tree1.norm2.weight                          of shape (512,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.base.level5.tree2.conv1.weight                          loaded from backbone.body.base.level5.tree2.conv1.weight                          of shape (512, 512, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.base.level5.tree2.conv2.weight                          loaded from backbone.body.base.level5.tree2.conv2.weight                          of shape (512, 512, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.base.level5.tree2.norm1.bias                            loaded from backbone.body.base.level5.tree2.norm1.bias                            of shape (512,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.base.level5.tree2.norm1.weight                          loaded from backbone.body.base.level5.tree2.norm1.weight                          of shape (512,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.base.level5.tree2.norm2.bias                            loaded from backbone.body.base.level5.tree2.norm2.bias                            of shape (512,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.base.level5.tree2.norm2.weight                          loaded from backbone.body.base.level5.tree2.norm2.weight                          of shape (512,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_0.node_1.deform_conv.bias                    loaded from backbone.body.dla_up.ida_0.node_1.deform_conv.bias                    of shape (256,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_0.node_1.deform_conv.conv_offset_mask.bias   loaded from backbone.body.dla_up.ida_0.node_1.deform_conv.conv_offset_mask.bias   of shape (27,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_0.node_1.deform_conv.conv_offset_mask.weight loaded from backbone.body.dla_up.ida_0.node_1.deform_conv.conv_offset_mask.weight of shape (27, 256, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_0.node_1.deform_conv.weight                  loaded from backbone.body.dla_up.ida_0.node_1.deform_conv.weight                  of shape (256, 256, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_0.node_1.norm.bias                           loaded from backbone.body.dla_up.ida_0.node_1.norm.bias                           of shape (256,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_0.node_1.norm.weight                         loaded from backbone.body.dla_up.ida_0.node_1.norm.weight                         of shape (256,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_0.proj_1.deform_conv.bias                    loaded from backbone.body.dla_up.ida_0.proj_1.deform_conv.bias                    of shape (256,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_0.proj_1.deform_conv.conv_offset_mask.bias   loaded from backbone.body.dla_up.ida_0.proj_1.deform_conv.conv_offset_mask.bias   of shape (27,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_0.proj_1.deform_conv.conv_offset_mask.weight loaded from backbone.body.dla_up.ida_0.proj_1.deform_conv.conv_offset_mask.weight of shape (27, 512, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_0.proj_1.deform_conv.weight                  loaded from backbone.body.dla_up.ida_0.proj_1.deform_conv.weight                  of shape (256, 512, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_0.proj_1.norm.bias                           loaded from backbone.body.dla_up.ida_0.proj_1.norm.bias                           of shape (256,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_0.proj_1.norm.weight                         loaded from backbone.body.dla_up.ida_0.proj_1.norm.weight                         of shape (256,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_0.up_1.weight                                loaded from backbone.body.dla_up.ida_0.up_1.weight                                of shape (256, 1, 4, 4)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.node_1.deform_conv.bias                    loaded from backbone.body.dla_up.ida_1.node_1.deform_conv.bias                    of shape (128,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.node_1.deform_conv.conv_offset_mask.bias   loaded from backbone.body.dla_up.ida_1.node_1.deform_conv.conv_offset_mask.bias   of shape (27,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.node_1.deform_conv.conv_offset_mask.weight loaded from backbone.body.dla_up.ida_1.node_1.deform_conv.conv_offset_mask.weight of shape (27, 128, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.node_1.deform_conv.weight                  loaded from backbone.body.dla_up.ida_1.node_1.deform_conv.weight                  of shape (128, 128, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.node_1.norm.bias                           loaded from backbone.body.dla_up.ida_1.node_1.norm.bias                           of shape (128,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.node_1.norm.weight                         loaded from backbone.body.dla_up.ida_1.node_1.norm.weight                         of shape (128,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.node_2.deform_conv.bias                    loaded from backbone.body.dla_up.ida_1.node_2.deform_conv.bias                    of shape (128,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.node_2.deform_conv.conv_offset_mask.bias   loaded from backbone.body.dla_up.ida_1.node_2.deform_conv.conv_offset_mask.bias   of shape (27,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.node_2.deform_conv.conv_offset_mask.weight loaded from backbone.body.dla_up.ida_1.node_2.deform_conv.conv_offset_mask.weight of shape (27, 128, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.node_2.deform_conv.weight                  loaded from backbone.body.dla_up.ida_1.node_2.deform_conv.weight                  of shape (128, 128, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.node_2.norm.bias                           loaded from backbone.body.dla_up.ida_1.node_2.norm.bias                           of shape (128,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.node_2.norm.weight                         loaded from backbone.body.dla_up.ida_1.node_2.norm.weight                         of shape (128,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.proj_1.deform_conv.bias                    loaded from backbone.body.dla_up.ida_1.proj_1.deform_conv.bias                    of shape (128,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.proj_1.deform_conv.conv_offset_mask.bias   loaded from backbone.body.dla_up.ida_1.proj_1.deform_conv.conv_offset_mask.bias   of shape (27,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.proj_1.deform_conv.conv_offset_mask.weight loaded from backbone.body.dla_up.ida_1.proj_1.deform_conv.conv_offset_mask.weight of shape (27, 256, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.proj_1.deform_conv.weight                  loaded from backbone.body.dla_up.ida_1.proj_1.deform_conv.weight                  of shape (128, 256, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.proj_1.norm.bias                           loaded from backbone.body.dla_up.ida_1.proj_1.norm.bias                           of shape (128,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.proj_1.norm.weight                         loaded from backbone.body.dla_up.ida_1.proj_1.norm.weight                         of shape (128,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.proj_2.deform_conv.bias                    loaded from backbone.body.dla_up.ida_1.proj_2.deform_conv.bias                    of shape (128,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.proj_2.deform_conv.conv_offset_mask.bias   loaded from backbone.body.dla_up.ida_1.proj_2.deform_conv.conv_offset_mask.bias   of shape (27,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.proj_2.deform_conv.conv_offset_mask.weight loaded from backbone.body.dla_up.ida_1.proj_2.deform_conv.conv_offset_mask.weight of shape (27, 256, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.proj_2.deform_conv.weight                  loaded from backbone.body.dla_up.ida_1.proj_2.deform_conv.weight                  of shape (128, 256, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.proj_2.norm.bias                           loaded from backbone.body.dla_up.ida_1.proj_2.norm.bias                           of shape (128,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.proj_2.norm.weight                         loaded from backbone.body.dla_up.ida_1.proj_2.norm.weight                         of shape (128,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.up_1.weight                                loaded from backbone.body.dla_up.ida_1.up_1.weight                                of shape (128, 1, 4, 4)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_1.up_2.weight                                loaded from backbone.body.dla_up.ida_1.up_2.weight                                of shape (128, 1, 4, 4)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.node_1.deform_conv.bias                    loaded from backbone.body.dla_up.ida_2.node_1.deform_conv.bias                    of shape (64,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.node_1.deform_conv.conv_offset_mask.bias   loaded from backbone.body.dla_up.ida_2.node_1.deform_conv.conv_offset_mask.bias   of shape (27,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.node_1.deform_conv.conv_offset_mask.weight loaded from backbone.body.dla_up.ida_2.node_1.deform_conv.conv_offset_mask.weight of shape (27, 64, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.node_1.deform_conv.weight                  loaded from backbone.body.dla_up.ida_2.node_1.deform_conv.weight                  of shape (64, 64, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.node_1.norm.bias                           loaded from backbone.body.dla_up.ida_2.node_1.norm.bias                           of shape (64,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.node_1.norm.weight                         loaded from backbone.body.dla_up.ida_2.node_1.norm.weight                         of shape (64,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.node_2.deform_conv.bias                    loaded from backbone.body.dla_up.ida_2.node_2.deform_conv.bias                    of shape (64,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.node_2.deform_conv.conv_offset_mask.bias   loaded from backbone.body.dla_up.ida_2.node_2.deform_conv.conv_offset_mask.bias   of shape (27,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.node_2.deform_conv.conv_offset_mask.weight loaded from backbone.body.dla_up.ida_2.node_2.deform_conv.conv_offset_mask.weight of shape (27, 64, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.node_2.deform_conv.weight                  loaded from backbone.body.dla_up.ida_2.node_2.deform_conv.weight                  of shape (64, 64, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.node_2.norm.bias                           loaded from backbone.body.dla_up.ida_2.node_2.norm.bias                           of shape (64,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.node_2.norm.weight                         loaded from backbone.body.dla_up.ida_2.node_2.norm.weight                         of shape (64,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.node_3.deform_conv.bias                    loaded from backbone.body.dla_up.ida_2.node_3.deform_conv.bias                    of shape (64,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.node_3.deform_conv.conv_offset_mask.bias   loaded from backbone.body.dla_up.ida_2.node_3.deform_conv.conv_offset_mask.bias   of shape (27,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.node_3.deform_conv.conv_offset_mask.weight loaded from backbone.body.dla_up.ida_2.node_3.deform_conv.conv_offset_mask.weight of shape (27, 64, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.node_3.deform_conv.weight                  loaded from backbone.body.dla_up.ida_2.node_3.deform_conv.weight                  of shape (64, 64, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.node_3.norm.bias                           loaded from backbone.body.dla_up.ida_2.node_3.norm.bias                           of shape (64,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.node_3.norm.weight                         loaded from backbone.body.dla_up.ida_2.node_3.norm.weight                         of shape (64,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.proj_1.deform_conv.bias                    loaded from backbone.body.dla_up.ida_2.proj_1.deform_conv.bias                    of shape (64,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.proj_1.deform_conv.conv_offset_mask.bias   loaded from backbone.body.dla_up.ida_2.proj_1.deform_conv.conv_offset_mask.bias   of shape (27,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.proj_1.deform_conv.conv_offset_mask.weight loaded from backbone.body.dla_up.ida_2.proj_1.deform_conv.conv_offset_mask.weight of shape (27, 128, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.proj_1.deform_conv.weight                  loaded from backbone.body.dla_up.ida_2.proj_1.deform_conv.weight                  of shape (64, 128, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.proj_1.norm.bias                           loaded from backbone.body.dla_up.ida_2.proj_1.norm.bias                           of shape (64,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.proj_1.norm.weight                         loaded from backbone.body.dla_up.ida_2.proj_1.norm.weight                         of shape (64,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.proj_2.deform_conv.bias                    loaded from backbone.body.dla_up.ida_2.proj_2.deform_conv.bias                    of shape (64,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.proj_2.deform_conv.conv_offset_mask.bias   loaded from backbone.body.dla_up.ida_2.proj_2.deform_conv.conv_offset_mask.bias   of shape (27,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.proj_2.deform_conv.conv_offset_mask.weight loaded from backbone.body.dla_up.ida_2.proj_2.deform_conv.conv_offset_mask.weight of shape (27, 128, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.proj_2.deform_conv.weight                  loaded from backbone.body.dla_up.ida_2.proj_2.deform_conv.weight                  of shape (64, 128, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.proj_2.norm.bias                           loaded from backbone.body.dla_up.ida_2.proj_2.norm.bias                           of shape (64,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.proj_2.norm.weight                         loaded from backbone.body.dla_up.ida_2.proj_2.norm.weight                         of shape (64,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.proj_3.deform_conv.bias                    loaded from backbone.body.dla_up.ida_2.proj_3.deform_conv.bias                    of shape (64,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.proj_3.deform_conv.conv_offset_mask.bias   loaded from backbone.body.dla_up.ida_2.proj_3.deform_conv.conv_offset_mask.bias   of shape (27,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.proj_3.deform_conv.conv_offset_mask.weight loaded from backbone.body.dla_up.ida_2.proj_3.deform_conv.conv_offset_mask.weight of shape (27, 128, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.proj_3.deform_conv.weight                  loaded from backbone.body.dla_up.ida_2.proj_3.deform_conv.weight                  of shape (64, 128, 3, 3)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.proj_3.norm.bias                           loaded from backbone.body.dla_up.ida_2.proj_3.norm.bias                           of shape (64,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.proj_3.norm.weight                         loaded from backbone.body.dla_up.ida_2.proj_3.norm.weight                         of shape (64,)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.up_1.weight                                loaded from backbone.body.dla_up.ida_2.up_1.weight                                of shape (64, 1, 4, 4)
+[2026-04-07 16:56:23,725] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.up_2.weight                                loaded from backbone.body.dla_up.ida_2.up_2.weight                                of shape (64, 1, 4, 4)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.dla_up.ida_2.up_3.weight                                loaded from backbone.body.dla_up.ida_2.up_3.weight                                of shape (64, 1, 4, 4)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.node_1.deform_conv.bias                          loaded from backbone.body.ida_up.node_1.deform_conv.bias                          of shape (64,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.node_1.deform_conv.conv_offset_mask.bias         loaded from backbone.body.ida_up.node_1.deform_conv.conv_offset_mask.bias         of shape (27,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.node_1.deform_conv.conv_offset_mask.weight       loaded from backbone.body.ida_up.node_1.deform_conv.conv_offset_mask.weight       of shape (27, 64, 3, 3)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.node_1.deform_conv.weight                        loaded from backbone.body.ida_up.node_1.deform_conv.weight                        of shape (64, 64, 3, 3)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.node_1.norm.bias                                 loaded from backbone.body.ida_up.node_1.norm.bias                                 of shape (64,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.node_1.norm.weight                               loaded from backbone.body.ida_up.node_1.norm.weight                               of shape (64,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.node_2.deform_conv.bias                          loaded from backbone.body.ida_up.node_2.deform_conv.bias                          of shape (64,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.node_2.deform_conv.conv_offset_mask.bias         loaded from backbone.body.ida_up.node_2.deform_conv.conv_offset_mask.bias         of shape (27,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.node_2.deform_conv.conv_offset_mask.weight       loaded from backbone.body.ida_up.node_2.deform_conv.conv_offset_mask.weight       of shape (27, 64, 3, 3)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.node_2.deform_conv.weight                        loaded from backbone.body.ida_up.node_2.deform_conv.weight                        of shape (64, 64, 3, 3)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.node_2.norm.bias                                 loaded from backbone.body.ida_up.node_2.norm.bias                                 of shape (64,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.node_2.norm.weight                               loaded from backbone.body.ida_up.node_2.norm.weight                               of shape (64,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.proj_1.deform_conv.bias                          loaded from backbone.body.ida_up.proj_1.deform_conv.bias                          of shape (64,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.proj_1.deform_conv.conv_offset_mask.bias         loaded from backbone.body.ida_up.proj_1.deform_conv.conv_offset_mask.bias         of shape (27,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.proj_1.deform_conv.conv_offset_mask.weight       loaded from backbone.body.ida_up.proj_1.deform_conv.conv_offset_mask.weight       of shape (27, 128, 3, 3)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.proj_1.deform_conv.weight                        loaded from backbone.body.ida_up.proj_1.deform_conv.weight                        of shape (64, 128, 3, 3)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.proj_1.norm.bias                                 loaded from backbone.body.ida_up.proj_1.norm.bias                                 of shape (64,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.proj_1.norm.weight                               loaded from backbone.body.ida_up.proj_1.norm.weight                               of shape (64,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.proj_2.deform_conv.bias                          loaded from backbone.body.ida_up.proj_2.deform_conv.bias                          of shape (64,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.proj_2.deform_conv.conv_offset_mask.bias         loaded from backbone.body.ida_up.proj_2.deform_conv.conv_offset_mask.bias         of shape (27,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.proj_2.deform_conv.conv_offset_mask.weight       loaded from backbone.body.ida_up.proj_2.deform_conv.conv_offset_mask.weight       of shape (27, 256, 3, 3)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.proj_2.deform_conv.weight                        loaded from backbone.body.ida_up.proj_2.deform_conv.weight                        of shape (64, 256, 3, 3)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.proj_2.norm.bias                                 loaded from backbone.body.ida_up.proj_2.norm.bias                                 of shape (64,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.proj_2.norm.weight                               loaded from backbone.body.ida_up.proj_2.norm.weight                               of shape (64,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.up_1.weight                                      loaded from backbone.body.ida_up.up_1.weight                                      of shape (64, 1, 4, 4)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: backbone.body.ida_up.up_2.weight                                      loaded from backbone.body.ida_up.up_2.weight                                      of shape (64, 1, 8, 8)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: heads.predictor.class_head.0.bias                                     loaded from heads.predictor.class_head.0.bias                                     of shape (256,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: heads.predictor.class_head.0.weight                                   loaded from heads.predictor.class_head.0.weight                                   of shape (256, 64, 3, 3)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: heads.predictor.class_head.1.bias                                     loaded from heads.predictor.class_head.1.bias                                     of shape (256,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: heads.predictor.class_head.1.weight                                   loaded from heads.predictor.class_head.1.weight                                   of shape (256,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: heads.predictor.class_head.3.bias                                     loaded from heads.predictor.class_head.3.bias                                     of shape (1,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: heads.predictor.class_head.3.weight                                   loaded from heads.predictor.class_head.3.weight                                   of shape (1, 256, 1, 1)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: heads.predictor.regression_head.0.bias                                loaded from heads.predictor.regression_head.0.bias                                of shape (256,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: heads.predictor.regression_head.0.weight                              loaded from heads.predictor.regression_head.0.weight                              of shape (256, 64, 3, 3)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: heads.predictor.regression_head.1.bias                                loaded from heads.predictor.regression_head.1.bias                                of shape (256,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: heads.predictor.regression_head.1.weight                              loaded from heads.predictor.regression_head.1.weight                              of shape (256,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: heads.predictor.regression_head.3.bias                                loaded from heads.predictor.regression_head.3.bias                                of shape (4,)
+[2026-04-07 16:56:23,726] smoke.utils.model_serialization INFO: heads.predictor.regression_head.3.weight                              loaded from heads.predictor.regression_head.3.weight                              of shape (4, 256, 1, 1)
+[2026-04-07 16:56:23,735] smoke.data.datasets.kitti INFO: Initializing KITTI val set with 100 files loaded
+[2026-04-07 16:56:23,878] smoke.engine.inference INFO: Start evaluation on kitti_test dataset(100 images).
+[2026-04-07 16:56:26,262] smoke.engine.inference INFO: Total run time: 0:00:02.383558 (0.023835582733154295 s / img per device, on 1 devices)
+[2026-04-07 16:56:26,262] smoke.engine.inference INFO: Model inference time: 0:00:01.969312 (0.019693121910095215 s / img per device, on 1 devices)
+[2026-04-07 16:56:26,262] smoke.data.datasets.evaluation.kitti.kitti_eval INFO: performing kitti detection evaluation: 
+[2026-04-07 16:56:26,268] smoke.data.datasets.evaluation.kitti.kitti_eval INFO: Evaluate on KITTI dataset

@@ -1,0 +1,29 @@
+{
+  "config": "/home/dy-jang/projects/TruckDetection-main/train/mmdet3d_configs/fcos3d_r101_caffe_dcn_fpn_v3_mono.py",
+  "checkpoint_dir": "/home/dy-jang/projects/TruckDetection-main/results/fcos3d/seed_42",
+  "dataset_root": "/home/dy-jang/projects/TruckDetection-main/datasets/v3_takamatsu_1000/kitti_mmdet3d_fcos3d",
+  "ann_file": "v3_infos_val.pkl",
+  "split": "val",
+  "num_samples": 1000,
+  "checkpoints": [
+    {
+      "num_samples": 1000,
+      "matched_count": 1000,
+      "missing_prediction_count": 0,
+      "detection_rate": 1.0,
+      "mean_bbox_iou_2d": 0.7266327365697396,
+      "mean_bev_iou": 0.4247682844261017,
+      "mean_3d_iou": 0.397096718515355,
+      "mean_ate_m": 1.540176995538175,
+      "median_ate_m": 0.8538161814212799,
+      "mean_aoe_deg": 24.30654130409597,
+      "median_aoe_deg": 11.149013848112153,
+      "epoch": 1,
+      "checkpoint": "/home/dy-jang/projects/TruckDetection-main/results/fcos3d/seed_42/epoch_1.pth",
+      "output_dir": "/home/dy-jang/projects/TruckDetection-main/results/final_eval_takamatsu1000/fcos3d_seed42_best3d/epoch_001",
+      "prediction_dir": "/home/dy-jang/projects/TruckDetection-main/results/final_eval_takamatsu1000/fcos3d_seed42_best3d/epoch_001/submission/pred_instances_3d",
+      "eval_log": "/home/dy-jang/projects/TruckDetection-main/results/final_eval_takamatsu1000/fcos3d_seed42_best3d/epoch_001_eval.log",
+      "eval_return_code": 0
+    }
+  ]
+}

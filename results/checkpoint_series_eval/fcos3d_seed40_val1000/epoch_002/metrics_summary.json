@@ -1,0 +1,19 @@
+{
+  "num_samples": 1000,
+  "matched_count": 1000,
+  "missing_prediction_count": 0,
+  "detection_rate": 1.0,
+  "mean_bbox_iou_2d": 0.9045209722920547,
+  "mean_bev_iou": 0.7583346262668227,
+  "mean_3d_iou": 0.7264586346882795,
+  "mean_ate_m": 0.27292164619639514,
+  "median_ate_m": 0.22710546851158142,
+  "mean_aoe_deg": 7.2056712545794666,
+  "median_aoe_deg": 4.223558386806868,
+  "epoch": 2,
+  "checkpoint": "/home/dy-jang/projects/TruckDetection-main/results/fcos3d/seed_40/epoch_2.pth",
+  "output_dir": "/home/dy-jang/projects/TruckDetection-main/results/checkpoint_series_eval/fcos3d_seed40_val1000/epoch_002",
+  "prediction_dir": "/home/dy-jang/projects/TruckDetection-main/results/checkpoint_series_eval/fcos3d_seed40_val1000/epoch_002/submission/pred_instances_3d",
+  "eval_log": "/home/dy-jang/projects/TruckDetection-main/results/checkpoint_series_eval/fcos3d_seed40_val1000/epoch_002_eval.log",
+  "eval_return_code": 0
+}

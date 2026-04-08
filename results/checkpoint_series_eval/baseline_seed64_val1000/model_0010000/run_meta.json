@@ -1,0 +1,26 @@
+{
+  "dataset_root": "/home/dy-jang/projects/v3/kitti_smoke_1280x384_lb",
+  "output_dir": "/home/dy-jang/projects/TruckDetection-main/results/checkpoint_series_eval/baseline_seed64_val1000/model_0010000",
+  "config_file": "configs/smoke_baseline_b16_60ep.yaml",
+  "batch": 16,
+  "seed": 64,
+  "model_type": "baseline",
+  "train_split": "train",
+  "test_split": "val",
+  "max_iteration": 15000,
+  "steps": [
+    6250,
+    10000
+  ],
+  "checkpoint_period": 1000,
+  "dimension_reference": [
+    9.8,
+    3.3,
+    2.5
+  ],
+  "depth_reference": [
+    6.15,
+    2.48
+  ],
+  "iters_per_epoch": 250
+}

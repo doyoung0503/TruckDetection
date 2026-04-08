@@ -1,0 +1,11 @@
+[wait] model_final not found yet: /home/dy-jang/projects/TruckDetection-main/results/geometry_v2/seed_42/model_final.pth
+[wait] model_final not found yet: /home/dy-jang/projects/TruckDetection-main/results/geometry_v2/seed_42/model_final.pth
+[wait] model_final not found yet: /home/dy-jang/projects/TruckDetection-main/results/geometry_v2/seed_42/model_final.pth
+[wait] detected final checkpoint: /home/dy-jang/projects/TruckDetection-main/results/geometry_v2/seed_42/model_final.pth
+[eval] /home/dy-jang/anaconda3/bin/python -u -m train.run_geometry_smoke_v2 --seed 42 --num-gpus 1 --dataset-root /home/dy-jang/projects/v3/kitti_smoke_1280x384_lb --eval-only --output-dir /home/dy-jang/projects/TruckDetection-main/results/checkpoint_series_eval/geometry_v2_seed42_val1000/model_0001000 MODEL.WEIGHT /home/dy-jang/projects/TruckDetection-main/results/geometry_v2/seed_42/model_0001000.pth
+Traceback (most recent call last):
+  File "/home/dy-jang/projects/TruckDetection-main/train/eval_smoke_checkpoint_series.py", line 664, in <module>
+    main()
+  File "/home/dy-jang/projects/TruckDetection-main/train/eval_smoke_checkpoint_series.py", line 608, in main
+    raise RuntimeError(
+RuntimeError: Prediction count mismatch for iter 1000: expected 1000, got 0

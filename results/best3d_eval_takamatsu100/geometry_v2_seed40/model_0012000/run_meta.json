@@ -1,0 +1,33 @@
+{
+  "dataset_root": "/home/dy-jang/projects/v3/v3_takamatsu_100/kitti_smoke_1280x384_lb",
+  "output_dir": "/home/dy-jang/projects/TruckDetection-main/results/best3d_eval_takamatsu100/geometry_v2_seed40/model_0012000",
+  "config_file": "configs/smoke_geometry_v2_b16_60ep.yaml",
+  "batch": 16,
+  "seed": 40,
+  "model_type": "geometry_v2",
+  "train_split": "train",
+  "test_split": "val",
+  "max_iteration": 15000,
+  "steps": [
+    6250,
+    10000
+  ],
+  "checkpoint_period": 1000,
+  "dimension_reference": [
+    9.8,
+    3.3,
+    2.5
+  ],
+  "depth_reference": [
+    6.15,
+    2.48
+  ],
+  "iters_per_epoch": 0,
+  "smoke_head_mode": "geometry_v2",
+  "regression_heads": 4,
+  "regression_channel": [
+    1,
+    1,
+    2
+  ]
+}

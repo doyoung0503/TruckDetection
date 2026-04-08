@@ -1,0 +1,5 @@
+[geometry-smoke-v2] cwd: /home/dy-jang/projects/TruckDetection-main/SMOKE-master
+[geometry-smoke-v2] cmd: /home/dy-jang/anaconda3/bin/python tools/plain_train_net.py --config-file configs/smoke_geometry_v2_b16_60ep.yaml DATASETS.DETECT_CLASSES ('Car',) MODEL.SMOKE_HEAD.MODE geometry_v2 MODEL.SMOKE_HEAD.REGRESSION_HEADS 4 MODEL.SMOKE_HEAD.REGRESSION_CHANNEL (1,1,2) MODEL.SMOKE_HEAD.DIMENSION_REFERENCE ((9.8,3.3,2.5),) MODEL.SMOKE_HEAD.DEPTH_REFERENCE (6.15,2.48) SEED 64 OUTPUT_DIR /home/dy-jang/projects/TruckDetection-main/results/geometry_v2/seed_64
+[geometry-smoke-v2] dataset: /home/dy-jang/projects/v3/kitti_smoke_1280x384_lb
+[geometry-smoke-v2] output: /home/dy-jang/projects/TruckDetection-main/results/geometry_v2/seed_64
+[geometry-smoke-v2] seed: 64

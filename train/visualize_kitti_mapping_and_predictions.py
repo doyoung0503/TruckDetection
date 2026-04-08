@@ -4,7 +4,6 @@ import argparse
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
@@ -30,6 +29,10 @@ PROJ_CORNER_COLOR = (80, 220, 255)
 TEXT_BG = (0, 0, 0, 180)
 PANEL_BG = (18, 18, 18)
 PANEL_TEXT = (245, 245, 245)
+BEV_BG = (24, 24, 30)
+BEV_GRID = (64, 64, 76)
+BEV_AXIS = (190, 190, 190)
+CAMERA_COLOR = (250, 250, 250)
 
 BOX_EDGES = (
     (0, 1), (1, 4), (4, 5), (5, 0),
@@ -117,7 +120,10 @@ def read_calib_p2(path: Path) -> np.ndarray:
 
 
 def project_corners(K: np.ndarray, corners_3d: np.ndarray) -> np.ndarray:
-    corners_2d = K @ corners_3d
+    corners = np.asarray(corners_3d, dtype=np.float32)
+    if corners.shape == (8, 3):
+        corners = corners.T
+    corners_2d = K @ corners
     corners_2d = corners_2d[:2] / np.clip(corners_2d[2:], 1e-7, None)
     return corners_2d.T
 
@@ -146,8 +152,17 @@ def bbox_iou(box_a: np.ndarray, box_b: np.ndarray) -> float:
     return inter / union if union > 0 else 0.0
 
 
+def corners_3d_from_object(K: np.ndarray, obj: KittiObject) -> np.ndarray:
+    _, _, corners_3d = encode_label(K, obj.ry, obj.dims_lhw, obj.loc_xyz)
+    corners = np.asarray(corners_3d, dtype=np.float32)
+    if corners.shape == (3, 8):
+        corners = corners.T
+    return corners
+
+
 def box_from_object(K: np.ndarray, obj: KittiObject) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    center_2d, box2d, corners_3d = encode_label(K, obj.ry, obj.dims_lhw, obj.loc_xyz)
+    center_2d, box2d, _ = encode_label(K, obj.ry, obj.dims_lhw, obj.loc_xyz)
+    corners_3d = corners_3d_from_object(K, obj)
     corners_2d = project_corners(K, corners_3d)
     return np.asarray(center_2d, dtype=np.float32), np.asarray(box2d, dtype=np.float32), corners_2d
 
@@ -209,6 +224,149 @@ def load_raw_transformed_corners(
         dtype=np.float32,
     )
     return [transformed]
+
+
+def bev_polygon_from_corners(corners_3d: np.ndarray) -> np.ndarray:
+    xz = np.asarray(corners_3d[:, [0, 2]], dtype=np.float32)
+    rounded = np.round(xz, 4)
+    _, unique_idx = np.unique(rounded, axis=0, return_index=True)
+    points = xz[np.sort(unique_idx)]
+    if len(points) <= 2:
+        return points
+    center = points.mean(axis=0)
+    angles = np.arctan2(points[:, 1] - center[1], points[:, 0] - center[0])
+    return points[np.argsort(angles)]
+
+
+def make_bev_projector(polygons: list[np.ndarray], size: tuple[int, int], margin: int = 36):
+    width, height = size
+    xs = [0.0]
+    zs = [0.0]
+    for polygon in polygons:
+        if polygon.size == 0:
+            continue
+        xs.extend(float(v) for v in polygon[:, 0])
+        zs.extend(float(v) for v in polygon[:, 1])
+
+    if len(xs) == 1:
+        xs.extend([-10.0, 10.0])
+        zs.extend([0.0, 30.0])
+
+    x_min, x_max = min(xs), max(xs)
+    z_min, z_max = min(zs), max(zs)
+    x_span = max(x_max - x_min, 4.0)
+    z_span = max(z_max - z_min, 8.0)
+    pad_x = max(2.0, x_span * 0.15)
+    pad_z = max(4.0, z_span * 0.15)
+
+    x_min -= pad_x
+    x_max += pad_x
+    z_min = min(0.0, z_min - pad_z * 0.5)
+    z_max += pad_z
+
+    avail_w = max(1.0, width - 2 * margin)
+    avail_h = max(1.0, height - 2 * margin)
+    scale = min(avail_w / max(x_max - x_min, 1e-6), avail_h / max(z_max - z_min, 1e-6))
+    used_w = scale * (x_max - x_min)
+    used_h = scale * (z_max - z_min)
+    x_offset = (width - used_w) * 0.5
+    y_offset = (height - used_h) * 0.5
+
+    def project(point: tuple[float, float] | np.ndarray) -> tuple[float, float]:
+        x = float(point[0])
+        z = float(point[1])
+        px = x_offset + (x - x_min) * scale
+        py = height - (y_offset + (z - z_min) * scale)
+        return px, py
+
+    return project, (x_min, x_max, z_min, z_max)
+
+
+def draw_bev_grid(draw: ImageDraw.ImageDraw, project, bounds: tuple[float, float, float, float], size: tuple[int, int]) -> None:
+    width, height = size
+    x_min, x_max, z_min, z_max = bounds
+    span = max(x_max - x_min, z_max - z_min)
+    step = 5.0 if span <= 50.0 else 10.0
+    font = load_font(14)
+
+    x_tick = step * np.floor(x_min / step)
+    while x_tick <= x_max + 1e-6:
+        color = BEV_AXIS if abs(x_tick) < 1e-6 else BEV_GRID
+        p0 = project((x_tick, z_min))
+        p1 = project((x_tick, z_max))
+        draw.line([p0, p1], fill=color, width=2 if abs(x_tick) < 1e-6 else 1)
+        if abs(x_tick) > 1e-6:
+            draw.text((p0[0] + 2, height - 24), f"{x_tick:.0f}m", font=font, fill=PANEL_TEXT)
+        x_tick += step
+
+    z_tick = step * np.floor(z_min / step)
+    while z_tick <= z_max + 1e-6:
+        color = BEV_AXIS if abs(z_tick) < 1e-6 else BEV_GRID
+        p0 = project((x_min, z_tick))
+        p1 = project((x_max, z_tick))
+        draw.line([p0, p1], fill=color, width=2 if abs(z_tick) < 1e-6 else 1)
+        if abs(z_tick) > 1e-6:
+            draw.text((8, p0[1] - 12), f"{z_tick:.0f}m", font=font, fill=PANEL_TEXT)
+        z_tick += step
+
+    draw.text((12, 10), "Top-down BEV (X-Z)", font=load_font(18), fill=PANEL_TEXT)
+
+
+def draw_bev_legend(draw: ImageDraw.ImageDraw) -> None:
+    font = load_font(16)
+    x0, y0 = 12, 36
+    items = [
+        (EDGE_COLOR_GT, "GT"),
+        (EDGE_COLOR_PRED, "Prediction"),
+        (CAMERA_COLOR, "Camera"),
+    ]
+    for idx, (color, label) in enumerate(items):
+        y = y0 + idx * 22
+        draw.line([(x0, y + 8), (x0 + 18, y + 8)], fill=color, width=3)
+        draw.text((x0 + 26, y), label, font=font, fill=PANEL_TEXT)
+
+
+def render_bev_panel(size: tuple[int, int], K: np.ndarray, gt_objects: list[KittiObject], pred_objects: list[KittiObject]) -> Image.Image:
+    canvas = Image.new("RGB", size, BEV_BG)
+    draw = ImageDraw.Draw(canvas, "RGBA")
+
+    gt_entries = []
+    for idx, obj in enumerate(gt_objects):
+        corners = corners_3d_from_object(K, obj)
+        gt_entries.append((idx, obj, bev_polygon_from_corners(corners)))
+
+    pred_entries = []
+    for idx, obj in enumerate(pred_objects):
+        corners = corners_3d_from_object(K, obj)
+        pred_entries.append((idx, obj, bev_polygon_from_corners(corners)))
+
+    polygons = [poly for _, _, poly in gt_entries + pred_entries if poly.size > 0]
+    project, bounds = make_bev_projector(polygons, size)
+    draw_bev_grid(draw, project, bounds, size)
+    draw_bev_legend(draw)
+
+    camera_xy = project((0.0, 0.0))
+    draw.ellipse([(camera_xy[0] - 5, camera_xy[1] - 5), (camera_xy[0] + 5, camera_xy[1] + 5)], fill=CAMERA_COLOR)
+    draw_tag(draw, (camera_xy[0] + 8, camera_xy[1] - 20), "Camera", CAMERA_COLOR)
+
+    for idx, obj, polygon in gt_entries:
+        if len(polygon) >= 2:
+            pts = [project(point) for point in polygon]
+            draw.line(pts + [pts[0]], fill=EDGE_COLOR_GT, width=3)
+        center_xy = project((obj.loc_xyz[0], obj.loc_xyz[2]))
+        draw.ellipse([(center_xy[0] - 4, center_xy[1] - 4), (center_xy[0] + 4, center_xy[1] + 4)], fill=EDGE_COLOR_GT)
+        draw_tag(draw, (center_xy[0] + 8, center_xy[1] - 18), f"GT#{idx}", EDGE_COLOR_GT)
+
+    for idx, obj, polygon in pred_entries:
+        if len(polygon) >= 2:
+            pts = [project(point) for point in polygon]
+            draw.line(pts + [pts[0]], fill=EDGE_COLOR_PRED, width=3)
+        center_xy = project((obj.loc_xyz[0], obj.loc_xyz[2]))
+        draw.ellipse([(center_xy[0] - 4, center_xy[1] - 4), (center_xy[0] + 4, center_xy[1] + 4)], fill=EDGE_COLOR_PRED)
+        score = f"{obj.score:.3f}" if obj.score is not None else "NA"
+        draw_tag(draw, (center_xy[0] + 8, center_xy[1] + 4), f"PR#{idx} {score}", EDGE_COLOR_PRED)
+
+    return canvas
 
 
 def render_gt_panel(
@@ -273,26 +431,39 @@ def render_overlay_panel(image: Image.Image, K: np.ndarray, gt_objects: list[Kit
     return canvas
 
 
-def compose_panels(sample_id: str, gt_panel: Image.Image, pred_panel: Image.Image, overlay_panel: Image.Image, mapping_stats: list[dict[str, float]]) -> Image.Image:
+def compose_panels(
+    sample_id: str,
+    gt_panel: Image.Image,
+    pred_panel: Image.Image,
+    overlay_panel: Image.Image,
+    bev_panel: Image.Image,
+    mapping_stats: list[dict[str, float]],
+) -> Image.Image:
     panel_titles = [
         f"{sample_id} | GT Label Mapping",
         f"{sample_id} | Prediction",
         f"{sample_id} | Overlay",
+        f"{sample_id} | BEV",
     ]
+    panels = [gt_panel, pred_panel, overlay_panel, bev_panel]
     title_font = load_font(22)
     text_font = load_font(18)
     pad = 16
     title_h = 42
-    width, height = gt_panel.size
-    canvas = Image.new("RGB", (width * 3 + pad * 4, height + title_h + pad * 2 + 96), PANEL_BG)
+    footer_h = 96
+    max_height = max(panel.height for panel in panels)
+    total_width = sum(panel.width for panel in panels) + pad * (len(panels) + 1)
+    canvas = Image.new("RGB", (total_width, max_height + title_h + pad * 2 + footer_h), PANEL_BG)
     draw = ImageDraw.Draw(canvas)
-    panels = [gt_panel, pred_panel, overlay_panel]
-    for idx, panel in enumerate(panels):
-        x0 = pad + idx * (width + pad)
-        y0 = pad + title_h
+
+    x0 = pad
+    for title, panel in zip(panel_titles, panels):
+        y0 = pad + title_h + (max_height - panel.height) // 2
         canvas.paste(panel, (x0, y0))
-        draw.text((x0, pad), panel_titles[idx], font=title_font, fill=PANEL_TEXT)
-    stats_y = pad + title_h + height + 12
+        draw.text((x0, pad), title, font=title_font, fill=PANEL_TEXT)
+        x0 += panel.width + pad
+
+    stats_y = pad + title_h + max_height + 12
     if mapping_stats:
         ious = [item["bbox_iou"] for item in mapping_stats]
         summary = (
@@ -304,7 +475,7 @@ def compose_panels(sample_id: str, gt_panel: Image.Image, pred_panel: Image.Imag
     draw.text((pad, stats_y), summary, font=text_font, fill=PANEL_TEXT)
     draw.text(
         (pad, stats_y + 28),
-        "Green: GT 3D box / bbox, Blue: GT reprojected 2D bbox, Red/Orange: prediction.",
+        "Green: GT 3D box / bbox, Blue: GT reprojected 2D bbox, Red/Orange: prediction, rightmost panel: BEV top-down.",
         font=text_font,
         fill=PANEL_TEXT,
     )
@@ -399,7 +570,8 @@ def main() -> None:
         gt_panel, mapping_stats = render_gt_panel(image, K, gt_objects, raw_corner_sets)
         pred_panel = render_pred_panel(image, K, pred_objects)
         overlay_panel = render_overlay_panel(image, K, gt_objects, pred_objects)
-        canvas = compose_panels(sample_id, gt_panel, pred_panel, overlay_panel, mapping_stats)
+        bev_panel = render_bev_panel((image.width, image.height), K, gt_objects, pred_objects)
+        canvas = compose_panels(sample_id, gt_panel, pred_panel, overlay_panel, bev_panel, mapping_stats)
 
         out_path = output_dir / f"{sample_id}_compare.png"
         canvas.save(out_path)

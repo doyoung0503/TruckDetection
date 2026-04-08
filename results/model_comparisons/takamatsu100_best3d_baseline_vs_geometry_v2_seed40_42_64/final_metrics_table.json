@@ -1,0 +1,81 @@
+{
+  "dataset": "v3_takamatsu_100",
+  "selection_metric": "best 3D IoU on original val1000",
+  "rows": [
+    {
+      "model": "baseline",
+      "seed": "42",
+      "runs": 1,
+      "matched_count": 77,
+      "num_samples": 100,
+      "detection_rate": 0.77,
+      "mean_bbox_iou_2d": 0.59758479436874,
+      "mean_ate_m": 0.8942478127390533,
+      "mean_aoe_deg": 2.7018941239869183,
+      "mean_bev_iou": 0.50337303087314,
+      "mean_3d_iou": 0.47905079960377056,
+      "note": "best 3D IoU on original val1000: iter 15000",
+      "iteration": 15000
+    },
+    {
+      "model": "geometry_v2",
+      "seed": "40",
+      "runs": 1,
+      "matched_count": 78,
+      "num_samples": 100,
+      "detection_rate": 0.78,
+      "mean_bbox_iou_2d": 0.6688555090263277,
+      "mean_ate_m": 0.8179337410972669,
+      "mean_aoe_deg": 2.788307318270502,
+      "mean_bev_iou": 0.5481071513696184,
+      "mean_3d_iou": 0.548092500278763,
+      "note": "best 3D IoU on original val1000: iter 12000",
+      "iteration": 12000
+    },
+    {
+      "model": "geometry_v2",
+      "seed": "42",
+      "runs": 1,
+      "matched_count": 70,
+      "num_samples": 100,
+      "detection_rate": 0.7,
+      "mean_bbox_iou_2d": 0.6067730051405665,
+      "mean_ate_m": 0.701758422596114,
+      "mean_aoe_deg": 3.909578520851472,
+      "mean_bev_iou": 0.5155213874720783,
+      "mean_3d_iou": 0.5155075164737822,
+      "note": "best 3D IoU on original val1000: iter 13000",
+      "iteration": 13000
+    },
+    {
+      "model": "geometry_v2",
+      "seed": "64",
+      "runs": 1,
+      "matched_count": 74,
+      "num_samples": 100,
+      "detection_rate": 0.74,
+      "mean_bbox_iou_2d": 0.6617394402119369,
+      "mean_ate_m": 0.5472409739410756,
+      "mean_aoe_deg": 2.4856458403049606,
+      "mean_bev_iou": 0.5685429003573033,
+      "mean_3d_iou": 0.5685276182991267,
+      "note": "best 3D IoU on original val1000: iter 14000",
+      "iteration": 14000
+    },
+    {
+      "model": "geometry_v2_mean",
+      "seed": "40,42,64",
+      "runs": 3,
+      "matched_count": 74,
+      "num_samples": 100,
+      "detection_rate": 0.74,
+      "mean_bbox_iou_2d": 0.645789318126277,
+      "mean_ate_m": 0.6889777125448189,
+      "mean_aoe_deg": 3.0611772264756447,
+      "mean_bev_iou": 0.5440571463996666,
+      "mean_3d_iou": 0.5440425450172239,
+      "note": "mean over geometry_v2 seeds 40/42/64 (best 3D IoU checkpoints)",
+      "iteration": null
+    }
+  ]
+}

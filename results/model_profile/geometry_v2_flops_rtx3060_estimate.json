@@ -1,0 +1,20 @@
+{
+  "model": "geometry_v2",
+  "checkpoint": "/home/dy-jang/projects/TruckDetection-main/results/geometry_v2/seed_42/model_0008000.pth",
+  "input_shape": [
+    1,
+    3,
+    384,
+    1280
+  ],
+  "measured_network_forward_flops": 87137894400,
+  "measured_network_forward_gflops": 87.1378944,
+  "notes": {
+    "flops_scope": "backbone + predictor network forward only; postprocess is excluded and usually small compared to the CNN forward",
+    "assumed_gpu": "GeForce RTX 3060 desktop FP32 12.74 TFLOPS",
+    "fps_theoretical_upper_bound": 146.20504761703307,
+    "fps_estimate_25pct_efficiency": 36.55126190425827,
+    "fps_estimate_33pct_efficiency": 48.24766571362092,
+    "fps_estimate_50pct_efficiency": 73.10252380851654
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "launcher_module": "train.run_official_smoke_baseline",
+  "checkpoint_dir": "/home/dy-jang/projects/TruckDetection-main/results/baseline_b16_full/seed_42",
+  "dataset_root": "/home/dy-jang/projects/TruckDetection-main/datasets/v3_takamatsu_1000/kitti_smoke_1280x384_lb",
+  "split": "val",
+  "num_samples": 1000,
+  "checkpoints": [
+    {
+      "num_samples": 1000,
+      "matched_count": 923,
+      "missing_prediction_count": 77,
+      "detection_rate": 0.923,
+      "mean_bbox_iou_2d": 0.6860542625681665,
+      "mean_bev_iou": 0.5765708652714634,
+      "mean_3d_iou": 0.5520801003100669,
+      "mean_ate_m": 0.8335404756881563,
+      "median_ate_m": 0.21558122336864471,
+      "mean_aoe_deg": 5.1624754951070475,
+      "median_aoe_deg": 2.2600869800162693,
+      "iteration": 15000,
+      "checkpoint": "/home/dy-jang/projects/TruckDetection-main/results/baseline_b16_full/seed_42/model_final.pth",
+      "output_dir": "/home/dy-jang/projects/TruckDetection-main/results/final_eval_takamatsu1000/baseline_seed42/model_0015000",
+      "prediction_dir": "/home/dy-jang/projects/TruckDetection-main/results/final_eval_takamatsu1000/baseline_seed42/model_0015000/inference/kitti_test/data",
+      "eval_log": "/home/dy-jang/projects/TruckDetection-main/results/final_eval_takamatsu1000/baseline_seed42/model_0015000_eval.log",
+      "eval_return_code": 1,
+      "model_name": "baseline",
+      "seed": 42
+    }
+  ]
+}

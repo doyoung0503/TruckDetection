@@ -1,0 +1,5 @@
+[eval] takamatsu_100 시작: $(date)
+[complete] best epoch=1 3D IoU=0.4675730203250918 ATE=1.2662076948583125 AOE=13.77575657662608
+[eval] takamatsu_1000 시작: $(date)
+[complete] best epoch=1 3D IoU=0.397096718515355 ATE=1.540176995538175 AOE=24.30654130409597
+[eval] 완료: $(date)

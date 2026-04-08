@@ -1,0 +1,32 @@
+{
+  "launcher_module": "train.run_geometry_smoke_v2",
+  "checkpoint_dir": "/home/dy-jang/projects/TruckDetection-main/results/geometry_v2/seed_42",
+  "dataset_root": "/home/dy-jang/projects/v3/v3_takamatsu_100/kitti_smoke_1280x384_lb",
+  "split": "val",
+  "num_samples": 100,
+  "selection_metric": "mean_3d_iou on original val1000",
+  "checkpoints": [
+    {
+      "num_samples": 100,
+      "matched_count": 70,
+      "missing_prediction_count": 30,
+      "detection_rate": 0.7,
+      "mean_bbox_iou_2d": 0.6067730051405665,
+      "mean_bev_iou": 0.5155213874720783,
+      "mean_3d_iou": 0.5155075164737822,
+      "mean_ate_m": 0.701758422596114,
+      "median_ate_m": 0.2970380187034607,
+      "mean_aoe_deg": 3.909578520851472,
+      "median_aoe_deg": 2.014864375466557,
+      "iteration": 13000,
+      "checkpoint": "/home/dy-jang/projects/TruckDetection-main/results/geometry_v2/seed_42/model_0013000.pth",
+      "output_dir": "/home/dy-jang/projects/TruckDetection-main/results/best3d_eval_takamatsu100/geometry_v2_seed42/model_0013000",
+      "prediction_dir": "/home/dy-jang/projects/TruckDetection-main/results/best3d_eval_takamatsu100/geometry_v2_seed42/model_0013000/inference/kitti_test/data",
+      "eval_log": "/home/dy-jang/projects/TruckDetection-main/results/best3d_eval_takamatsu100/geometry_v2_seed42/model_0013000_eval.log",
+      "eval_return_code": 1,
+      "model_name": "geometry_v2",
+      "seed": 42,
+      "note": "best 3D IoU on original val1000: iter 13000"
+    }
+  ]
+}

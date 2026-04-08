@@ -1,0 +1,79 @@
+{
+  "rows": [
+    {
+      "sample_id": "000001",
+      "failure_type": "both_miss",
+      "baseline_matched": "False",
+      "baseline_iou_2d": "0.000",
+      "baseline_bev_iou": "0.000",
+      "baseline_ate_m": "NA",
+      "baseline_aoe_deg": "NA",
+      "geometry_matched": "False",
+      "geometry_iou_2d": "0.000",
+      "geometry_bev_iou": "0.000",
+      "geometry_ate_m": "NA",
+      "geometry_aoe_deg": "NA",
+      "takeaway": "Both models missed the truck."
+    },
+    {
+      "sample_id": "000018",
+      "failure_type": "both_miss",
+      "baseline_matched": "False",
+      "baseline_iou_2d": "0.000",
+      "baseline_bev_iou": "0.000",
+      "baseline_ate_m": "NA",
+      "baseline_aoe_deg": "NA",
+      "geometry_matched": "False",
+      "geometry_iou_2d": "0.000",
+      "geometry_bev_iou": "0.000",
+      "geometry_ate_m": "NA",
+      "geometry_aoe_deg": "NA",
+      "takeaway": "Both models missed the truck."
+    },
+    {
+      "sample_id": "000054",
+      "failure_type": "baseline_miss_geometry_hit",
+      "baseline_matched": "False",
+      "baseline_iou_2d": "0.000",
+      "baseline_bev_iou": "0.000",
+      "baseline_ate_m": "NA",
+      "baseline_aoe_deg": "NA",
+      "geometry_matched": "True",
+      "geometry_iou_2d": "0.858",
+      "geometry_bev_iou": "0.826",
+      "geometry_ate_m": "0.381",
+      "geometry_aoe_deg": "1.699",
+      "takeaway": "Geometry detected the truck while baseline missed it."
+    },
+    {
+      "sample_id": "000052",
+      "failure_type": "geometry_miss_baseline_hit",
+      "baseline_matched": "True",
+      "baseline_iou_2d": "0.722",
+      "baseline_bev_iou": "0.419",
+      "baseline_ate_m": "1.989",
+      "baseline_aoe_deg": "4.129",
+      "geometry_matched": "False",
+      "geometry_iou_2d": "0.000",
+      "geometry_bev_iou": "0.000",
+      "geometry_ate_m": "NA",
+      "geometry_aoe_deg": "NA",
+      "takeaway": "Baseline detected the truck while geometry missed it."
+    },
+    {
+      "sample_id": "000015",
+      "failure_type": "both_low_overlap",
+      "baseline_matched": "True",
+      "baseline_iou_2d": "0.360",
+      "baseline_bev_iou": "0.000",
+      "baseline_ate_m": "4.787",
+      "baseline_aoe_deg": "33.235",
+      "geometry_matched": "True",
+      "geometry_iou_2d": "0.542",
+      "geometry_bev_iou": "0.000",
+      "geometry_ate_m": "3.838",
+      "geometry_aoe_deg": "15.583",
+      "takeaway": "Both detected the truck, but overlap/translation quality remained poor."
+    }
+  ]
+}

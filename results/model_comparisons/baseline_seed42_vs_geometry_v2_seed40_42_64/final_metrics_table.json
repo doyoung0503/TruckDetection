@@ -1,0 +1,74 @@
+{
+  "rows": [
+    {
+      "model": "baseline",
+      "seed": "42",
+      "runs": 1,
+      "matched_count": 976,
+      "num_samples": 1000,
+      "detection_rate": 0.976,
+      "mean_bbox_iou_2d": 0.8182303286678512,
+      "mean_ate_m": 0.08841649835097191,
+      "mean_aoe_deg": 1.3318991079304159,
+      "mean_bev_iou": 0.7921090775437006,
+      "mean_3d_iou": 0.7593290985694219,
+      "note": "reference: only seed42 trained"
+    },
+    {
+      "model": "geometry_v2",
+      "seed": "40",
+      "runs": 1,
+      "matched_count": 978,
+      "num_samples": 1000,
+      "detection_rate": 0.978,
+      "mean_bbox_iou_2d": 0.9455605038686105,
+      "mean_ate_m": 0.08403287614635735,
+      "mean_aoe_deg": 1.2735047342669485,
+      "mean_bev_iou": 0.9021960451390605,
+      "mean_3d_iou": 0.90217109289975,
+      "note": "final checkpoint"
+    },
+    {
+      "model": "geometry_v2",
+      "seed": "42",
+      "runs": 1,
+      "matched_count": 974,
+      "num_samples": 1000,
+      "detection_rate": 0.974,
+      "mean_bbox_iou_2d": 0.9416129244218789,
+      "mean_ate_m": 0.08518524282110866,
+      "mean_aoe_deg": 1.3387276842932794,
+      "mean_bev_iou": 0.8968441042380294,
+      "mean_3d_iou": 0.8968193715058436,
+      "note": "final checkpoint"
+    },
+    {
+      "model": "geometry_v2",
+      "seed": "64",
+      "runs": 1,
+      "matched_count": 975,
+      "num_samples": 1000,
+      "detection_rate": 0.975,
+      "mean_bbox_iou_2d": 0.9424700398657283,
+      "mean_ate_m": 0.08176098807452199,
+      "mean_aoe_deg": 1.4187402823432071,
+      "mean_bev_iou": 0.8988588186590657,
+      "mean_3d_iou": 0.8988339407618567,
+      "note": "final checkpoint"
+    },
+    {
+      "model": "geometry_v2_mean",
+      "seed": "40,42,64",
+      "runs": 3,
+      "matched_count": 975.6666666666666,
+      "num_samples": 1000,
+      "detection_rate": 0.9756666666666667,
+      "mean_bbox_iou_2d": 0.9432144893854059,
+      "mean_ate_m": 0.08365970234732933,
+      "mean_aoe_deg": 1.3436575669678117,
+      "mean_bev_iou": 0.8992996560120519,
+      "mean_3d_iou": 0.8992748017224834,
+      "note": "mean over geometry_v2 seeds 40/42/64"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "num_samples": 1000,
+  "matched_count": 935,
+  "missing_prediction_count": 65,
+  "detection_rate": 0.935,
+  "mean_bbox_iou_2d": 0.8209510979989575,
+  "mean_bev_iou": 0.6652195248700409,
+  "mean_3d_iou": 0.6652027519475453,
+  "mean_ate_m": 0.40386908035426533,
+  "median_ate_m": 0.26760315895080566,
+  "mean_aoe_deg": 4.920955359342696,
+  "median_aoe_deg": 3.9500879152061836,
+  "iteration": 2000,
+  "checkpoint": "/home/dy-jang/projects/TruckDetection-main/results/geometry_v2/seed_40/model_0002000.pth",
+  "output_dir": "/home/dy-jang/projects/TruckDetection-main/results/checkpoint_series_eval/geometry_v2_seed40_val1000/model_0002000",
+  "prediction_dir": "/home/dy-jang/projects/TruckDetection-main/results/checkpoint_series_eval/geometry_v2_seed40_val1000/model_0002000/inference/kitti_test/data",
+  "eval_log": "/home/dy-jang/projects/TruckDetection-main/results/checkpoint_series_eval/geometry_v2_seed40_val1000/model_0002000_eval.log",
+  "eval_return_code": 1
+}

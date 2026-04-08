@@ -1,0 +1,608 @@
+04/08 10:57:50 - mmengine - INFO - 
+------------------------------------------------------------
+System environment:
+    sys.platform: linux
+    Python: 3.10.20 (main, Mar 11 2026, 17:46:40) [GCC 14.3.0]
+    CUDA available: True
+    MUSA available: False
+    numpy_random_seed: 837100954
+    GPU 0: NVIDIA RTX A6000
+    CUDA_HOME: /usr/local/cuda
+    NVCC: Cuda compilation tools, release 11.7, V11.7.99
+    GCC: gcc (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0
+    PyTorch: 2.1.2+cu121
+    PyTorch compiling details: PyTorch built with:
+  - GCC 9.3
+  - C++ Version: 201703
+  - Intel(R) oneAPI Math Kernel Library Version 2022.2-Product Build 20220804 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v3.1.1 (Git Hash 64f6bcbcbab628e96f33a62c3e975f8535a7bde4)
+  - OpenMP 201511 (a.k.a. OpenMP 4.5)
+  - LAPACK is enabled (usually provided by MKL)
+  - NNPACK is enabled
+  - CPU capability usage: AVX512
+  - CUDA Runtime 12.1
+  - NVCC architecture flags: -gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;-gencode;arch=compute_70,code=sm_70;-gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_80,code=sm_80;-gencode;arch=compute_86,code=sm_86;-gencode;arch=compute_90,code=sm_90
+  - CuDNN 8.9.2
+  - Magma 2.6.1
+  - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, CUDA_VERSION=12.1, CUDNN_VERSION=8.9.2, CXX_COMPILER=/opt/rh/devtoolset-9/root/usr/bin/c++, CXX_FLAGS= -D_GLIBCXX_USE_CXX11_ABI=0 -fabi-version=11 -fvisibility-inlines-hidden -DUSE_PTHREADPOOL -DNDEBUG -DUSE_KINETO -DLIBKINETO_NOROCTRACER -DUSE_FBGEMM -DUSE_QNNPACK -DUSE_PYTORCH_QNNPACK -DUSE_XNNPACK -DSYMBOLICATE_MOBILE_DEBUG_HANDLE -O2 -fPIC -Wall -Wextra -Werror=return-type -Werror=non-virtual-dtor -Werror=bool-operation -Wnarrowing -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas -Wno-unused-parameter -Wno-unused-function -Wno-unused-result -Wno-strict-overflow -Wno-strict-aliasing -Wno-stringop-overflow -Wno-psabi -Wno-error=pedantic -Wno-error=old-style-cast -Wno-invalid-partial-specialization -Wno-unused-private-field -Wno-aligned-allocation-unavailable -Wno-missing-braces -fdiagnostics-color=always -faligned-new -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Werror=format -Werror=cast-function-type -Wno-stringop-overflow, LAPACK_INFO=mkl, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, TORCH_DISABLE_GPU_ASSERTS=ON, TORCH_VERSION=2.1.2, USE_CUDA=ON, USE_CUDNN=ON, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=1, USE_NNPACK=ON, USE_OPENMP=ON, USE_ROCM=OFF, 
+
+    TorchVision: 0.16.2+cu121
+    OpenCV: 4.11.0
+    MMEngine: 0.10.7
+
+Runtime environment:
+    cudnn_benchmark: False
+    mp_cfg: {'mp_start_method': 'fork', 'opencv_num_threads': 0}
+    dist_cfg: {'backend': 'nccl'}
+    seed: 837100954
+    Distributed launcher: none
+    Distributed training: False
+    GPU number: 1
+------------------------------------------------------------
+
+04/08 10:57:50 - mmengine - INFO - Config:
+auto_scale_lr = dict(base_batch_size=16, enable=False)
+backend_args = None
+class_names = [
+    'Car',
+]
+custom_hooks = [
+    dict(
+        depth_index=2,
+        stage2_weight=1.0,
+        switch_epoch=6,
+        type='DepthWeightSchedulerHook'),
+]
+custom_imports = dict(
+    allow_failed_imports=False, imports=[
+        'truck_hooks',
+    ])
+data_root = '/home/dy-jang/projects/v3/kitti_mmdet3d_fcos3d/'
+dataset_type = 'KittiDataset'
+default_hooks = dict(
+    checkpoint=dict(
+        by_epoch=True,
+        interval=1,
+        max_keep_ckpts=12,
+        save_last=True,
+        type='CheckpointHook'),
+    logger=dict(interval=20, type='LoggerHook'),
+    param_scheduler=dict(type='ParamSchedulerHook'),
+    sampler_seed=dict(type='DistSamplerSeedHook'),
+    timer=dict(type='IterTimerHook'),
+    visualization=dict(type='Det3DVisualizationHook'))
+default_scope = 'mmdet3d'
+env_cfg = dict(
+    cudnn_benchmark=False,
+    dist_cfg=dict(backend='nccl'),
+    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0))
+eval_pipeline = [
+    dict(backend_args=None, type='LoadImageFromFileMono3D'),
+    dict(keys=[
+        'img',
+    ], type='Pack3DDetInputs'),
+]
+input_modality = dict(use_camera=True, use_lidar=False)
+launcher = 'none'
+load_from = '/home/dy-jang/projects/TruckDetection-main/results/fcos3d/seed_64/epoch_12.pth'
+log_level = 'INFO'
+log_processor = dict(by_epoch=True, type='LogProcessor', window_size=50)
+metainfo = dict(classes=[
+    'Car',
+])
+model = dict(
+    backbone=dict(
+        dcn=dict(deform_groups=1, fallback_on_stride=False, type='DCNv2'),
+        depth=101,
+        frozen_stages=0,
+        init_cfg=dict(
+            checkpoint='open-mmlab://detectron2/resnet101_caffe',
+            type='Pretrained'),
+        norm_cfg=dict(requires_grad=False, type='BN'),
+        norm_eval=True,
+        num_stages=4,
+        out_indices=(
+            0,
+            1,
+            2,
+            3,
+        ),
+        stage_with_dcn=(
+            False,
+            False,
+            True,
+            True,
+        ),
+        style='caffe',
+        type='mmdet.ResNet'),
+    bbox_head=dict(
+        attr_branch=(256, ),
+        bbox_code_size=7,
+        bbox_coder=dict(
+            base_depths=((
+                5.9990189126,
+                2.4878107717,
+            ), ),
+            base_dims=((
+                5.103683,
+                1.918924,
+                1.868429,
+            ), ),
+            code_size=7,
+            type='FCOS3DBBoxCoder'),
+        center_sampling=True,
+        centerness_on_reg=True,
+        cls_branch=(256, ),
+        conv_bias=True,
+        dcn_on_last_conv=True,
+        diff_rad_by_sin=True,
+        dir_branch=(256, ),
+        dir_limit_offset=0,
+        dir_offset=0.7854,
+        feat_channels=256,
+        group_reg_dims=(
+            2,
+            1,
+            3,
+            1,
+        ),
+        in_channels=256,
+        loss_attr=dict(
+            loss_weight=1.0, type='mmdet.CrossEntropyLoss', use_sigmoid=False),
+        loss_bbox=dict(
+            beta=0.1111111111111111,
+            loss_weight=1.0,
+            type='mmdet.SmoothL1Loss'),
+        loss_centerness=dict(
+            loss_weight=1.0, type='mmdet.CrossEntropyLoss', use_sigmoid=True),
+        loss_cls=dict(
+            alpha=0.25,
+            gamma=2.0,
+            loss_weight=1.0,
+            type='mmdet.FocalLoss',
+            use_sigmoid=True),
+        loss_dir=dict(
+            loss_weight=1.0, type='mmdet.CrossEntropyLoss', use_sigmoid=False),
+        norm_on_bbox=True,
+        num_classes=1,
+        pred_attrs=False,
+        pred_velo=False,
+        reg_branch=(
+            (256, ),
+            (256, ),
+            (256, ),
+            (256, ),
+        ),
+        stacked_convs=2,
+        strides=[
+            8,
+            16,
+            32,
+            64,
+            128,
+        ],
+        type='FCOSMono3DHead',
+        use_direction_classifier=True),
+    data_preprocessor=dict(
+        bgr_to_rgb=False,
+        mean=[
+            103.53,
+            116.28,
+            123.675,
+        ],
+        pad_size_divisor=32,
+        std=[
+            1.0,
+            1.0,
+            1.0,
+        ],
+        type='Det3DDataPreprocessor'),
+    neck=dict(
+        add_extra_convs='on_output',
+        in_channels=[
+            256,
+            512,
+            1024,
+            2048,
+        ],
+        num_outs=5,
+        out_channels=256,
+        relu_before_extra_convs=True,
+        start_level=1,
+        type='mmdet.FPN'),
+    test_cfg=dict(
+        max_per_img=200,
+        min_bbox_size=0,
+        nms_across_levels=False,
+        nms_pre=1000,
+        nms_thr=0.8,
+        score_thr=0.05,
+        use_rotate_nms=True),
+    train_cfg=dict(
+        allowed_border=0,
+        code_weight=[
+            1.0,
+            1.0,
+            0.2,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+        ],
+        debug=False,
+        pos_weight=-1),
+    type='FCOSMono3D')
+optim_wrapper = dict(
+    accumulative_counts=16,
+    clip_grad=dict(max_norm=35, norm_type=2),
+    optimizer=dict(lr=0.002, momentum=0.9, type='SGD', weight_decay=0.0001),
+    paramwise_cfg=dict(bias_decay_mult=0.0, bias_lr_mult=2.0),
+    type='OptimWrapper')
+param_scheduler = [
+    dict(
+        begin=0,
+        by_epoch=False,
+        end=500,
+        start_factor=0.3333333333333333,
+        type='LinearLR'),
+    dict(
+        begin=0,
+        by_epoch=True,
+        end=12,
+        gamma=0.1,
+        milestones=[
+            8,
+            11,
+        ],
+        type='MultiStepLR'),
+]
+resume = False
+test_cfg = dict(type='TestLoop')
+test_dataloader = dict(
+    batch_size=1,
+    dataset=dict(
+        ann_file='v3_infos_val.pkl',
+        backend_args=None,
+        box_type_3d='Camera',
+        data_prefix=dict(img='training/image_2'),
+        data_root='/home/dy-jang/projects/v3/kitti_mmdet3d_fcos3d',
+        load_type='fov_image_based',
+        metainfo=dict(classes=[
+            'Car',
+        ]),
+        modality=dict(use_camera=True, use_lidar=False),
+        pipeline=[
+            dict(backend_args=None, type='LoadImageFromFileMono3D'),
+            dict(keep_ratio=True, scale=(
+                1280,
+                384,
+            ), type='mmdet.Resize'),
+            dict(keys=[
+                'img',
+            ], type='Pack3DDetInputs'),
+        ],
+        test_mode=True,
+        type='KittiDataset'),
+    drop_last=False,
+    num_workers=2,
+    persistent_workers=True,
+    sampler=dict(shuffle=False, type='DefaultSampler'))
+test_evaluator = dict(
+    ann_file='/home/dy-jang/projects/v3/kitti_mmdet3d_fcos3d/v3_infos_val.pkl',
+    backend_args=None,
+    format_only=True,
+    metric='bbox',
+    submission_prefix=
+    '/home/dy-jang/projects/TruckDetection-main/results/checkpoint_series_eval/fcos3d_seed64_val1000/epoch_012/submission',
+    type='KittiMetric')
+test_pipeline = [
+    dict(backend_args=None, type='LoadImageFromFileMono3D'),
+    dict(keep_ratio=True, scale=(
+        1280,
+        384,
+    ), type='mmdet.Resize'),
+    dict(keys=[
+        'img',
+    ], type='Pack3DDetInputs'),
+]
+train_cfg = dict(max_epochs=12, type='EpochBasedTrainLoop', val_interval=1)
+train_dataloader = dict(
+    batch_size=2,
+    dataset=dict(
+        ann_file='v3_infos_train.pkl',
+        backend_args=None,
+        box_type_3d='Camera',
+        data_prefix=dict(img='training/image_2'),
+        data_root='/home/dy-jang/projects/v3/kitti_mmdet3d_fcos3d/',
+        load_type='fov_image_based',
+        metainfo=dict(classes=[
+            'Car',
+        ]),
+        modality=dict(use_camera=True, use_lidar=False),
+        pipeline=[
+            dict(backend_args=None, type='LoadImageFromFileMono3D'),
+            dict(
+                type='LoadAnnotations3D',
+                with_attr_label=False,
+                with_bbox=True,
+                with_bbox_3d=True,
+                with_bbox_depth=True,
+                with_label=True,
+                with_label_3d=True),
+            dict(keep_ratio=True, scale=(
+                1280,
+                384,
+            ), type='mmdet.Resize'),
+            dict(flip_ratio_bev_horizontal=0.5, type='RandomFlip3D'),
+            dict(
+                keys=[
+                    'img',
+                    'gt_bboxes',
+                    'gt_bboxes_labels',
+                    'gt_bboxes_3d',
+                    'gt_labels_3d',
+                    'centers_2d',
+                    'depths',
+                ],
+                type='Pack3DDetInputs'),
+        ],
+        test_mode=False,
+        type='KittiDataset'),
+    num_workers=2,
+    persistent_workers=True,
+    sampler=dict(shuffle=True, type='DefaultSampler'))
+train_pipeline = [
+    dict(backend_args=None, type='LoadImageFromFileMono3D'),
+    dict(
+        type='LoadAnnotations3D',
+        with_attr_label=False,
+        with_bbox=True,
+        with_bbox_3d=True,
+        with_bbox_depth=True,
+        with_label=True,
+        with_label_3d=True),
+    dict(keep_ratio=True, scale=(
+        1280,
+        384,
+    ), type='mmdet.Resize'),
+    dict(flip_ratio_bev_horizontal=0.5, type='RandomFlip3D'),
+    dict(
+        keys=[
+            'img',
+            'gt_bboxes',
+            'gt_bboxes_labels',
+            'gt_bboxes_3d',
+            'gt_labels_3d',
+            'centers_2d',
+            'depths',
+        ],
+        type='Pack3DDetInputs'),
+]
+val_cfg = dict(type='ValLoop')
+val_dataloader = dict(
+    batch_size=1,
+    dataset=dict(
+        ann_file='v3_infos_val.pkl',
+        backend_args=None,
+        box_type_3d='Camera',
+        data_prefix=dict(img='training/image_2'),
+        data_root='/home/dy-jang/projects/v3/kitti_mmdet3d_fcos3d/',
+        load_type='fov_image_based',
+        metainfo=dict(classes=[
+            'Car',
+        ]),
+        modality=dict(use_camera=True, use_lidar=False),
+        pipeline=[
+            dict(backend_args=None, type='LoadImageFromFileMono3D'),
+            dict(keep_ratio=True, scale=(
+                1280,
+                384,
+            ), type='mmdet.Resize'),
+            dict(keys=[
+                'img',
+            ], type='Pack3DDetInputs'),
+        ],
+        test_mode=True,
+        type='KittiDataset'),
+    drop_last=False,
+    num_workers=2,
+    persistent_workers=True,
+    sampler=dict(shuffle=False, type='DefaultSampler'))
+val_evaluator = dict(
+    ann_file='/home/dy-jang/projects/v3/kitti_mmdet3d_fcos3d/v3_infos_val.pkl',
+    backend_args=None,
+    metric='bbox',
+    type='KittiMetric')
+vis_backends = [
+    dict(type='LocalVisBackend'),
+]
+visualizer = dict(
+    name='visualizer',
+    type='Det3DLocalVisualizer',
+    vis_backends=[
+        dict(type='LocalVisBackend'),
+    ])
+work_dir = '/home/dy-jang/projects/TruckDetection-main/results/checkpoint_series_eval/fcos3d_seed64_val1000/epoch_012/workdir'
+
+04/08 10:57:51 - mmengine - INFO - Distributed training is not used, all SyncBatchNorm (SyncBN) layers in the model will be automatically reverted to BatchNormXd layers if they are used.
+04/08 10:57:51 - mmengine - INFO - Hooks will be executed in the following order:
+before_run:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+before_train:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+before_train_epoch:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(NORMAL      ) DistSamplerSeedHook                
+(NORMAL      ) DepthWeightSchedulerHook           
+ -------------------- 
+before_train_iter:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+after_train_iter:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(BELOW_NORMAL) LoggerHook                         
+(LOW         ) ParamSchedulerHook                 
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+after_train_epoch:
+(NORMAL      ) IterTimerHook                      
+(LOW         ) ParamSchedulerHook                 
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+before_val:
+(VERY_HIGH   ) RuntimeInfoHook                    
+ -------------------- 
+before_val_epoch:
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+before_val_iter:
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+after_val_iter:
+(NORMAL      ) IterTimerHook                      
+(NORMAL      ) Det3DVisualizationHook             
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+after_val_epoch:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(BELOW_NORMAL) LoggerHook                         
+(LOW         ) ParamSchedulerHook                 
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+after_val:
+(VERY_HIGH   ) RuntimeInfoHook                    
+ -------------------- 
+after_train:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+before_test:
+(VERY_HIGH   ) RuntimeInfoHook                    
+ -------------------- 
+before_test_epoch:
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+before_test_iter:
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+after_test_iter:
+(NORMAL      ) IterTimerHook                      
+(NORMAL      ) Det3DVisualizationHook             
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+after_test_epoch:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+after_test:
+(VERY_HIGH   ) RuntimeInfoHook                    
+ -------------------- 
+after_run:
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+04/08 10:57:51 - mmengine - INFO - ------------------------------
+04/08 10:57:51 - mmengine - INFO - The length of test dataset: 1000
+04/08 10:57:51 - mmengine - INFO - The number of instances per category in the dataset:
++----------+--------+
+| category | number |
++----------+--------+
+| Car      | 1000   |
++----------+--------+
+Loads checkpoint by local backend from path: /home/dy-jang/projects/TruckDetection-main/results/fcos3d/seed_64/epoch_12.pth
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.0.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.1.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.2.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.3.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.4.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.5.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.6.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.7.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.8.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.9.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.10.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.11.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.12.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.13.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.14.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.15.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.16.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.17.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.18.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.19.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.20.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.21.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.22.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer4.0.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer4.1.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack backbone.layer4.2.conv2 is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack bbox_head.cls_convs.1.conv is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - ModulatedDeformConvPack bbox_head.reg_convs.1.conv is upgraded to version 2.
+04/08 10:57:51 - mmengine - INFO - Load checkpoint from /home/dy-jang/projects/TruckDetection-main/results/fcos3d/seed_64/epoch_12.pth
+/home/dy-jang/anaconda3/envs/mmdet3d-fcos3d/lib/python3.10/site-packages/torch/functional.py:504: UserWarning: torch.meshgrid: in an upcoming release, it will be required to pass the indexing argument. (Triggered internally at ../aten/src/ATen/native/TensorShape.cpp:3526.)
+  return _VF.meshgrid(tensors, **kwargs)  # type: ignore[attr-defined]
+04/08 10:57:52 - mmengine - INFO - Epoch(test) [  20/1000]    eta: 0:00:52  time: 0.0540  data_time: 0.0030  memory: 427  
+04/08 10:57:53 - mmengine - INFO - Epoch(test) [  40/1000]    eta: 0:00:40  time: 0.0420  data_time: 0.0019  memory: 427  
+04/08 10:57:54 - mmengine - INFO - Epoch(test) [  60/1000]    eta: 0:00:35  time: 0.0301  data_time: 0.0007  memory: 427  
+04/08 10:57:54 - mmengine - INFO - Epoch(test) [  80/1000]    eta: 0:00:33  time: 0.0302  data_time: 0.0007  memory: 427  
+04/08 10:57:55 - mmengine - INFO - Epoch(test) [ 100/1000]    eta: 0:00:31  time: 0.0303  data_time: 0.0007  memory: 427  
+04/08 10:57:56 - mmengine - INFO - Epoch(test) [ 120/1000]    eta: 0:00:30  time: 0.0302  data_time: 0.0007  memory: 427  
+04/08 10:57:56 - mmengine - INFO - Epoch(test) [ 140/1000]    eta: 0:00:28  time: 0.0302  data_time: 0.0007  memory: 427  
+04/08 10:57:57 - mmengine - INFO - Epoch(test) [ 160/1000]    eta: 0:00:27  time: 0.0302  data_time: 0.0007  memory: 427  
+04/08 10:57:57 - mmengine - INFO - Epoch(test) [ 180/1000]    eta: 0:00:26  time: 0.0303  data_time: 0.0007  memory: 427  
+04/08 10:57:58 - mmengine - INFO - Epoch(test) [ 200/1000]    eta: 0:00:26  time: 0.0302  data_time: 0.0007  memory: 427  
+04/08 10:57:59 - mmengine - INFO - Epoch(test) [ 220/1000]    eta: 0:00:25  time: 0.0302  data_time: 0.0007  memory: 427  
+04/08 10:57:59 - mmengine - INFO - Epoch(test) [ 240/1000]    eta: 0:00:24  time: 0.0302  data_time: 0.0007  memory: 427  
+04/08 10:58:00 - mmengine - INFO - Epoch(test) [ 260/1000]    eta: 0:00:23  time: 0.0303  data_time: 0.0007  memory: 427  
+04/08 10:58:00 - mmengine - INFO - Epoch(test) [ 280/1000]    eta: 0:00:22  time: 0.0303  data_time: 0.0008  memory: 427  
+04/08 10:58:01 - mmengine - INFO - Epoch(test) [ 300/1000]    eta: 0:00:22  time: 0.0303  data_time: 0.0007  memory: 427  
+04/08 10:58:02 - mmengine - INFO - Epoch(test) [ 320/1000]    eta: 0:00:21  time: 0.0302  data_time: 0.0007  memory: 427  
+04/08 10:58:02 - mmengine - INFO - Epoch(test) [ 340/1000]    eta: 0:00:20  time: 0.0302  data_time: 0.0007  memory: 427  
+04/08 10:58:03 - mmengine - INFO - Epoch(test) [ 360/1000]    eta: 0:00:20  time: 0.0303  data_time: 0.0007  memory: 427  
+04/08 10:58:03 - mmengine - INFO - Epoch(test) [ 380/1000]    eta: 0:00:19  time: 0.0304  data_time: 0.0008  memory: 427  
+04/08 10:58:04 - mmengine - INFO - Epoch(test) [ 400/1000]    eta: 0:00:18  time: 0.0303  data_time: 0.0007  memory: 427  
+04/08 10:58:05 - mmengine - INFO - Epoch(test) [ 420/1000]    eta: 0:00:18  time: 0.0302  data_time: 0.0007  memory: 427  
+04/08 10:58:05 - mmengine - INFO - Epoch(test) [ 440/1000]    eta: 0:00:17  time: 0.0302  data_time: 0.0007  memory: 427  
+04/08 10:58:06 - mmengine - INFO - Epoch(test) [ 460/1000]    eta: 0:00:16  time: 0.0303  data_time: 0.0007  memory: 427  
+04/08 10:58:06 - mmengine - INFO - Epoch(test) [ 480/1000]    eta: 0:00:16  time: 0.0303  data_time: 0.0008  memory: 427  
+04/08 10:58:07 - mmengine - INFO - Epoch(test) [ 500/1000]    eta: 0:00:15  time: 0.0303  data_time: 0.0008  memory: 427  
+04/08 10:58:08 - mmengine - INFO - Epoch(test) [ 520/1000]    eta: 0:00:14  time: 0.0303  data_time: 0.0007  memory: 427  
+04/08 10:58:08 - mmengine - INFO - Epoch(test) [ 540/1000]    eta: 0:00:14  time: 0.0303  data_time: 0.0007  memory: 427  
+04/08 10:58:09 - mmengine - INFO - Epoch(test) [ 560/1000]    eta: 0:00:13  time: 0.0304  data_time: 0.0007  memory: 427  
+04/08 10:58:09 - mmengine - INFO - Epoch(test) [ 580/1000]    eta: 0:00:13  time: 0.0304  data_time: 0.0008  memory: 427  
+04/08 10:58:10 - mmengine - INFO - Epoch(test) [ 600/1000]    eta: 0:00:12  time: 0.0304  data_time: 0.0008  memory: 427  
+04/08 10:58:11 - mmengine - INFO - Epoch(test) [ 620/1000]    eta: 0:00:11  time: 0.0303  data_time: 0.0007  memory: 427  
+04/08 10:58:11 - mmengine - INFO - Epoch(test) [ 640/1000]    eta: 0:00:11  time: 0.0303  data_time: 0.0007  memory: 427  
+04/08 10:58:12 - mmengine - INFO - Epoch(test) [ 660/1000]    eta: 0:00:10  time: 0.0304  data_time: 0.0007  memory: 427  
+04/08 10:58:12 - mmengine - INFO - Epoch(test) [ 680/1000]    eta: 0:00:09  time: 0.0304  data_time: 0.0008  memory: 427  
+04/08 10:58:13 - mmengine - INFO - Epoch(test) [ 700/1000]    eta: 0:00:09  time: 0.0304  data_time: 0.0008  memory: 427  
+04/08 10:58:14 - mmengine - INFO - Epoch(test) [ 720/1000]    eta: 0:00:08  time: 0.0304  data_time: 0.0007  memory: 427  
+04/08 10:58:14 - mmengine - INFO - Epoch(test) [ 740/1000]    eta: 0:00:08  time: 0.0303  data_time: 0.0007  memory: 427  
+04/08 10:58:15 - mmengine - INFO - Epoch(test) [ 760/1000]    eta: 0:00:07  time: 0.0304  data_time: 0.0008  memory: 427  
+04/08 10:58:16 - mmengine - INFO - Epoch(test) [ 780/1000]    eta: 0:00:06  time: 0.0305  data_time: 0.0008  memory: 427  
+04/08 10:58:16 - mmengine - INFO - Epoch(test) [ 800/1000]    eta: 0:00:06  time: 0.0304  data_time: 0.0007  memory: 427  
+04/08 10:58:17 - mmengine - INFO - Epoch(test) [ 820/1000]    eta: 0:00:05  time: 0.0304  data_time: 0.0007  memory: 427  
+04/08 10:58:17 - mmengine - INFO - Epoch(test) [ 840/1000]    eta: 0:00:04  time: 0.0304  data_time: 0.0008  memory: 427  
+04/08 10:58:18 - mmengine - INFO - Epoch(test) [ 860/1000]    eta: 0:00:04  time: 0.0305  data_time: 0.0008  memory: 427  
+04/08 10:58:19 - mmengine - INFO - Epoch(test) [ 880/1000]    eta: 0:00:03  time: 0.0304  data_time: 0.0007  memory: 427  
+04/08 10:58:19 - mmengine - INFO - Epoch(test) [ 900/1000]    eta: 0:00:03  time: 0.0302  data_time: 0.0007  memory: 427  
+04/08 10:58:20 - mmengine - INFO - Epoch(test) [ 920/1000]    eta: 0:00:02  time: 0.0302  data_time: 0.0007  memory: 427  
+04/08 10:58:20 - mmengine - INFO - Epoch(test) [ 940/1000]    eta: 0:00:01  time: 0.0302  data_time: 0.0007  memory: 427  
+04/08 10:58:21 - mmengine - INFO - Epoch(test) [ 960/1000]    eta: 0:00:01  time: 0.0303  data_time: 0.0007  memory: 427  
+04/08 10:58:22 - mmengine - INFO - Epoch(test) [ 980/1000]    eta: 0:00:00  time: 0.0304  data_time: 0.0008  memory: 427  
+04/08 10:58:22 - mmengine - INFO - Epoch(test) [1000/1000]    eta: 0:00:00  time: 0.0305  data_time: 0.0007  memory: 427  
+
+Converting 3D prediction to KITTI format
+[                                                  ] 0/1000, elapsed: 0s, ETA:[                              ] 1/1000, 533.2 task/s, elapsed: 0s, ETA:     2s[                              ] 2/1000, 833.6 task/s, elapsed: 0s, ETA:     1s[                             ] 3/1000, 1042.6 task/s, elapsed: 0s, ETA:     1s[                             ] 4/1000, 1175.3 task/s, elapsed: 0s, ETA:     1s[                             ] 5/1000, 1291.0 task/s, elapsed: 0s, ETA:     1s[                             ] 6/1000, 1369.4 task/s, elapsed: 0s, ETA:     1s[                             ] 7/1000, 1445.0 task/s, elapsed: 0s, ETA:     1s[                             ] 8/1000, 1506.2 task/s, elapsed: 0s, ETA:     1s[                             ] 9/1000, 1560.5 task/s, elapsed: 0s, ETA:     1s[                            ] 10/1000, 1605.1 task/s, elapsed: 0s, ETA:     1s[                            ] 11/1000, 1645.6 task/s, elapsed: 0s, ETA:     1s[                            ] 12/1000, 1679.5 task/s, elapsed: 0s, ETA:     1s[                            ] 13/1000, 1710.0 task/s, elapsed: 0s, ETA:     1s[                            ] 14/1000, 1738.8 task/s, elapsed: 0s, ETA:     1s[                            ] 15/1000, 1763.0 task/s, elapsed: 0s, ETA:     1s[                            ] 16/1000, 1786.4 task/s, elapsed: 0s, ETA:     1s[                            ] 17/1000, 1804.9 task/s, elapsed: 0s, ETA:     1s[                            ] 18/1000, 1823.2 task/s, elapsed: 0s, ETA:     1s[                            ] 19/1000, 1838.9 task/s, elapsed: 0s, ETA:     1s[                            ] 20/1000, 1848.4 task/s, elapsed: 0s, ETA:     1s[                            ] 21/1000, 1860.6 task/s, elapsed: 0s, ETA:     1s[                            ] 22/1000, 1873.6 task/s, elapsed: 0s, ETA:     1s[                            ] 23/1000, 1884.9 task/s, elapsed: 0s, ETA:     1s[                            ] 24/1000, 1884.2 task/s, elapsed: 0s, ETA:     1s[                            ] 25/1000, 1887.5 task/s, elapsed: 0s, ETA:     1s[                            ] 26/1000, 1897.6 task/s, elapsed: 0s, ETA:     1s[                            ] 27/1000, 1902.1 task/s, elapsed: 0s, ETA:     1s[                            ] 28/1000, 1906.2 task/s, elapsed: 0s, ETA:     1s[                            ] 29/1000, 1913.4 task/s, elapsed: 0s, ETA:     1s[                            ] 30/1000, 1921.5 task/s, elapsed: 0s, ETA:     1s[                            ] 31/1000, 1923.2 task/s, elapsed: 0s, ETA:     1s[                            ] 32/1000, 1930.3 task/s, elapsed: 0s, ETA:     1s[                            ] 33/1000, 1937.7 task/s, elapsed: 0s, ETA:     0s[                            ] 34/1000, 1944.1 task/s, elapsed: 0s, ETA:     0s[                            ] 35/1000, 1950.9 task/s, elapsed: 0s, ETA:     0s[>                           ] 36/1000, 1956.3 task/s, elapsed: 0s, ETA:     0s[>                           ] 37/1000, 1962.3 task/s, elapsed: 0s, ETA:     0s[>                           ] 38/1000, 1967.5 task/s, elapsed: 0s, ETA:     0s[>                           ] 39/1000, 1972.3 task/s, elapsed: 0s, ETA:     0s[>                           ] 40/1000, 1976.7 task/s, elapsed: 0s, ETA:     0s[>                           ] 41/1000, 1977.8 task/s, elapsed: 0s, ETA:     0s[>                           ] 42/1000, 1981.9 task/s, elapsed: 0s, ETA:     0s[>                           ] 43/1000, 1983.6 task/s, elapsed: 0s, ETA:     0s[>                           ] 44/1000, 1987.3 task/s, elapsed: 0s, ETA:     0s[>                           ] 45/1000, 1987.8 task/s, elapsed: 0s, ETA:     0s[>                           ] 46/1000, 1991.9 task/s, elapsed: 0s, ETA:     0s[>                           ] 47/1000, 1995.1 task/s, elapsed: 0s, ETA:     0s[>                           ] 48/1000, 1999.0 task/s, elapsed: 0s, ETA:     0s[>                           ] 49/1000, 2002.1 task/s, elapsed: 0s, ETA:     0s[>                           ] 50/1000, 2005.1 task/s, elapsed: 0s, ETA:     0s[>                           ] 51/1000, 2008.2 task/s, elapsed: 0s, ETA:     0s[>                           ] 52/1000, 2011.3 task/s, elapsed: 0s, ETA:     0s[>                           ] 53/1000, 2013.5 task/s, elapsed: 0s, ETA:     0s[>                           ] 54/1000, 2016.9 task/s, elapsed: 0s, ETA:     0s[>                           ] 55/1000, 2019.3 task/s, elapsed: 0s, ETA:     0s[>                           ] 56/1000, 2019.4 task/s, elapsed: 0s, ETA:     0s[>                           ] 57/1000, 2021.8 task/s, elapsed: 0s, ETA:     0s[>                           ] 58/1000, 2024.3 task/s, elapsed: 0s, ETA:     0s[>                           ] 59/1000, 2027.0 task/s, elapsed: 0s, ETA:     0s[>                           ] 60/1000, 2029.0 task/s, elapsed: 0s, ETA:     0s[>                           ] 61/1000, 2031.6 task/s, elapsed: 0s, ETA:     0s[>                           ] 62/1000, 2033.4 task/s, elapsed: 0s, ETA:     0s[>                           ] 63/1000, 2035.9 task/s, elapsed: 0s, ETA:     0s[>                           ] 64/1000, 2034.3 task/s, elapsed: 0s, ETA:     0s[>                           ] 65/1000, 2034.5 task/s, elapsed: 0s, ETA:     0s[>                           ] 66/1000, 2034.3 task/s, elapsed: 0s, ETA:     0s[>                           ] 67/1000, 2036.3 task/s, elapsed: 0s, ETA:     0s[>                           ] 68/1000, 2038.0 task/s, elapsed: 0s, ETA:     0s[>                           ] 69/1000, 2035.9 task/s, elapsed: 0s, ETA:     0s[>                           ] 70/1000, 2037.1 task/s, elapsed: 0s, ETA:     0s[>                           ] 71/1000, 2039.1 task/s, elapsed: 0s, ETA:     0s[>>                          ] 72/1000, 2040.5 task/s, elapsed: 0s, ETA:     0s[>>                          ] 73/1000, 2042.1 task/s, elapsed: 0s, ETA:     0s[>>                          ] 74/1000, 2043.6 task/s, elapsed: 0s, ETA:     0s[>>                          ] 75/1000, 2045.4 task/s, elapsed: 0s, ETA:     0s[>>                          ] 76/1000, 2046.7 task/s, elapsed: 0s, ETA:     0s[>>                          ] 77/1000, 2046.6 task/s, elapsed: 0s, ETA:     0s[>>                          ] 78/1000, 2048.3 task/s, elapsed: 0s, ETA:     0s[>>                          ] 79/1000, 2049.6 task/s, elapsed: 0s, ETA:     0s[>>                          ] 80/1000, 2051.2 task/s, elapsed: 0s, ETA:     0s[>>                          ] 81/1000, 2052.5 task/s, elapsed: 0s, ETA:     0s[>>                          ] 82/1000, 2053.9 task/s, elapsed: 0s, ETA:     0s[>>                          ] 83/1000, 2055.0 task/s, elapsed: 0s, ETA:     0s[>>                          ] 84/1000, 2056.6 task/s, elapsed: 0s, ETA:     0s[>>                          ] 85/1000, 2055.9 task/s, elapsed: 0s, ETA:     0s[>>                          ] 86/1000, 2057.0 task/s, elapsed: 0s, ETA:     0s[>>                          ] 87/1000, 2057.9 task/s, elapsed: 0s, ETA:     0s[>>                          ] 88/1000, 2057.5 task/s, elapsed: 0s, ETA:     0s[>>                          ] 89/1000, 2055.3 task/s, elapsed: 0s, ETA:     0s[>>                          ] 90/1000, 2056.3 task/s, elapsed: 0s, ETA:     0s[>>                          ] 91/1000, 2057.2 task/s, elapsed: 0s, ETA:     0s[>>                          ] 92/1000, 2058.3 task/s, elapsed: 0s, ETA:     0s[>>                          ] 93/1000, 2057.8 task/s, elapsed: 0s, ETA:     0s[>>                          ] 94/1000, 2058.8 task/s, elapsed: 0s, ETA:     0s[>>                          ] 95/1000, 2059.7 task/s, elapsed: 0s, ETA:     0s[>>                          ] 96/1000, 2060.8 task/s, elapsed: 0s, ETA:     0s[>>                          ] 97/1000, 2060.6 task/s, elapsed: 0s, ETA:     0s[>>                          ] 98/1000, 2061.3 task/s, elapsed: 0s, ETA:     0s[>>                          ] 99/1000, 2062.3 task/s, elapsed: 0s, ETA:     0s[>>                         ] 100/1000, 2063.1 task/s, elapsed: 0s, ETA:     0s[>>                         ] 101/1000, 2064.1 task/s, elapsed: 0s, ETA:     0s[>>                         ] 102/1000, 2064.7 task/s, elapsed: 0s, ETA:     0s[>>                         ] 103/1000, 2065.6 task/s, elapsed: 0s, ETA:     0s[>>                         ] 104/1000, 2065.0 task/s, elapsed: 0s, ETA:     0s[>>                         ] 105/1000, 2064.7 task/s, elapsed: 0s, ETA:     0s[>>                         ] 106/1000, 2065.3 task/s, elapsed: 0s, ETA:     0s[>>                         ] 107/1000, 2066.0 task/s, elapsed: 0s, ETA:     0s[>>                         ] 108/1000, 2066.8 task/s, elapsed: 0s, ETA:     0s[>>                         ] 109/1000, 2067.9 task/s, elapsed: 0s, ETA:     0s[>>                         ] 110/1000, 2068.8 task/s, elapsed: 0s, ETA:     0s[>>                         ] 111/1000, 2070.0 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 112/1000, 2071.1 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 113/1000, 2071.8 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 114/1000, 2070.5 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 115/1000, 2071.0 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 116/1000, 2071.8 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 117/1000, 2072.5 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 118/1000, 2073.4 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 119/1000, 2074.0 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 120/1000, 2074.7 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 121/1000, 2074.9 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 122/1000, 2074.3 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 123/1000, 2074.7 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 124/1000, 2075.6 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 125/1000, 2076.3 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 126/1000, 2077.1 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 127/1000, 2076.7 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 128/1000, 2076.4 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 129/1000, 2076.7 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 130/1000, 2077.3 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 131/1000, 2077.1 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 132/1000, 2077.4 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 133/1000, 2078.0 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 134/1000, 2078.4 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 135/1000, 2079.1 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 136/1000, 2078.3 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 137/1000, 2078.8 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 138/1000, 2079.3 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 139/1000, 2080.0 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 140/1000, 2079.5 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 141/1000, 2079.2 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 142/1000, 2079.5 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 143/1000, 2080.2 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 144/1000, 2080.8 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 145/1000, 2081.4 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 146/1000, 2081.9 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 147/1000, 2081.3 task/s, elapsed: 0s, ETA:     0s[>>>                        ] 148/1000, 2081.8 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 149/1000, 2082.0 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 150/1000, 2080.8 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 151/1000, 2081.2 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 152/1000, 2080.9 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 153/1000, 2081.1 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 154/1000, 2081.7 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 155/1000, 2080.8 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 156/1000, 2081.3 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 157/1000, 2080.8 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 158/1000, 2081.3 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 159/1000, 2081.7 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 160/1000, 2082.2 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 161/1000, 2082.4 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 162/1000, 2082.0 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 163/1000, 2082.3 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 164/1000, 2082.8 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 165/1000, 2083.2 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 166/1000, 2083.7 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 167/1000, 2084.1 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 168/1000, 2084.6 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 169/1000, 2084.3 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 170/1000, 2084.6 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 171/1000, 2085.0 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 172/1000, 2085.1 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 173/1000, 2085.7 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 174/1000, 2085.2 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 175/1000, 2085.6 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 176/1000, 2085.8 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 177/1000, 2086.3 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 178/1000, 2086.6 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 179/1000, 2087.2 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 180/1000, 2087.5 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 181/1000, 2087.2 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 182/1000, 2087.4 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 183/1000, 2087.8 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 184/1000, 2088.3 task/s, elapsed: 0s, ETA:     0s[>>>>                       ] 185/1000, 2088.5 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 186/1000, 2089.0 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 187/1000, 2089.2 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 188/1000, 2088.6 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 189/1000, 2088.8 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 190/1000, 2089.2 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 191/1000, 2089.4 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 192/1000, 2089.8 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 193/1000, 2090.0 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 194/1000, 2090.3 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 195/1000, 2090.5 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 196/1000, 2090.8 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 197/1000, 2091.1 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 198/1000, 2090.7 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 199/1000, 2090.9 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 200/1000, 2091.2 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 201/1000, 2091.3 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 202/1000, 2091.6 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 203/1000, 2091.3 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 204/1000, 2090.5 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 205/1000, 2090.9 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 206/1000, 2091.2 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 207/1000, 2091.0 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 208/1000, 2091.1 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 209/1000, 2091.5 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 210/1000, 2091.5 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 211/1000, 2091.8 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 212/1000, 2092.0 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 213/1000, 2092.2 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 214/1000, 2092.5 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 215/1000, 2092.9 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 216/1000, 2092.6 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 217/1000, 2092.9 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 218/1000, 2093.1 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 219/1000, 2092.9 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 220/1000, 2093.3 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 221/1000, 2089.5 task/s, elapsed: 0s, ETA:     0s[>>>>>                      ] 222/1000, 2089.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 223/1000, 2089.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 224/1000, 2089.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 225/1000, 2090.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 226/1000, 2090.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 227/1000, 2090.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 228/1000, 2090.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 229/1000, 2091.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 230/1000, 2091.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 231/1000, 2091.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 232/1000, 2091.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 233/1000, 2091.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 234/1000, 2091.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 235/1000, 2091.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 236/1000, 2092.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 237/1000, 2091.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 238/1000, 2092.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 239/1000, 2091.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 240/1000, 2091.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 241/1000, 2092.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 242/1000, 2091.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 243/1000, 2092.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 244/1000, 2092.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 245/1000, 2092.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 246/1000, 2092.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 247/1000, 2092.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 248/1000, 2092.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 249/1000, 2093.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 250/1000, 2093.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 251/1000, 2093.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 252/1000, 2093.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 253/1000, 2094.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 254/1000, 2093.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 255/1000, 2093.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 256/1000, 2093.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 257/1000, 2094.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 258/1000, 2094.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>                     ] 259/1000, 2094.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 260/1000, 2094.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 261/1000, 2094.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 262/1000, 2094.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 263/1000, 2095.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 264/1000, 2095.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 265/1000, 2095.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 266/1000, 2095.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 267/1000, 2095.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 268/1000, 2096.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 269/1000, 2096.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 270/1000, 2096.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 271/1000, 2095.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 272/1000, 2096.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 273/1000, 2096.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 274/1000, 2096.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 275/1000, 2096.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 276/1000, 2096.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 277/1000, 2096.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 278/1000, 2097.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 279/1000, 2097.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 280/1000, 2097.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 281/1000, 2097.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 282/1000, 2097.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 283/1000, 2097.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 284/1000, 2097.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 285/1000, 2097.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 286/1000, 2097.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 287/1000, 2097.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 288/1000, 2097.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 289/1000, 2097.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 290/1000, 2097.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 291/1000, 2097.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 292/1000, 2097.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 293/1000, 2097.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 294/1000, 2098.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 295/1000, 2098.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>                    ] 296/1000, 2098.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 297/1000, 2097.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 298/1000, 2098.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 299/1000, 2098.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 300/1000, 2098.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 301/1000, 2098.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 302/1000, 2098.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 303/1000, 2098.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 304/1000, 2099.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 305/1000, 2099.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 306/1000, 2099.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 307/1000, 2099.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 308/1000, 2099.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 309/1000, 2099.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 310/1000, 2100.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 311/1000, 2100.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 312/1000, 2100.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 313/1000, 2100.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 314/1000, 2100.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 315/1000, 2100.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 316/1000, 2100.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 317/1000, 2101.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 318/1000, 2101.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 319/1000, 2100.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 320/1000, 2099.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 321/1000, 2099.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 322/1000, 2100.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 323/1000, 2100.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 324/1000, 2100.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 325/1000, 2100.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 326/1000, 2100.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 327/1000, 2100.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 328/1000, 2099.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 329/1000, 2099.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 330/1000, 2099.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 331/1000, 2099.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 332/1000, 2099.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>                   ] 333/1000, 2099.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 334/1000, 2099.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 335/1000, 2099.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 336/1000, 2099.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 337/1000, 2098.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 338/1000, 2098.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 339/1000, 2098.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 340/1000, 2098.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 341/1000, 2098.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 342/1000, 2098.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 343/1000, 2098.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 344/1000, 2098.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 345/1000, 2098.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 346/1000, 2098.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 347/1000, 2098.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 348/1000, 2098.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 349/1000, 2098.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 350/1000, 2098.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 351/1000, 2098.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 352/1000, 2098.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 353/1000, 2098.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 354/1000, 2098.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 355/1000, 2097.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 356/1000, 2097.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 357/1000, 2097.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 358/1000, 2097.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 359/1000, 2097.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 360/1000, 2097.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 361/1000, 2097.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 362/1000, 2097.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 363/1000, 2097.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 364/1000, 2097.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 365/1000, 2097.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 366/1000, 2097.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 367/1000, 2098.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 368/1000, 2098.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 369/1000, 2098.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>                  ] 370/1000, 2098.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 371/1000, 2098.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 372/1000, 2097.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 373/1000, 2097.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 374/1000, 2097.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 375/1000, 2097.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 376/1000, 2097.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 377/1000, 2097.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 378/1000, 2097.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 379/1000, 2098.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 380/1000, 2098.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 381/1000, 2097.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 382/1000, 2097.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 383/1000, 2097.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 384/1000, 2097.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 385/1000, 2097.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 386/1000, 2097.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 387/1000, 2097.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 388/1000, 2097.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 389/1000, 2097.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 390/1000, 2098.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 391/1000, 2098.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 392/1000, 2097.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 393/1000, 2098.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 394/1000, 2098.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 395/1000, 2098.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 396/1000, 2098.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 397/1000, 2098.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 398/1000, 2098.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 399/1000, 2097.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 400/1000, 2097.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 401/1000, 2097.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 402/1000, 2097.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 403/1000, 2097.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 404/1000, 2097.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 405/1000, 2097.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 406/1000, 2097.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>                 ] 407/1000, 2097.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 408/1000, 2097.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 409/1000, 2097.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 410/1000, 2097.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 411/1000, 2097.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 412/1000, 2097.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 413/1000, 2097.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 414/1000, 2097.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 415/1000, 2097.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 416/1000, 2097.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 417/1000, 2097.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 418/1000, 2097.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 419/1000, 2097.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 420/1000, 2097.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 421/1000, 2097.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 422/1000, 2097.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 423/1000, 2097.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 424/1000, 2098.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 425/1000, 2098.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 426/1000, 2098.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 427/1000, 2098.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 428/1000, 2097.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 429/1000, 2097.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 430/1000, 2098.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 431/1000, 2098.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 432/1000, 2098.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 433/1000, 2098.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 434/1000, 2098.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 435/1000, 2098.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 436/1000, 2098.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 437/1000, 2099.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 438/1000, 2098.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 439/1000, 2098.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 440/1000, 2098.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 441/1000, 2098.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 442/1000, 2098.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 443/1000, 2098.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>                ] 444/1000, 2098.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 445/1000, 2098.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 446/1000, 2098.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 447/1000, 2098.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 448/1000, 2098.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 449/1000, 2098.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 450/1000, 2098.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 451/1000, 2098.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 452/1000, 2098.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 453/1000, 2097.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 454/1000, 2097.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 455/1000, 2098.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 456/1000, 2098.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 457/1000, 2097.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 458/1000, 2097.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 459/1000, 2098.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 460/1000, 2098.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 461/1000, 2098.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 462/1000, 2098.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 463/1000, 2098.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 464/1000, 2098.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 465/1000, 2098.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 466/1000, 2098.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 467/1000, 2098.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 468/1000, 2098.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 469/1000, 2098.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 470/1000, 2098.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 471/1000, 2098.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 472/1000, 2098.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 473/1000, 2098.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 474/1000, 2099.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 475/1000, 2099.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 476/1000, 2099.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 477/1000, 2099.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 478/1000, 2099.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 479/1000, 2098.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 480/1000, 2098.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>               ] 481/1000, 2098.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 482/1000, 2098.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 483/1000, 2098.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 484/1000, 2097.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 485/1000, 2097.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 486/1000, 2097.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 487/1000, 2097.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 488/1000, 2097.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 489/1000, 2097.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 490/1000, 2097.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 491/1000, 2097.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 492/1000, 2097.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 493/1000, 2097.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 494/1000, 2097.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 495/1000, 2097.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 496/1000, 2097.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 497/1000, 2097.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 498/1000, 2097.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 499/1000, 2097.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 500/1000, 2097.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 501/1000, 2097.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 502/1000, 2097.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 503/1000, 2098.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 504/1000, 2098.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 505/1000, 2098.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 506/1000, 2098.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 507/1000, 2098.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 508/1000, 2098.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 509/1000, 2098.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 510/1000, 2098.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 511/1000, 2098.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 512/1000, 2098.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 513/1000, 2098.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 514/1000, 2098.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 515/1000, 2098.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 516/1000, 2098.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 517/1000, 2098.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>              ] 518/1000, 2098.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 519/1000, 2098.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 520/1000, 2098.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 521/1000, 2098.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 522/1000, 2098.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 523/1000, 2098.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 524/1000, 2098.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 525/1000, 2098.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 526/1000, 2098.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 527/1000, 2098.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 528/1000, 2098.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 529/1000, 2098.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 530/1000, 2098.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 531/1000, 2098.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 532/1000, 2098.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 533/1000, 2098.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 534/1000, 2098.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 535/1000, 2098.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 536/1000, 2098.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 537/1000, 2098.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 538/1000, 2098.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 539/1000, 2098.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 540/1000, 2098.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 541/1000, 2098.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 542/1000, 2099.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 543/1000, 2099.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 544/1000, 2099.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 545/1000, 2099.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 546/1000, 2099.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 547/1000, 2099.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 548/1000, 2099.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 549/1000, 2099.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 550/1000, 2099.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 551/1000, 2098.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 552/1000, 2098.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 553/1000, 2098.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 554/1000, 2098.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>             ] 555/1000, 2098.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 556/1000, 2098.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 557/1000, 2099.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 558/1000, 2099.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 559/1000, 2099.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 560/1000, 2099.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 561/1000, 2099.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 562/1000, 2099.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 563/1000, 2099.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 564/1000, 2099.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 565/1000, 2099.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 566/1000, 2099.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 567/1000, 2100.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 568/1000, 2100.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 569/1000, 2100.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 570/1000, 2100.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 571/1000, 2100.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 572/1000, 2100.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 573/1000, 2100.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 574/1000, 2100.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 575/1000, 2100.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 576/1000, 2100.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 577/1000, 2100.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 578/1000, 2101.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 579/1000, 2101.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 580/1000, 2101.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 581/1000, 2101.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 582/1000, 2100.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 583/1000, 2101.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 584/1000, 2100.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 585/1000, 2100.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 586/1000, 2100.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 587/1000, 2100.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 588/1000, 2100.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 589/1000, 2100.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 590/1000, 2100.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 591/1000, 2100.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>            ] 592/1000, 2100.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 593/1000, 2100.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 594/1000, 2100.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 595/1000, 2100.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 596/1000, 2100.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 597/1000, 2100.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 598/1000, 2100.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 599/1000, 2100.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 600/1000, 2100.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 601/1000, 2100.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 602/1000, 2100.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 603/1000, 2101.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 604/1000, 2100.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 605/1000, 2100.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 606/1000, 2100.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 607/1000, 2100.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 608/1000, 2100.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 609/1000, 2100.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 610/1000, 2100.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 611/1000, 2100.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 612/1000, 2100.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 613/1000, 2100.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 614/1000, 2100.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 615/1000, 2100.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 616/1000, 2100.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 617/1000, 2100.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 618/1000, 2100.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 619/1000, 2100.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 620/1000, 2100.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 621/1000, 2100.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 622/1000, 2100.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 623/1000, 2100.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 624/1000, 2100.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 625/1000, 2100.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 626/1000, 2100.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 627/1000, 2100.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 628/1000, 2100.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>           ] 629/1000, 2100.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 630/1000, 2100.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 631/1000, 2100.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 632/1000, 2100.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 633/1000, 2100.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 634/1000, 2101.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 635/1000, 2101.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 636/1000, 2101.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 637/1000, 2101.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 638/1000, 2101.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 639/1000, 2101.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 640/1000, 2101.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 641/1000, 2101.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 642/1000, 2101.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 643/1000, 2100.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 644/1000, 2100.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 645/1000, 2100.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 646/1000, 2100.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 647/1000, 2101.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 648/1000, 2101.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 649/1000, 2101.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 650/1000, 2100.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 651/1000, 2100.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 652/1000, 2100.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 653/1000, 2101.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 654/1000, 2100.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 655/1000, 2100.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 656/1000, 2101.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 657/1000, 2101.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 658/1000, 2101.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 659/1000, 2101.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 660/1000, 2101.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 661/1000, 2101.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 662/1000, 2101.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 663/1000, 2101.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 664/1000, 2101.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 665/1000, 2101.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>          ] 666/1000, 2101.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 667/1000, 2101.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 668/1000, 2101.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 669/1000, 2101.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 670/1000, 2101.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 671/1000, 2101.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 672/1000, 2101.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 673/1000, 2101.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 674/1000, 2101.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 675/1000, 2101.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 676/1000, 2101.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 677/1000, 2101.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 678/1000, 2101.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 679/1000, 2102.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 680/1000, 2102.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 681/1000, 2102.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 682/1000, 2102.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 683/1000, 2101.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 684/1000, 2101.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 685/1000, 2101.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 686/1000, 2101.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 687/1000, 2101.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 688/1000, 2101.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 689/1000, 2101.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 690/1000, 2101.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 691/1000, 2102.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 692/1000, 2101.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 693/1000, 2102.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 694/1000, 2102.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 695/1000, 2102.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 696/1000, 2102.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 697/1000, 2102.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 698/1000, 2102.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 699/1000, 2102.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 700/1000, 2101.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 701/1000, 2101.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 702/1000, 2102.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>         ] 703/1000, 2102.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 704/1000, 2102.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 705/1000, 2101.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 706/1000, 2101.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 707/1000, 2101.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 708/1000, 2101.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 709/1000, 2101.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 710/1000, 2102.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 711/1000, 2102.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 712/1000, 2102.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 713/1000, 2102.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 714/1000, 2102.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 715/1000, 2102.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 716/1000, 2101.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 717/1000, 2101.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 718/1000, 2102.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 719/1000, 2102.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 720/1000, 2102.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 721/1000, 2102.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 722/1000, 2102.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 723/1000, 2101.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 724/1000, 2101.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 725/1000, 2102.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 726/1000, 2102.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 727/1000, 2102.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 728/1000, 2102.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 729/1000, 2102.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 730/1000, 2102.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 731/1000, 2102.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 732/1000, 2102.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 733/1000, 2102.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 734/1000, 2102.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 735/1000, 2102.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 736/1000, 2102.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 737/1000, 2102.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 738/1000, 2102.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 739/1000, 2102.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>        ] 740/1000, 2102.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 741/1000, 2102.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 742/1000, 2102.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 743/1000, 2102.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 744/1000, 2102.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 745/1000, 2102.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 746/1000, 2102.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 747/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 748/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 749/1000, 2102.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 750/1000, 2102.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 751/1000, 2102.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 752/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 753/1000, 2103.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 754/1000, 2103.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 755/1000, 2103.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 756/1000, 2102.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 757/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 758/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 759/1000, 2103.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 760/1000, 2103.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 761/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 762/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 763/1000, 2102.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 764/1000, 2102.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 765/1000, 2102.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 766/1000, 2102.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 767/1000, 2102.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 768/1000, 2102.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 769/1000, 2102.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 770/1000, 2102.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 771/1000, 2102.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 772/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 773/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 774/1000, 2103.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 775/1000, 2103.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 776/1000, 2103.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>       ] 777/1000, 2103.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 778/1000, 2103.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 779/1000, 2103.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 780/1000, 2103.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 781/1000, 2103.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 782/1000, 2103.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 783/1000, 2103.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 784/1000, 2103.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 785/1000, 2103.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 786/1000, 2103.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 787/1000, 2103.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 788/1000, 2103.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 789/1000, 2103.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 790/1000, 2103.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 791/1000, 2103.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 792/1000, 2103.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 793/1000, 2103.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 794/1000, 2103.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 795/1000, 2103.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 796/1000, 2103.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 797/1000, 2103.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 798/1000, 2103.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 799/1000, 2103.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 800/1000, 2103.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 801/1000, 2103.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 802/1000, 2103.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 803/1000, 2103.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 804/1000, 2103.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 805/1000, 2103.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 806/1000, 2103.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 807/1000, 2103.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 808/1000, 2103.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 809/1000, 2103.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 810/1000, 2103.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 811/1000, 2103.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 812/1000, 2103.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 813/1000, 2103.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>      ] 814/1000, 2103.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 815/1000, 2103.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 816/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 817/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 818/1000, 2103.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 819/1000, 2102.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 820/1000, 2102.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 821/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 822/1000, 2103.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 823/1000, 2103.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 824/1000, 2103.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 825/1000, 2103.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 826/1000, 2103.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 827/1000, 2103.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 828/1000, 2103.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 829/1000, 2103.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 830/1000, 2103.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 831/1000, 2103.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 832/1000, 2103.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 833/1000, 2103.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 834/1000, 2103.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 835/1000, 2103.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 836/1000, 2103.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 837/1000, 2103.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 838/1000, 2103.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 839/1000, 2103.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 840/1000, 2103.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 841/1000, 2103.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 842/1000, 2103.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 843/1000, 2103.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 844/1000, 2103.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 845/1000, 2103.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 846/1000, 2103.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 847/1000, 2103.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 848/1000, 2103.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 849/1000, 2103.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 850/1000, 2103.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>     ] 851/1000, 2102.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 852/1000, 2102.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 853/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 854/1000, 2103.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 855/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 856/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 857/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 858/1000, 2102.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 859/1000, 2102.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 860/1000, 2102.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 861/1000, 2102.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 862/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 863/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 864/1000, 2103.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 865/1000, 2103.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 866/1000, 2103.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 867/1000, 2103.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 868/1000, 2103.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 869/1000, 2103.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 870/1000, 2103.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 871/1000, 2102.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 872/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 873/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 874/1000, 2102.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 875/1000, 2102.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 876/1000, 2102.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 877/1000, 2102.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 878/1000, 2102.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 879/1000, 2102.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 880/1000, 2102.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 881/1000, 2102.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 882/1000, 2102.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 883/1000, 2102.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 884/1000, 2102.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 885/1000, 2102.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 886/1000, 2102.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 887/1000, 2102.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>    ] 888/1000, 2102.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 889/1000, 2102.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 890/1000, 2102.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 891/1000, 2102.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 892/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 893/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 894/1000, 2103.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 895/1000, 2103.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 896/1000, 2103.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 897/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 898/1000, 2103.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 899/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 900/1000, 2102.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 901/1000, 2102.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 902/1000, 2102.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 903/1000, 2103.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 904/1000, 2103.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 905/1000, 2103.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 906/1000, 2103.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 907/1000, 2103.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 908/1000, 2103.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 909/1000, 2103.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 910/1000, 2103.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 911/1000, 2103.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 912/1000, 2103.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 913/1000, 2103.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 914/1000, 2103.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 915/1000, 2103.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 916/1000, 2103.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 917/1000, 2103.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 918/1000, 2103.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 919/1000, 2103.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 920/1000, 2103.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 921/1000, 2103.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 922/1000, 2103.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 923/1000, 2103.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 924/1000, 2103.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>   ] 925/1000, 2103.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 926/1000, 2103.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 927/1000, 2103.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 928/1000, 2103.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 929/1000, 2103.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 930/1000, 2103.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 931/1000, 2103.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 932/1000, 2103.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 933/1000, 2103.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 934/1000, 2103.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 935/1000, 2103.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 936/1000, 2103.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 937/1000, 2104.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 938/1000, 2104.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 939/1000, 2104.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 940/1000, 2104.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 941/1000, 2104.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 942/1000, 2104.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 943/1000, 2104.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 944/1000, 2104.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 945/1000, 2104.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 946/1000, 2104.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 947/1000, 2104.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 948/1000, 2103.9 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 949/1000, 2104.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 950/1000, 2104.0 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 951/1000, 2104.1 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 952/1000, 2104.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 953/1000, 2104.2 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 954/1000, 2104.3 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 955/1000, 2104.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 956/1000, 2104.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 957/1000, 2104.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 958/1000, 2104.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 959/1000, 2104.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 960/1000, 2104.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 961/1000, 2104.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>  ] 962/1000, 2104.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 963/1000, 2104.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 964/1000, 2104.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 965/1000, 2104.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 966/1000, 2104.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 967/1000, 2104.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 968/1000, 2104.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 969/1000, 2104.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 970/1000, 2104.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 971/1000, 2104.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 972/1000, 2104.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 973/1000, 2104.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 974/1000, 2104.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 975/1000, 2104.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 976/1000, 2104.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 977/1000, 2104.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 978/1000, 2104.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 979/1000, 2104.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 980/1000, 2104.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 981/1000, 2104.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 982/1000, 2104.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 983/1000, 2104.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 984/1000, 2104.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 985/1000, 2104.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 986/1000, 2104.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 987/1000, 2104.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 988/1000, 2104.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 989/1000, 2104.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 990/1000, 2104.4 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 991/1000, 2104.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 992/1000, 2104.5 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 993/1000, 2104.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 994/1000, 2104.6 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 995/1000, 2104.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 996/1000, 2104.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 997/1000, 2104.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 998/1000, 2104.8 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>> ] 999/1000, 2104.7 task/s, elapsed: 0s, ETA:     0s[>>>>>>>>>>>>>>>>>>>>>>>>>>] 1000/1000, 2104.7 task/s, elapsed: 0s, ETA:     0s
+Result is saved to /tmp/tmpympai436/results/pred_instances_3d.pkl.
+04/08 10:58:23 - mmengine - INFO - results are saved in /home/dy-jang/projects/TruckDetection-main/results/checkpoint_series_eval/fcos3d_seed64_val1000/epoch_012
+04/08 10:58:23 - mmengine - INFO - Epoch(test) [1000/1000]    data_time: 0.0008  time: 0.0308

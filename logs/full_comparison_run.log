@@ -1,0 +1,3 @@
+
+[step] SMOKE baseline seed=40 val sweep ...
+[run] /home/dy-jang/anaconda3/bin/python -u /home/dy-jang/projects/TruckDetection-main/train/eval_smoke_checkpoint_series.py --launcher-module train.run_official_smoke_baseline --checkpoint-dir /home/dy-jang/projects/TruckDetection-main/results/baseline/seed_40 --dataset-root /home/dy-jang/projects/v3/kitti_smoke_1280x384_lb --output-root /home/dy-jang/projects/TruckDetection-main/results/checkpoint_series_eval/baseline_seed40_val1000 --seed 40

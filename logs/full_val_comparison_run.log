@@ -1,0 +1,51 @@
+[2026. 04. 08. (수) 10:36:41 KST] === FCOS3D val sweep seed 40 ===
+[complete] best epoch=12 3D IoU=0.8931027434537356 ATE=0.08743315671524032 AOE=2.4044815825009973
+[2026. 04. 08. (수) 10:43:56 KST] === FCOS3D val sweep seed 42 ===
+[complete] best epoch=12 3D IoU=0.888424581910909 ATE=0.09414101319387555 AOE=2.5742216602160277
+[2026. 04. 08. (수) 10:51:10 KST] === FCOS3D val sweep seed 64 ===
+[complete] best epoch=12 3D IoU=0.8950685736366971 ATE=0.09124492071894928 AOE=1.9789463545761974
+[2026. 04. 08. (수) 10:58:24 KST] === Final comparison table ===
+
+=== SMOKE baseline val sweeps ===
+[reuse] val sweep done: /home/dy-jang/projects/TruckDetection-main/results/checkpoint_series_eval/baseline_seed40_val1000
+  [best] seed=40 iter=14000 3d_iou=0.7637
+[reuse] val sweep done: /home/dy-jang/projects/TruckDetection-main/results/checkpoint_series_eval/baseline_seed42_val1000
+  [best] seed=42 iter=15000 3d_iou=0.7593
+[run] /home/dy-jang/anaconda3/bin/python -u /home/dy-jang/projects/TruckDetection-main/train/eval_smoke_checkpoint_series.py --launcher-module train.run_official_smoke_baseline --checkpoint-dir /home/dy-jang/projects/TruckDetection-main/results/baseline/seed_64 --dataset-root /home/dy-jang/projects/v3/kitti_smoke_1280x384_lb --output-root /home/dy-jang/projects/TruckDetection-main/results/checkpoint_series_eval/baseline_seed64_val1000 --seed 64
+[val-sweep] baseline_seed64_val1000 returncode=0
+  [best] seed=64 iter=13000 3d_iou=0.7545
+
+=== SMOKE geometry_v2 val sweeps ===
+[reuse] val sweep done: /home/dy-jang/projects/TruckDetection-main/results/checkpoint_series_eval/geometry_v2_seed40_val1000
+  [best] seed=40 iter=12000 3d_iou=0.9035
+[reuse] val sweep done: /home/dy-jang/projects/TruckDetection-main/results/checkpoint_series_eval/geometry_v2_seed42_val1000
+  [best] seed=42 iter=13000 3d_iou=0.8983
+[reuse] val sweep done: /home/dy-jang/projects/TruckDetection-main/results/checkpoint_series_eval/geometry_v2_seed64_val1000
+  [best] seed=64 iter=14000 3d_iou=0.9005
+
+=== FCOS3D val sweep results ===
+  [best] seed=40 epoch=12 3d_iou=0.8931 matched=1000/1000
+  [best] seed=42 epoch=12 3d_iou=0.8884 matched=1000/1000
+  [best] seed=64 epoch=12 3d_iou=0.8951 matched=1000/1000
+
+[saved] /home/dy-jang/projects/TruckDetection-main/results/model_comparison_val.json
+
+==================================================================================================================================================================================================================================
+Model                                     Det Rate                3D IoU               BEV IoU               ATE (m)           ATE med (m)             AOE (deg)         AOE med (deg)                2D IoU          Matched/1000
+==================================================================================================================================================================================================================================
+SMOKE baseline                        0.976 ±0.001        0.7592 ±0.0038        0.7919 ±0.0038          0.089 ±0.005          0.067 ±0.004            1.32 ±0.02            0.88 ±0.02        0.8193 ±0.0016                 976±1
+SMOKE geometry_v2                     0.978 ±0.002        0.9008 ±0.0021        0.9008 ±0.0021          0.085 ±0.003          0.062 ±0.003            1.37 ±0.03            0.90 ±0.04        0.9455 ±0.0018                 978±2
+FCOS3D                                1.000 ±0.000        0.8922 ±0.0028        0.9064 ±0.0028          0.091 ±0.003          0.072 ±0.003            2.32 ±0.25            1.41 ±0.01        0.9548 ±0.0012                1000±0
+==================================================================================================================================================================================================================================
+
+--- Per-seed breakdown ---
+  SMOKE baseline seed=40 (best iter/epoch=14000): det=0.977  3d_iou=0.7637  bev_iou=0.7964  ate=0.082m  aoe=1.29deg  matched=977/1000
+  SMOKE baseline seed=42 (best iter/epoch=15000): det=0.976  3d_iou=0.7593  bev_iou=0.7921  ate=0.088m  aoe=1.33deg  matched=976/1000
+  SMOKE baseline seed=64 (best iter/epoch=13000): det=0.975  3d_iou=0.7545  bev_iou=0.7871  ate=0.095m  aoe=1.35deg  matched=975/1000
+  SMOKE geometry_v2 seed=40 (best iter/epoch=12000): det=0.981  3d_iou=0.9035  bev_iou=0.9035  ate=0.086m  aoe=1.33deg  matched=981/1000
+  SMOKE geometry_v2 seed=42 (best iter/epoch=13000): det=0.978  3d_iou=0.8983  bev_iou=0.8984  ate=0.088m  aoe=1.39deg  matched=978/1000
+  SMOKE geometry_v2 seed=64 (best iter/epoch=14000): det=0.976  3d_iou=0.9005  bev_iou=0.9005  ate=0.081m  aoe=1.40deg  matched=976/1000
+  FCOS3D seed=40 (best iter/epoch=12): det=1.000  3d_iou=0.8931  bev_iou=0.9071  ate=0.087m  aoe=2.40deg  matched=1000/1000
+  FCOS3D seed=42 (best iter/epoch=12): det=1.000  3d_iou=0.8884  bev_iou=0.9027  ate=0.094m  aoe=2.57deg  matched=1000/1000
+  FCOS3D seed=64 (best iter/epoch=12): det=1.000  3d_iou=0.8951  bev_iou=0.9095  ate=0.091m  aoe=1.98deg  matched=1000/1000
+[2026. 04. 08. (수) 11:04:38 KST] === ALL DONE ===

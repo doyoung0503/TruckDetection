@@ -42,3 +42,9 @@ server_deploy/
 
 # 환경변수
 .env
+
+# per-sample 추론 결과 (대용량)
+results/**/inference/kitti_test/data/*.txt
+results/**/submission/pred_instances_3d/*.txt
+results/**/per_sample_metrics.json
+results/**/per_sample_metrics.csv

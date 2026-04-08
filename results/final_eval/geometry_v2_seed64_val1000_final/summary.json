@@ -1,0 +1,28 @@
+{
+  "launcher_module": "train.run_geometry_smoke_v2",
+  "checkpoint_dir": "/home/dy-jang/projects/TruckDetection-main/results/geometry_v2/seed_64",
+  "dataset_root": "/home/dy-jang/projects/v3/kitti_smoke_1280x384_lb",
+  "split": "val",
+  "num_samples": 1000,
+  "checkpoints": [
+    {
+      "num_samples": 1000,
+      "matched_count": 975,
+      "missing_prediction_count": 25,
+      "detection_rate": 0.975,
+      "mean_bbox_iou_2d": 0.9424700398657283,
+      "mean_bev_iou": 0.8988588186590657,
+      "mean_3d_iou": 0.8988339407618567,
+      "mean_ate_m": 0.08176098807452199,
+      "median_ate_m": 0.060974474996328354,
+      "mean_aoe_deg": 1.4187402823432071,
+      "median_aoe_deg": 0.8541658306867161,
+      "iteration": 15000,
+      "checkpoint": "/home/dy-jang/projects/TruckDetection-main/results/geometry_v2/seed_64/model_final.pth",
+      "output_dir": "/home/dy-jang/projects/TruckDetection-main/results/final_eval/geometry_v2_seed64_val1000_final/model_0015000",
+      "prediction_dir": "/home/dy-jang/projects/TruckDetection-main/results/final_eval/geometry_v2_seed64_val1000_final/model_0015000/inference/kitti_test/data",
+      "eval_log": "/home/dy-jang/projects/TruckDetection-main/results/final_eval/geometry_v2_seed64_val1000_final/model_0015000_eval.log",
+      "eval_return_code": 1
+    }
+  ]
+}
