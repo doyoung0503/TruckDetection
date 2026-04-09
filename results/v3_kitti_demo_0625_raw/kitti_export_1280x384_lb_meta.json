@@ -1,0 +1,27 @@
+{
+  "source": "/Users/doyoung/Documents/Blender/results/v3_kitti_demo_0625_raw",
+  "out_size": [
+    1280,
+    384
+  ],
+  "letterbox_pad_color": [
+    114,
+    114,
+    114
+  ],
+  "num_exported": 1,
+  "workers": 1,
+  "min_selfcheck_iou": 0.99,
+  "strict_selfcheck": true,
+  "selfcheck": {
+    "count": 1,
+    "bbox_iou_mean": 0.9999979243955264,
+    "bbox_iou_median": 0.9999979243955264,
+    "bbox_iou_min": 0.9999979243955264,
+    "bbox_iou_max": 0.9999979243955264,
+    "num_below_threshold": 0,
+    "examples_below_threshold": []
+  },
+  "smoke_root": "/Users/doyoung/Documents/Blender/results/v3_kitti_demo_0625_raw/kitti_smoke_1280x384_lb",
+  "rtm3d_root": "/Users/doyoung/Documents/Blender/results/v3_kitti_demo_0625_raw/kitti_format_1280x384_lb/data/kitti"
+}

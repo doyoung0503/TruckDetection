@@ -1,0 +1,44 @@
+newmtl takamatsu_japan_sample_1
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ns 0.000000
+Ni 1.450000
+d 1.000000
+illum 1
+map_Kd takamatsu_japan_sample_1.jpg
+
+newmtl takamatsu_japan_sample_2
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ns 0.000000
+Ni 1.450000
+d 1.000000
+illum 1
+map_Kd takamatsu_japan_sample_2.jpg
+
+newmtl takamatsu_japan_sample_3
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ns 0.000000
+Ni 1.450000
+d 1.000000
+illum 1
+map_Kd takamatsu_japan_sample_3.jpg
+
+newmtl takamatsu_japan_sample_4
+Ka 1.000000 1.000000 1.000000
+Kd 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ns 0.000000
+Ni 1.450000
+d 1.000000
+illum 1
+map_Kd takamatsu_japan_sample_4.jpg
+

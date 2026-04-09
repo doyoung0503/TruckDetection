@@ -4,11 +4,11 @@ datasets/
 # Python 가상환경
 .venv/
 
-# HDRI 바이너리
-hdri/
+# HDRI 바이너리 (서버 생성용으로 추적)
+# hdri/
 
-# 3D 지도 데이터
-map/
+# 3D 지도 데이터 (서버 생성용으로 추적)
+# map/
 
 # 학습 체크포인트 (대용량 .pt)
 results/**/*.pt

@@ -60,7 +60,8 @@ try:
 except NameError:
     SCRIPT_DIR = os.getcwd()
 
-DATASET_VERSION = "v3"
+DEFAULT_DATASET_VERSION = "v3"
+DATASET_VERSION = DEFAULT_DATASET_VERSION
 OUTPUT_DIR = os.path.join(SCRIPT_DIR, "datasets", DATASET_VERSION)
 IMAGE_DIR  = os.path.join(OUTPUT_DIR, "images")
 DEPTH_DIR  = os.path.join(OUTPUT_DIR, "depth")
@@ -73,13 +74,14 @@ TEXTURE_DIR  = os.path.join(SCRIPT_DIR, "hyundai-porter-truck", "textures")
 # 3D 환경 맵 경로
 MAP_DIR = os.path.join(SCRIPT_DIR, "map")
 
-# 지원 맵 설정: name → {fbx, tex_dir, center_offset, interior_lighting}
+# 지원 맵 설정: name → {fbx, tex_dir, center_offset, scale, interior_lighting}
 MAP_CONFIGS = {
     'warehouse': {
         'fbx':     os.path.join(MAP_DIR, 'warehouse-fbx-model-free', 'source', 'Warehouse.fbx'),
         'tex_dir': os.path.join(MAP_DIR, 'warehouse-fbx-model-free', 'textures'),
         # inspect 결과: AABB center X=8.0, Y=23.09 → 트럭 원점(0,0) 기준 정렬
         'center_offset': (-8.0, -23.09, 0.0),
+        'scale':   1.0,
         'interior': True,   # 실내 → HDRI 비활성, 실내 조명 사용
     },
     'city': {
@@ -87,7 +89,25 @@ MAP_CONFIGS = {
         'tex_dir': os.path.join(MAP_DIR, 'modern-city-block', 'textures'),
         # inspect 결과: 도로 중심 X≈-100, Y≈-158, 도로 최상단 Z=-0.08 → +0.08 올려 Z=0 정렬
         'center_offset': (100.0, 158.0, 0.08),
+        'scale':   1.0,
         'interior': False,  # 실외 → HDRI + Sun 조명 사용
+    },
+    'takamatsu': {
+        'fbx':     os.path.join(MAP_DIR, 'takamatsu-city', 'source', 'takamatsu_japan_sample.fbx'),
+        'tex_dir': os.path.join(MAP_DIR, 'takamatsu-city', 'source'),
+        # inspect 결과: 중심이 원점에 가깝고 최저면 Z≈0
+        'center_offset': (0.0, 0.0, 0.0),
+        # 원본 샘플이 miniature 규모(폭≈3.5m)로 들어와서 실제 도심 블록 크기에 가깝게 확장
+        'scale':   40.0,
+        'interior': False,  # 실외 → HDRI + Sun 조명 사용
+    },
+    'cnr_middle_nowhere': {
+        'fbx':     os.path.join(MAP_DIR, 'cnr-ds-middle-of-nowhere', 'source', 'untitled.fbx'),
+        'tex_dir': os.path.join(MAP_DIR, 'cnr-ds-middle-of-nowhere', 'source'),
+        # 프리뷰 스크립트에서 실제 AABB 기준으로 재정렬한다.
+        'center_offset': (0.0, 0.0, 0.0),
+        'scale':   1.0,
+        'interior': False,
     },
 }
 
@@ -127,6 +147,12 @@ CAM_Z_MIN, CAM_Z_MAX = 0.5, 2.0   # 지면 ~ 2m (리프터 상하 운동)
 # 카메라-트럭 거리 범위 (후면·전면·측면 공통)
 CAM_DIST_MIN = 1.0    # 최소 거리 (m)
 CAM_DIST_MAX = 10.0   # 최대 거리 (m)
+
+# 카메라 후보 재시도 / 가시성 필터
+MAX_CAMERA_SAMPLING_ATTEMPTS = 40
+MIN_TRUCK_CLEAR_RATIO = 0.50
+MIN_RENDER_MEAN_LUMA = 5.0
+MIN_RENDER_MAX_CHANNEL = 20
 
 # Look-at 노이즈 (Truncation 모사)
 # 거리에 비례하여 노이즈를 스케일합니다.
@@ -175,10 +201,54 @@ ENV_CONFIGS = [
     },
 ]
 
+TAKAMATSU_ENV_CONFIG = {
+    'name':         'takamatsu_openfield',
+    'map_name':     'takamatsu',
+    'map_offset':   None,
+    'weight':       1.0,
+    'cam_dist_max': 16.0,
+    'cam_height_above_ground_min': 0.3,
+    'cam_height_above_ground_max': 1.8,
+    'truck_spawn_xy': (15.709855511784554, -35.311138013693004),
+    'truck_spawn_clearance_m': 0.03,
+}
+
+CNR_MIDDLE_NOWHERE_ENV_CONFIG = {
+    'name':         'cnr_middle_nowhere',
+    'map_name':     'cnr_middle_nowhere',
+    'map_offset':   None,
+    'weight':       1.0,
+    'cam_dist_max': 16.0,
+    'cam_height_above_ground_min': 0.2,
+    'cam_height_above_ground_max': 1.8,
+    # 프리뷰에서 실제 dirt 면 위로 확인한 스폰 위치
+    'truck_spawn_xy': (3.2690, 3.7333),
+    'truck_spawn_clearance_m': 0.03,
+}
+
 # 임포트된 트럭 메쉬 오브젝트 목록 (GT 계산용 전역 참조)
 TRUCK_MESH_OBJECTS: list = []
 # 실제 모델에서 계산된 트럭 제원 (import_truck() 실행 후 채워짐)
 TRUCK_DIMS: dict = {"width": 0.0, "length": 0.0, "height": 0.0}
+
+
+def configure_output_paths(dataset_version: str) -> None:
+    """Update dataset output directories at runtime."""
+    global DATASET_VERSION, OUTPUT_DIR, IMAGE_DIR, DEPTH_DIR, LABEL_DIR
+    DATASET_VERSION = dataset_version.strip()
+    OUTPUT_DIR = os.path.join(SCRIPT_DIR, "datasets", DATASET_VERSION)
+    IMAGE_DIR = os.path.join(OUTPUT_DIR, "images")
+    DEPTH_DIR = os.path.join(OUTPUT_DIR, "depth")
+    LABEL_DIR = os.path.join(OUTPUT_DIR, "labels")
+
+
+def _first_missing_index(existing_indices: list[int]) -> int:
+    """0부터 시작하는 frame_id 중 비어 있는 첫 인덱스를 반환합니다."""
+    used = set(existing_indices)
+    idx = 0
+    while idx in used:
+        idx += 1
+    return idx
 
 # ── 재질명 → 텍스처 파일명 수동 매핑 ─────────────────────────────────────────
 # FBX가 잘못된 경로를 저장하거나 이미지명이 실제 파일명과 달라
@@ -209,6 +279,210 @@ def clear_scene():
         bpy.data.lights.remove(light)
     for mat in list(bpy.data.materials):
         bpy.data.materials.remove(mat)
+
+
+def _is_descendant_of(obj: bpy.types.Object | None, parent: bpy.types.Object) -> bool:
+    current = obj
+    while current is not None:
+        if current == parent:
+            return True
+        current = current.parent
+    return False
+
+
+def _ground_height_at(scene: bpy.types.Scene, truck_empty, x: float, y: float) -> float | None:
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    direction = mathutils.Vector((0.0, 0.0, -1.0))
+    origin = mathutils.Vector((x, y, 500.0))
+
+    ignored_surface_keywords = (
+        'sky', 'corn', 'hay', 'fence', 'tree', 'rock',
+        'windmill', 'house', 'goal', 'window', 'door',
+    )
+
+    for _ in range(16):
+        hit, location, _, _, hit_obj, _ = scene.ray_cast(depsgraph, origin, direction)
+        if not hit or _is_descendant_of(hit_obj, truck_empty):
+            return None
+
+        texts = [hit_obj.name.lower()]
+        for slot in getattr(hit_obj, 'material_slots', []):
+            mat = getattr(slot, 'material', None)
+            if mat is not None:
+                texts.append(mat.name.lower())
+
+        if any(keyword in text for keyword in ignored_surface_keywords for text in texts):
+            origin = location + direction * 0.05
+            continue
+        return float(location.z)
+    return None
+
+
+def apply_env_truck_pose(scene, truck_empty, truck_dims: dict, env_cfg: dict) -> None:
+    """Optionally place the truck at an environment-specific spawn point."""
+    spawn_xy = env_cfg.get('truck_spawn_xy')
+    if not spawn_xy:
+        return
+
+    ground_z = _ground_height_at(scene, truck_empty, float(spawn_xy[0]), float(spawn_xy[1]))
+    if ground_z is None:
+        print(f"  [env] ground hit failed for spawn {spawn_xy}, keeping default truck pose")
+        return
+
+    clearance = float(env_cfg.get('truck_spawn_clearance_m', 0.0))
+    truck_empty.location = (
+        float(spawn_xy[0]),
+        float(spawn_xy[1]),
+        ground_z + (truck_dims['height'] / 2.0) + clearance,
+    )
+    if 'truck_yaw_world_fixed' in env_cfg:
+        truck_empty.rotation_euler = (
+            0.0,
+            0.0,
+            math.radians(float(env_cfg['truck_yaw_world_fixed'])),
+        )
+    bpy.context.view_layer.update()
+
+
+def _ray_hits_truck_before_occluder(
+    scene: bpy.types.Scene,
+    origin: mathutils.Vector,
+    target: mathutils.Vector,
+    truck_empty,
+    origin_offset_m: float = 0.05,
+    hit_margin_m: float = 0.05,
+) -> bool:
+    """카메라→타깃 선분 상에서 트럭이 먼저 맞는지 검사합니다."""
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    delta = target - origin
+    dist = delta.length
+    if dist <= 1e-6:
+        return False
+
+    direction = delta.normalized()
+    ray_origin = origin + direction * min(origin_offset_m, dist * 0.25)
+    ray_dist = max(hit_margin_m, dist + hit_margin_m)
+
+    hit, location, _, _, hit_obj, _ = scene.ray_cast(
+        depsgraph, ray_origin, direction, distance=ray_dist
+    )
+    if not hit:
+        return False
+
+    hit_dist = (location - ray_origin).length
+    if hit_dist > ray_dist:
+        return False
+    return _is_descendant_of(hit_obj, truck_empty)
+
+
+def _get_truck_visibility_sample_points(
+    truck_dims: dict,
+    truck_empty,
+    truck_corners_world: list | None = None,
+) -> list[mathutils.Vector]:
+    """환경 가림 여부를 판단할 대표 샘플 포인트들을 반환합니다."""
+    center_world = mathutils.Vector(truck_empty.location)
+    points = [center_world]
+
+    W, L, H = truck_dims['width'], truck_dims['length'], truck_dims['height']
+    rot_mat = mathutils.Matrix.Rotation(float(truck_empty.rotation_euler.z), 3, 'Z')
+    local_points = [
+        mathutils.Vector((0.0, +L / 2.0, 0.0)),          # front center
+        mathutils.Vector((0.0, -L / 2.0, 0.0)),          # rear center
+        mathutils.Vector((+W / 2.0, 0.0, 0.0)),          # right center
+        mathutils.Vector((-W / 2.0, 0.0, 0.0)),          # left center
+        mathutils.Vector((0.0, 0.0, +H * 0.45)),         # roof-ish center
+    ]
+    points.extend(center_world + (rot_mat @ p) for p in local_points)
+    return points
+
+
+def _evaluate_truck_view_clearance(
+    scene: bpy.types.Scene,
+    cam_obj,
+    truck_empty,
+    truck_dims: dict,
+    truck_corners_world: list | None = None,
+) -> dict:
+    """카메라에서 트럭으로 가는 시선이 환경에 막히지 않는지 평가합니다."""
+    sample_points = _get_truck_visibility_sample_points(
+        truck_dims, truck_empty, truck_corners_world
+    )
+    visible_flags = [
+        _ray_hits_truck_before_occluder(
+            scene,
+            mathutils.Vector(cam_obj.location),
+            point,
+            truck_empty,
+        )
+        for point in sample_points
+    ]
+    visible_count = sum(1 for flag in visible_flags if flag)
+    sample_count = len(visible_flags)
+    clear_ratio = (visible_count / sample_count) if sample_count else 0.0
+    return {
+        "center_visible": bool(visible_flags[0]) if visible_flags else False,
+        "visible_count": visible_count,
+        "sample_count": sample_count,
+        "clear_ratio": clear_ratio,
+    }
+
+
+def _rendered_image_is_usable(image_path: str) -> tuple[bool, dict]:
+    """
+    거의 검은 프레임처럼 명백히 무효인 렌더를 걸러냅니다.
+    Pillow가 없으면 이 체크는 통과 처리합니다.
+    """
+    try:
+        from PIL import Image, ImageStat
+    except ImportError:
+        return True, {"mean_luma": None, "max_channel": None}
+
+    with Image.open(image_path) as img:
+        rgb = img.convert('RGB')
+        mean_luma = float(sum(ImageStat.Stat(rgb).mean) / 3.0)
+        max_channel = max(ch_max for _, ch_max in rgb.getextrema())
+
+    ok = (
+        mean_luma >= MIN_RENDER_MEAN_LUMA and
+        max_channel >= MIN_RENDER_MAX_CHANNEL
+    )
+    return ok, {
+        "mean_luma": mean_luma,
+        "max_channel": max_channel,
+    }
+
+
+def _resolve_camera_height_limits(
+    truck_empty,
+    truck_dims: dict,
+    env_cfg: dict,
+) -> tuple[float, float]:
+    """
+    환경 설정에서 카메라 높이 범위를 sample_camera_pose용 높이 값으로 계산합니다.
+    `cam_height_above_ground_*`는 실제 지면 기준 높이로 해석하고,
+    sample_camera_pose 내부의 clearance 중복을 상쇄하기 위해 spawn clearance를 보정합니다.
+    """
+    if (
+        'cam_height_above_ground_min' in env_cfg or
+        'cam_height_above_ground_max' in env_cfg
+    ):
+        clearance = float(env_cfg.get('truck_spawn_clearance_m', 0.0))
+        z_min = max(
+            0.0,
+            float(env_cfg.get('cam_height_above_ground_min', CAM_Z_MIN)) - clearance,
+        )
+        z_max = max(
+            0.0,
+            float(env_cfg.get('cam_height_above_ground_max', CAM_Z_MAX)) - clearance,
+        )
+    else:
+        z_min = float(env_cfg.get('cam_z_min', CAM_Z_MIN))
+        z_max = float(env_cfg.get('cam_z_max', CAM_Z_MAX))
+
+    if z_min > z_max:
+        z_min, z_max = z_max, z_min
+    return z_min, z_max
 
 
 def setup_render_settings():
@@ -575,12 +849,17 @@ def import_environment_map(map_name: str) -> list:
     bpy.ops.import_scene.fbx(filepath=cfg['fbx'])
     bpy.context.view_layer.update()
 
+    scale_factor = float(cfg.get('scale', 1.0))
     ox, oy, oz = cfg['center_offset']
     imported = list(bpy.context.selected_objects)
     for obj in imported:
+        obj.scale.x *= scale_factor
+        obj.scale.y *= scale_factor
+        obj.scale.z *= scale_factor
         obj.location.x += ox
         obj.location.y += oy
         obj.location.z += oz
+    bpy.context.view_layer.update()
 
     # 텍스처 재연결 (맵별 처리)
     if map_name == 'warehouse':
@@ -1425,7 +1704,8 @@ def sample_camera_pose(view_cat: str, truck_dims: dict,
                         truck_yaw_rad: float,
                         truck_empty: 'bpy.types.Object',
                         dist_max: float = None,
-                        cam_z_min: float = None) -> tuple:
+                        cam_z_min: float = None,
+                        cam_z_max: float = None) -> tuple:
     """
     뷰 카테고리에 따라 카메라 위치와 Look-at 타겟을 샘플링합니다.
 
@@ -1449,7 +1729,10 @@ def sample_camera_pose(view_cat: str, truck_dims: dict,
 
     # 카메라 높이는 월드 Z 기준 (지면=0), 로컬 Z 변환: cam_z_local = cam_z - H/2
     _z_min = cam_z_min if cam_z_min is not None else CAM_Z_MIN
-    cam_z_world = random.uniform(_z_min, CAM_Z_MAX)
+    _z_max = cam_z_max if cam_z_max is not None else CAM_Z_MAX
+    if _z_min > _z_max:
+        _z_min, _z_max = _z_max, _z_min
+    cam_z_world = random.uniform(_z_min, _z_max)
     cam_z_local = cam_z_world - H / 2.0
     _dist_max = dist_max if dist_max is not None else CAM_DIST_MAX
 
@@ -1642,103 +1925,170 @@ def _render_batch(env_cfg, n_frames, start_i, scene, cam_obj,
     view_probs = list(VIEW_WEIGHTS.values())
     truck_center_world = mathutils.Vector(truck_empty.location)
     env_name = env_cfg['name']
+    cam_z_min_world, cam_z_max_world = _resolve_camera_height_limits(
+        truck_empty, truck_dims, env_cfg
+    )
+    frame_w = scene.render.resolution_x
+    frame_h = scene.render.resolution_y
     i = start_i
 
     for _ in range(n_frames):
         # 이미 생성된 인덱스 건너뜀 (resume 시 중복 방지)
         while os.path.exists(os.path.join(IMAGE_DIR, f"image_{i:04d}.png")):
             i += 1
+        attempt = 0
+        while True:
+            attempt += 1
+            view_cat = random.choices(view_cats, weights=view_probs, k=1)[0]
 
-        view_cat = random.choices(view_cats, weights=view_probs, k=1)[0]
+            randomize_domain()
 
-        randomize_domain()
+            truck_yaw_deg = random.uniform(0.0, 360.0)
+            truck_yaw_rad = math.radians(truck_yaw_deg)
+            truck_empty.rotation_euler = (0.0, 0.0, truck_yaw_rad)
 
-        truck_yaw_deg = random.uniform(0.0, 360.0)
-        truck_yaw_rad = math.radians(truck_yaw_deg)
-        truck_empty.rotation_euler = (0.0, 0.0, truck_yaw_rad)
+            truck_center_world = mathutils.Vector(truck_empty.location)
+            cam_pos, look_target = sample_camera_pose(
+                view_cat, truck_dims, truck_yaw_rad, truck_empty,
+                dist_max=env_cfg.get('cam_dist_max'),
+                cam_z_min=cam_z_min_world,
+                cam_z_max=cam_z_max_world)
+            cam_obj.location = cam_pos
+            set_camera_look_at(cam_obj, look_target)
+            bpy.context.view_layer.update()
 
-        cam_pos, look_target = sample_camera_pose(
-            view_cat, truck_dims, truck_yaw_rad, truck_empty,
-            dist_max=env_cfg.get('cam_dist_max'),
-            cam_z_min=env_cfg.get('cam_z_min'))
-        cam_obj.location = cam_pos
-        set_camera_look_at(cam_obj, look_target)
-        bpy.context.view_layer.update()
+            truck_corners_world = get_truck_obb_corners(truck_dims, truck_empty)
+            clearance = _evaluate_truck_view_clearance(
+                scene, cam_obj, truck_empty, truck_dims, truck_corners_world
+            )
+            if not (
+                clearance["center_visible"] and
+                clearance["clear_ratio"] >= MIN_TRUCK_CLEAR_RATIO
+            ):
+                print(
+                    f"  skip {i:04d} attempt {attempt:02d}"
+                    f"  [{env_name:10s}|{view_cat:5s}]"
+                    f"  occluded clear={clearance['visible_count']}/{clearance['sample_count']}"
+                )
+                if attempt >= MAX_CAMERA_SAMPLING_ATTEMPTS:
+                    raise RuntimeError(
+                        f"Could not find a clear camera view for frame {i:04d} "
+                        f"in {env_name} after {attempt} attempts."
+                    )
+                continue
 
-        truck_corners_world = get_truck_obb_corners(truck_dims, truck_empty)
-        cam_x, cam_y, cam_z = cam_pos.x, cam_pos.y, cam_pos.z
-        dist = (cam_pos - truck_center_world).length
-        truck_center_2d = world_to_image_pixel(scene, cam_obj, truck_center_world)
-        yaw_theta = compute_yaw_angle(cam_obj, truck_empty)
-        corners_2d = [world_to_image_kp(scene, cam_obj, mathutils.Vector(c))
-                      for c in truck_corners_world]
+            cam_x, cam_y, cam_z = cam_pos.x, cam_pos.y, cam_pos.z
+            dist = (cam_pos - truck_center_world).length
+            truck_center_2d = world_to_image_pixel(scene, cam_obj, truck_center_world)
+            if not (
+                0.0 <= truck_center_2d[0] <= frame_w and
+                0.0 <= truck_center_2d[1] <= frame_h
+            ):
+                print(
+                    f"  skip {i:04d} attempt {attempt:02d}"
+                    f"  [{env_name:10s}|{view_cat:5s}]"
+                    f"  center_out=({truck_center_2d[0]:.1f},{truck_center_2d[1]:.1f})"
+                )
+                if attempt >= MAX_CAMERA_SAMPLING_ATTEMPTS:
+                    raise RuntimeError(
+                        f"Could not keep truck center in-frame for {i:04d} "
+                        f"in {env_name} after {attempt} attempts."
+                    )
+                continue
+            yaw_theta = compute_yaw_angle(cam_obj, truck_empty)
+            corners_2d = [world_to_image_kp(scene, cam_obj, mathutils.Vector(c))
+                          for c in truck_corners_world]
 
-        rot_mat = mathutils.Matrix.Rotation(truck_yaw_rad, 3, 'Z')
-        axes_2d = {
-            "origin": truck_center_2d,
-            "x_end": world_to_image_pixel(scene, cam_obj,
-                         truck_center_world + rot_mat @ mathutils.Vector((1, 0, 0))),
-            "y_end": world_to_image_pixel(scene, cam_obj,
-                         truck_center_world + rot_mat @ mathutils.Vector((0, 1, 0))),
-            "z_end": world_to_image_pixel(scene, cam_obj,
-                         truck_center_world + mathutils.Vector((0, 0, 1))),
-        }
+            rot_mat = mathutils.Matrix.Rotation(truck_yaw_rad, 3, 'Z')
+            axes_2d = {
+                "origin": truck_center_2d,
+                "x_end": world_to_image_pixel(scene, cam_obj,
+                             truck_center_world + rot_mat @ mathutils.Vector((1, 0, 0))),
+                "y_end": world_to_image_pixel(scene, cam_obj,
+                             truck_center_world + rot_mat @ mathutils.Vector((0, 1, 0))),
+                "z_end": world_to_image_pixel(scene, cam_obj,
+                             truck_center_world + mathutils.Vector((0, 0, 1))),
+            }
 
-        label_data = {
-            "frame_id":      i,
-            "view_category": view_cat,
-            "truck_dims":    truck_dims,
-            "metadata": {
-                "h_cam":           cam_z,
-                "cam_pos":         [cam_x, cam_y, cam_z],
-                "distance":        dist,
-                "truck_yaw_world": truck_yaw_deg,
-                "environment":     env_name,
-                "hdri":            (os.path.basename(_DR_env_tex.image.filepath)
-                                    if _DR_env_tex and _DR_env_tex.image else "none"),
-                "sun_energy":      (_DR_sun_obj.data.energy if _DR_sun_obj else None),
-                "K_matrix":        K,
-                "depth_format": {
-                    "file":          f"depth_{i:04d}.npy",
-                    "dtype":         "float32",
-                    "unit":          "meter",
-                    "invalid_value": 0.0,
-                    "max_range_m":   65.535,
-                    "shape":         [scene.render.resolution_y,
-                                      scene.render.resolution_x],
+            label_data = {
+                "frame_id":      i,
+                "view_category": view_cat,
+                "truck_dims":    truck_dims,
+                "metadata": {
+                    "h_cam":           cam_z,
+                    "cam_pos":         [cam_x, cam_y, cam_z],
+                    "distance":        dist,
+                    "truck_yaw_world": truck_yaw_deg,
+                    "environment":     env_name,
+                    "hdri":            (os.path.basename(_DR_env_tex.image.filepath)
+                                        if _DR_env_tex and _DR_env_tex.image else "none"),
+                    "sun_energy":      (_DR_sun_obj.data.energy if _DR_sun_obj else None),
+                    "K_matrix":        K,
+                    "depth_format": {
+                        "file":          f"depth_{i:04d}.npy",
+                        "dtype":         "float32",
+                        "unit":          "meter",
+                        "invalid_value": 0.0,
+                        "max_range_m":   65.535,
+                        "shape":         [scene.render.resolution_y,
+                                          scene.render.resolution_x],
+                    },
                 },
-            },
-            "ground_truth": {
-                "truck_center_2d": truck_center_2d,
-                "yaw_theta":       yaw_theta,
-                "3d_corners":      truck_corners_world,
-                "2d_corners":      corners_2d,
-                "axes_2d":         axes_2d,
-            },
-        }
+                "ground_truth": {
+                    "truck_center_2d": truck_center_2d,
+                    "yaw_theta":       yaw_theta,
+                    "3d_corners":      truck_corners_world,
+                    "2d_corners":      corners_2d,
+                    "axes_2d":         axes_2d,
+                },
+            }
 
-        scene.render.filepath = os.path.abspath(
-            os.path.join(IMAGE_DIR, f"image_{i:04d}.png"))
-        bpy.ops.render.render(write_still=True)
+            image_path = os.path.abspath(
+                os.path.join(IMAGE_DIR, f"image_{i:04d}.png")
+            )
+            label_path = os.path.join(LABEL_DIR, f"label_{i:04d}.json")
+            exr_path = os.path.join(DEPTH_DIR, f'depth_{i:04d}.exr')
+            npy_path = os.path.join(DEPTH_DIR, f'depth_{i:04d}.npy')
+            png_path = os.path.join(DEPTH_DIR, f'depth_{i:04d}.png')
 
-        # ── Depth EXR → .npy (float32 m, RealSense 동일) ─────────────────────
-        _render_depth_pass(scene, DEPTH_DIR, i, cam_obj)
-        exr_path = os.path.join(DEPTH_DIR, f'depth_{i:04d}.exr')
-        npy_path = os.path.join(DEPTH_DIR, f'depth_{i:04d}.npy')
-        png_path = os.path.join(DEPTH_DIR, f'depth_{i:04d}.png')
-        if os.path.exists(exr_path):
-            _exr_to_npy(exr_path, npy_path, png_path)
+            scene.render.filepath = image_path
+            bpy.ops.render.render(write_still=True)
 
-        with open(os.path.join(LABEL_DIR, f"label_{i:04d}.json"),
-                  'w', encoding='utf-8') as fp:
-            json.dump(label_data, fp, indent=2, ensure_ascii=False)
+            # ── Depth EXR → .npy (float32 m, RealSense 동일) ─────────────────
+            _render_depth_pass(scene, DEPTH_DIR, i, cam_obj)
+            if os.path.exists(exr_path):
+                _exr_to_npy(exr_path, npy_path, png_path)
 
-        print(
-            f"  {i:04d}  [{env_name:10s}|{view_cat:5s}]"
-            f"  cam=({cam_x:+5.2f},{cam_y:+6.2f},{cam_z:.2f})m"
-            f"  dist={dist:5.2f}m  yaw={yaw_theta:6.1f}°"
-        )
-        i += 1
+            render_ok, render_stats = _rendered_image_is_usable(image_path)
+            if not render_ok:
+                for path in (image_path, label_path, exr_path, npy_path, png_path):
+                    if os.path.exists(path):
+                        os.remove(path)
+                print(
+                    f"  skip {i:04d} attempt {attempt:02d}"
+                    f"  [{env_name:10s}|{view_cat:5s}]"
+                    f"  dark mean={render_stats['mean_luma']:.2f}"
+                    f" max={render_stats['max_channel']}"
+                )
+                if attempt >= MAX_CAMERA_SAMPLING_ATTEMPTS:
+                    raise RuntimeError(
+                        f"Could not render a usable frame for {i:04d} "
+                        f"in {env_name} after {attempt} attempts."
+                    )
+                continue
+
+            with open(label_path, 'w', encoding='utf-8') as fp:
+                json.dump(label_data, fp, indent=2, ensure_ascii=False)
+
+            attempt_suffix = f"  tries={attempt}" if attempt > 1 else ""
+            print(
+                f"  {i:04d}  [{env_name:10s}|{view_cat:5s}]"
+                f"  cam=({cam_x:+5.2f},{cam_y:+6.2f},{cam_z:.2f})m"
+                f"  dist={dist:5.2f}m  yaw={yaw_theta:6.1f}°"
+                f"{attempt_suffix}"
+            )
+            i += 1
+            break
 
     return i
 
@@ -1769,7 +2119,7 @@ def main():
             pass
 
     already = sum(existing_by_env.values())
-    start_i = max(existing_indices, default=-1) + 1
+    start_i = _first_missing_index(existing_indices)
 
     if already > 0:
         print(f"Resume: {already}/{NUM_IMAGES} 이미 생성됨 "
@@ -1826,6 +2176,7 @@ def main():
 
             cam_obj = create_camera()
             scene   = bpy.context.scene
+            apply_env_truck_pose(scene, truck_empty, truck_dims, env_cfg)
             K = get_camera_intrinsic_matrix(scene, cam_obj)
             bpy.context.view_layer.update()
 
@@ -1880,6 +2231,10 @@ def _run_test_views(views=('rear', 'front', 'left', 'right'), map_name=None):
         setup_lighting()
 
     cam_obj = create_camera()
+    test_env_cfg = {}
+    if map_name == 'takamatsu':
+        test_env_cfg = TAKAMATSU_ENV_CONFIG
+    apply_env_truck_pose(bpy.context.scene, truck_empty, truck_dims, test_env_cfg)
 
     scene = bpy.context.scene
     K = get_camera_intrinsic_matrix(scene, cam_obj)
@@ -1988,6 +2343,13 @@ if __name__ == "__main__":
         except (IndexError, ValueError):
             pass
 
+    if '--dataset-version' in _argv:
+        _idx = _argv.index('--dataset-version')
+        try:
+            configure_output_paths(_argv[_idx + 1])
+        except IndexError:
+            pass
+
     # --map <name> 파라미터 파싱
     _map_name = None
     if '--map' in _argv:
@@ -2000,6 +2362,10 @@ if __name__ == "__main__":
         for e in city_envs:
             e['weight'] = w_each
         ENV_CONFIGS[:] = city_envs
+    elif '--takamatsu-only' in _argv:
+        ENV_CONFIGS[:] = [dict(TAKAMATSU_ENV_CONFIG)]
+    elif '--cnr-middle-only' in _argv:
+        ENV_CONFIGS[:] = [dict(CNR_MIDDLE_NOWHERE_ENV_CONFIG)]
 
     if '--test-warehouse' in _argv:
         _run_test_views(('rear', 'front', 'left', 'right'), map_name='warehouse')
