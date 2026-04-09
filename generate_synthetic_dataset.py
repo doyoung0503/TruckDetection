@@ -62,6 +62,7 @@ except NameError:
 
 DEFAULT_DATASET_VERSION = "v3"
 DATASET_VERSION = DEFAULT_DATASET_VERSION
+START_INDEX = -1   # -1 = auto (resume 로직), >=0 = 강제 시작 인덱스
 OUTPUT_DIR = os.path.join(SCRIPT_DIR, "datasets", DATASET_VERSION)
 IMAGE_DIR  = os.path.join(OUTPUT_DIR, "images")
 DEPTH_DIR  = os.path.join(OUTPUT_DIR, "depth")
@@ -2121,27 +2122,35 @@ def main():
     already = sum(existing_by_env.values())
     start_i = _first_missing_index(existing_indices)
 
-    if already > 0:
-        print(f"Resume: {already}/{NUM_IMAGES} 이미 생성됨 "
-              f"(next index: {start_i})")
-        print("  환경별 기존: " +
-              ", ".join(f"{k}={v}" for k, v in existing_by_env.items()))
+    # --start-index 옵션: 기존 파일 스캔을 무시하고 인덱스를 강제 설정
+    if START_INDEX >= 0:
+        start_i = START_INDEX
+        counts   = [NUM_IMAGES] + [0] * (len(ENV_CONFIGS) - 1)
+        print(f"start-index 강제: i={start_i}, 생성 수={NUM_IMAGES}")
+        print(f"Generating {NUM_IMAGES} images: " +
+              ", ".join(f"{e['name']}×{c}" for e, c in zip(ENV_CONFIGS, counts)))
+    else:
+        if already > 0:
+            print(f"Resume: {already}/{NUM_IMAGES} 이미 생성됨 "
+                  f"(next index: {start_i})")
+            print("  환경별 기존: " +
+                  ", ".join(f"{k}={v}" for k, v in existing_by_env.items()))
 
-    if already >= NUM_IMAGES:
-        print("이미 완료됨.")
-        return
+        if already >= NUM_IMAGES:
+            print("이미 완료됨.")
+            return
 
-    # 환경별 목표 수 계산 후 기존 생성분 차감
-    total   = NUM_IMAGES
-    weights = [e['weight'] for e in ENV_CONFIGS]
-    w_sum   = sum(weights)
-    targets = [round(total * w / w_sum) for w in weights]
-    targets[-1] = total - sum(targets[:-1])
-    counts  = [max(0, t - existing_by_env.get(e['name'], 0))
-               for e, t in zip(ENV_CONFIGS, targets)]
+        # 환경별 목표 수 계산 후 기존 생성분 차감
+        total   = NUM_IMAGES
+        weights = [e['weight'] for e in ENV_CONFIGS]
+        w_sum   = sum(weights)
+        targets = [round(total * w / w_sum) for w in weights]
+        targets[-1] = total - sum(targets[:-1])
+        counts  = [max(0, t - existing_by_env.get(e['name'], 0))
+                   for e, t in zip(ENV_CONFIGS, targets)]
 
-    print(f"Generating {sum(counts)} more images: " +
-          ", ".join(f"{e['name']}×{c}" for e, c in zip(ENV_CONFIGS, counts)))
+        print(f"Generating {sum(counts)} more images: " +
+              ", ".join(f"{e['name']}×{c}" for e, c in zip(ENV_CONFIGS, counts)))
 
     i = start_i
     total_generated = 0
@@ -2331,15 +2340,23 @@ def _run_test_views(views=('rear', 'front', 'left', 'right'), map_name=None):
 # =============================================================================
 
 if __name__ == "__main__":
-    # blender -- --num-images N   : 이미지 수 오버라이드
-    # blender -- --test-rear      : 정확한 정후방 1장만 렌더링
-    # blender -- --test-front     : 정확한 정전방 1장만 렌더링 (PBR 확인용)
+    # blender -- --num-images N       : 생성할 이미지 수
+    # blender -- --start-index N      : 시작 frame_id 강제 지정 (resume 로직 무시)
+    # blender -- --test-rear          : 정확한 정후방 1장만 렌더링
+    # blender -- --test-front         : 정확한 정전방 1장만 렌더링 (PBR 확인용)
     _argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 
     if '--num-images' in _argv:
         _idx = _argv.index('--num-images')
         try:
             NUM_IMAGES = int(_argv[_idx + 1])
+        except (IndexError, ValueError):
+            pass
+
+    if '--start-index' in _argv:
+        _idx = _argv.index('--start-index')
+        try:
+            START_INDEX = int(_argv[_idx + 1])
         except (IndexError, ValueError):
             pass
 
