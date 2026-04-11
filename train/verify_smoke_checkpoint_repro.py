@@ -236,7 +236,10 @@ def main() -> None:
                 for key, value in batch.items()
             }
             outputs = model(batch["image"])
-            pred_corners, pred_yaw, pred_z = decode_predictions(outputs, batch, args.model_type, device)
+            # Use the current decode path exactly as train.smoke_trainer defines it.
+            pred_corners, pred_yaw, pred_z = decode_predictions(
+                outputs, batch, args.model_type
+            )
             gt_corners, gt_yaw, gt_z = _build_gt_for_metrics(batch, device, args.model_type)
 
             metric_rows.append(
