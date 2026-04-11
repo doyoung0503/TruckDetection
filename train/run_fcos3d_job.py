@@ -8,6 +8,7 @@ only needs MMDetection3D installed plus the current dataset root.
 from __future__ import annotations
 
 import argparse
+import pickle
 import subprocess
 import sys
 from pathlib import Path
@@ -38,7 +39,14 @@ def _ensure_infos(dataset_root: Path) -> None:
         dataset_root / "kitti_infos_test.pkl",
     )
     if all(path.exists() for path in required):
-        return
+        try:
+            with (dataset_root / "kitti_infos_train.pkl").open("rb") as handle:
+                payload = pickle.load(handle)
+            sample = payload["data_list"][0]
+            if "known_dims" in sample and "known_gravity_y" in sample:
+                return
+        except Exception:
+            pass
 
     cmd = [
         sys.executable,

@@ -152,6 +152,25 @@ def _parse_label_file(label_path: Path) -> list[dict[str, object]]:
     return instances
 
 
+def _load_known_geometry(sample_id: str, source_label_dir: Path) -> tuple[list[float], float]:
+    """Load explicit known geometry metadata from the source v3 labels."""
+    label_path = source_label_dir / f"label_{int(sample_id):04d}.json"
+    if not label_path.exists():
+        raise FileNotFoundError(
+            f"Missing source geometry metadata for sample {sample_id}: {label_path}")
+
+    payload = json.loads(label_path.read_text())
+    truck_dims = payload["truck_dims"]
+    known_dims = [
+        float(truck_dims["length"]),
+        float(truck_dims["height"]),
+        float(truck_dims["width"]),
+    ]
+    h_cam = float(payload["metadata"]["h_cam"])
+    known_gravity_y = h_cam - known_dims[1] * 0.5
+    return known_dims, known_gravity_y
+
+
 def _compute_difficulty(bbox_height: float, occluded: int, truncated: float) -> int:
     min_height = (40.0, 25.0, 25.0)
     max_occlusion = (0, 1, 2)
@@ -215,7 +234,8 @@ def _build_image_dict(sample_id: str, image_path: Path, calib: dict[str, np.ndar
     }
 
 
-def _build_data_item(sample_id: str, split: SplitSpec) -> dict[str, object]:
+def _build_data_item(sample_id: str, split: SplitSpec,
+                     source_label_dir: Path) -> dict[str, object]:
     image_path = split.image_dir / f"{sample_id}.png"
     if not image_path.exists():
         image_path = split.image_dir / f"{sample_id}.jpg"
@@ -225,6 +245,7 @@ def _build_data_item(sample_id: str, split: SplitSpec) -> dict[str, object]:
     calib = _parse_calibration(split.calib_dir / f"{sample_id}.txt")
     instances = _parse_label_file(split.label_dir / f"{sample_id}.txt") if split.label_dir else []
     _finalize_center_targets(instances, calib["P2"])
+    known_dims, known_gravity_y = _load_known_geometry(sample_id, source_label_dir)
 
     item = {
         "sample_idx": int(sample_id),
@@ -238,6 +259,8 @@ def _build_data_item(sample_id: str, split: SplitSpec) -> dict[str, object]:
         },
         "instances": deepcopy(instances),
         "cam_instances": {"CAM2": deepcopy(instances)},
+        "known_dims": known_dims,
+        "known_gravity_y": float(known_gravity_y),
     }
     return item
 
@@ -291,6 +314,7 @@ def _validate_payload(payload: dict[str, object]) -> dict[str, object]:
         "num_cam_instances": 0,
         "all_lidar2cam_invertible": True,
         "all_centers_finite": True,
+        "all_known_geometry_present": True,
     }
 
     for item in data_list:
@@ -308,6 +332,12 @@ def _validate_payload(payload: dict[str, object]) -> dict[str, object]:
             depth = float(instance.get("depth", math.nan))
             if center_2d.shape != (2,) or not np.isfinite(center_2d).all() or not math.isfinite(depth):
                 summary["all_centers_finite"] = False
+
+        known_dims = np.array(item.get("known_dims", []), dtype=np.float32)
+        known_gravity_y = item.get("known_gravity_y", None)
+        if known_dims.shape != (3,) or not np.isfinite(known_dims).all() or \
+                known_gravity_y is None or not math.isfinite(float(known_gravity_y)):
+            summary["all_known_geometry_present"] = False
 
     return summary
 
@@ -350,11 +380,18 @@ def main() -> None:
     args = parse_args()
     dataset_root = args.dataset_root.resolve()
     output_dir = (args.output_dir or dataset_root).resolve()
+    source_label_dir = dataset_root.parent / "labels"
+    if not source_label_dir.exists():
+        raise FileNotFoundError(
+            f"Expected source label metadata directory at {source_label_dir}")
 
     summaries: dict[str, object] = {}
     for split in _iter_splits(dataset_root):
         sample_ids = _read_split_ids(split.image_set_path)
-        data_list = [_build_data_item(sample_id, split) for sample_id in sample_ids]
+        data_list = [
+            _build_data_item(sample_id, split, source_label_dir)
+            for sample_id in sample_ids
+        ]
         payload = _build_payload(data_list)
         output_path = output_dir / f"{args.prefix}_infos_{split.name}.pkl"
         _write_pickle(output_path, payload)
