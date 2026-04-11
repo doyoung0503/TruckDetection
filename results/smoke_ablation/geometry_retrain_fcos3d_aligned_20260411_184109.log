@@ -1,0 +1,25 @@
+장치: cuda  |  모델: ['geometry']  |  epochs=12
+
+════════════════════════════════════════════════════════════
+  모델: geometry  |  epochs=12  batch=2  lr=0.00025  seed=42
+════════════════════════════════════════════════════════════
+  데이터: train=4000  val=1000
+  Ep    1/12  [ 158s]  train: l_heat=2.771 l_off=0.535 l_3d=448.353 total=4.268  val: l_heat=2.463 l_3d=314.931 total=3.514  | Z=32.47m  Center=33.75m  Yaw=45.6°  ADD-S=34.38m ★
+  Ep    2/12  [ 158s]  train: l_heat=2.252 l_off=0.520 l_3d=422.934 total=3.663  val: l_heat=2.116 l_3d=318.053 total=3.178  | Z=32.41m  Center=33.68m  Yaw=46.4°  ADD-S=34.34m ★
+  Ep    3/12  [ 158s]  train: l_heat=2.034 l_off=0.515 l_3d=414.161 total=3.416  val: l_heat=1.927 l_3d=316.267 total=2.982  | Z=32.53m  Center=33.73m  Yaw=46.6°  ADD-S=34.39m ★
+  Ep    4/12  [ 158s]  train: l_heat=1.830 l_off=0.516 l_3d=412.479 total=3.206  val: l_heat=1.944 l_3d=323.387 total=3.023  | Z=32.51m  Center=33.68m  Yaw=46.3°  ADD-S=34.34m
+  Ep    5/12  [ 159s]  train: l_heat=1.393 l_off=0.505 l_3d=407.140 total=2.752  val: l_heat=1.407 l_3d=308.340 total=2.437  | Z=31.65m  Center=32.82m  Yaw=46.0°  ADD-S=33.76m ★
+  Ep    6/12  [ 159s]  train: l_heat=1.247 l_off=0.499 l_3d=403.958 total=2.595  val: l_heat=1.304 l_3d=307.466 total=2.331  | Z=31.52m  Center=32.69m  Yaw=45.9°  ADD-S=33.68m ★
+  Ep    7/12  [ 158s]  train: l_heat=1.188 l_off=0.488 l_3d=402.596 total=2.532  val: l_heat=1.272 l_3d=306.326 total=2.294  | Z=31.43m  Center=32.60m  Yaw=45.9°  ADD-S=33.63m ★
+  Ep    8/12  [ 158s]  train: l_heat=1.091 l_off=0.498 l_3d=402.001 total=2.433  val: l_heat=1.234 l_3d=306.029 total=2.256  | Z=31.31m  Center=32.46m  Yaw=45.9°  ADD-S=33.50m ★
+  Ep    9/12  [ 158s]  train: l_heat=1.095 l_off=0.500 l_3d=401.838 total=2.436  val: l_heat=1.229 l_3d=305.915 total=2.251  | Z=31.37m  Center=32.52m  Yaw=45.7°  ADD-S=33.56m ★
+  Ep   10/12  [ 158s]  train: l_heat=1.092 l_off=0.491 l_3d=401.633 total=2.433  val: l_heat=1.221 l_3d=305.890 total=2.243  | Z=31.40m  Center=32.55m  Yaw=45.7°  ADD-S=33.57m ★
+  Ep   11/12  [ 158s]  train: l_heat=1.076 l_off=0.496 l_3d=401.732 total=2.417  val: l_heat=1.224 l_3d=305.924 total=2.246  | Z=31.46m  Center=32.62m  Yaw=45.7°  ADD-S=33.63m
+  Ep   12/12  [ 158s]  train: l_heat=1.070 l_off=0.490 l_3d=401.582 total=2.411  val: l_heat=1.204 l_3d=305.727 total=2.225  | Z=31.46m  Center=32.61m  Yaw=45.6°  ADD-S=33.62m ★
+
+  ▶ Best  ep=12  val_loss=2.2246  Z=31.457m  ADD-S=33.625m
+     체크포인트 → /home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/smoke_ablation/geometry/best.pt
+     마지막 체크포인트 → /home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/smoke_ablation/geometry/last.pt
+     히스토리  → /home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/smoke_ablation/history_geometry.json
+
+  절제 연구 그래프 저장 → /home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/smoke_ablation/ablation_curves.png
