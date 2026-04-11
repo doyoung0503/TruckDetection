@@ -8,6 +8,7 @@ only needs MMDetection3D installed plus the current dataset root.
 from __future__ import annotations
 
 import argparse
+import os
 import pickle
 import subprocess
 import sys
@@ -160,7 +161,13 @@ def main() -> None:
     print("[fcos3d-job] cmd:", " ".join(cmd))
     if args.dry_run:
         return
-    subprocess.run(cmd, cwd=args.mmdet3d_root, check=True)
+    env = os.environ.copy()
+    existing_pythonpath = env.get("PYTHONPATH", "")
+    mmdet3d_root = str(args.mmdet3d_root.resolve())
+    env["PYTHONPATH"] = (
+        mmdet3d_root if not existing_pythonpath else
+        f"{mmdet3d_root}:{existing_pythonpath}")
+    subprocess.run(cmd, cwd=args.mmdet3d_root, check=True, env=env)
 
 
 if __name__ == "__main__":

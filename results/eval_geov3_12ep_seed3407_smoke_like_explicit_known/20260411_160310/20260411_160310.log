@@ -1,0 +1,864 @@
+2026/04/11 16:03:10 - mmengine - INFO - 
+------------------------------------------------------------
+System environment:
+    sys.platform: linux
+    Python: 3.10.19 (main, Oct 21 2025, 16:43:05) [GCC 11.2.0]
+    CUDA available: True
+    MUSA available: False
+    numpy_random_seed: 1403978777
+    GPU 0: NVIDIA GeForce RTX 4090
+    CUDA_HOME: /usr/local/cuda
+    NVCC: Cuda compilation tools, release 12.9, V12.9.86
+    GCC: gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+    PyTorch: 2.1.0+cu121
+    PyTorch compiling details: PyTorch built with:
+  - GCC 9.3
+  - C++ Version: 201703
+  - Intel(R) oneAPI Math Kernel Library Version 2022.2-Product Build 20220804 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v3.1.1 (Git Hash 64f6bcbcbab628e96f33a62c3e975f8535a7bde4)
+  - OpenMP 201511 (a.k.a. OpenMP 4.5)
+  - LAPACK is enabled (usually provided by MKL)
+  - NNPACK is enabled
+  - CPU capability usage: AVX2
+  - CUDA Runtime 12.1
+  - NVCC architecture flags: -gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;-gencode;arch=compute_70,code=sm_70;-gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_80,code=sm_80;-gencode;arch=compute_86,code=sm_86;-gencode;arch=compute_90,code=sm_90
+  - CuDNN 8.9.2
+  - Magma 2.6.1
+  - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, CUDA_VERSION=12.1, CUDNN_VERSION=8.9.2, CXX_COMPILER=/opt/rh/devtoolset-9/root/usr/bin/c++, CXX_FLAGS= -D_GLIBCXX_USE_CXX11_ABI=0 -fabi-version=11 -fvisibility-inlines-hidden -DUSE_PTHREADPOOL -DNDEBUG -DUSE_KINETO -DLIBKINETO_NOROCTRACER -DUSE_FBGEMM -DUSE_QNNPACK -DUSE_PYTORCH_QNNPACK -DUSE_XNNPACK -DSYMBOLICATE_MOBILE_DEBUG_HANDLE -O2 -fPIC -Wall -Wextra -Werror=return-type -Werror=non-virtual-dtor -Werror=bool-operation -Wnarrowing -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas -Wno-unused-parameter -Wno-unused-function -Wno-unused-result -Wno-strict-overflow -Wno-strict-aliasing -Wno-stringop-overflow -Wno-psabi -Wno-error=pedantic -Wno-error=old-style-cast -Wno-invalid-partial-specialization -Wno-unused-private-field -Wno-aligned-allocation-unavailable -Wno-missing-braces -fdiagnostics-color=always -faligned-new -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Werror=format -Werror=cast-function-type -Wno-stringop-overflow, LAPACK_INFO=mkl, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, TORCH_DISABLE_GPU_ASSERTS=ON, TORCH_VERSION=2.1.0, USE_CUDA=ON, USE_CUDNN=ON, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=1, USE_NNPACK=ON, USE_OPENMP=ON, USE_ROCM=OFF, 
+
+    TorchVision: 0.16.0+cu121
+    OpenCV: 4.11.0
+    MMEngine: 0.10.7
+
+Runtime environment:
+    cudnn_benchmark: False
+    mp_cfg: {'mp_start_method': 'fork', 'opencv_num_threads': 0}
+    dist_cfg: {'backend': 'nccl'}
+    seed: 1403978777
+    Distributed launcher: none
+    Distributed training: False
+    GPU number: 1
+------------------------------------------------------------
+
+2026/04/11 16:03:11 - mmengine - INFO - Config:
+auto_scale_lr = dict(base_batch_size=32, enable=False)
+backend_args = None
+base_depths = ((
+    5.331445990264416,
+    2.6893772919824164,
+), )
+base_dims = (
+    5.103683,
+    1.918924,
+    1.868429,
+)
+base_gravity_center_y = 0.4274145055
+class_names = [
+    'Car',
+]
+common_meta_keys = (
+    'img_path',
+    'ori_shape',
+    'img_shape',
+    'lidar2img',
+    'depth2img',
+    'cam2img',
+    'pad_shape',
+    'scale_factor',
+    'flip',
+    'pcd_horizontal_flip',
+    'pcd_vertical_flip',
+    'box_mode_3d',
+    'box_type_3d',
+    'img_norm_cfg',
+    'num_pts_feats',
+    'pcd_trans',
+    'sample_idx',
+    'pcd_scale_factor',
+    'pcd_rotation',
+    'pcd_rotation_angle',
+    'lidar_path',
+    'transformation_3d_flow',
+    'trans_mat',
+    'affine_aug',
+    'sweep_img_metas',
+    'ori_cam2img',
+    'cam2global',
+    'crop_offset',
+    'img_crop_offset',
+    'resize_img_shape',
+    'lidar2cam',
+    'ori_lidar2img',
+    'num_ref_frames',
+    'num_views',
+    'ego2global',
+    'axis_align_matrix',
+    'known_dims',
+    'known_gravity_y',
+)
+custom_imports = dict(
+    allow_failed_imports=False,
+    imports=[
+        'mmdet3d.datasets.transforms.fcos3d_geov3',
+        'mmdet3d.models.task_modules.coders.fcos3d_geov3_bbox_coder',
+        'mmdet3d.models.dense_heads.fcos_mono3d_geov3_head',
+    ])
+data_root = 'data/kitti/'
+dataset_type = 'KittiDataset'
+default_hooks = dict(
+    checkpoint=dict(interval=1, max_keep_ckpts=12, type='CheckpointHook'),
+    logger=dict(interval=50, type='LoggerHook'),
+    param_scheduler=dict(type='ParamSchedulerHook'),
+    sampler_seed=dict(type='DistSamplerSeedHook'),
+    timer=dict(type='IterTimerHook'),
+    visualization=dict(type='Det3DVisualizationHook'))
+default_scope = 'mmdet3d'
+env_cfg = dict(
+    cudnn_benchmark=False,
+    dist_cfg=dict(backend='nccl'),
+    mp_cfg=dict(mp_start_method='fork', opencv_num_threads=0))
+eval_pipeline = [
+    dict(backend_args=None, type='LoadImageFromFileMono3D'),
+    dict(keys=[
+        'img',
+    ], type='Pack3DDetInputs'),
+]
+input_modality = dict(use_camera=True, use_lidar=False)
+launcher = 'none'
+load_from = '/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/compare_geov3_12ep_seed3407/epoch_12.pth'
+log_level = 'INFO'
+log_processor = dict(by_epoch=True, type='LogProcessor', window_size=50)
+metainfo = dict(classes=[
+    'Car',
+])
+model = dict(
+    backbone=dict(
+        dcn=dict(deform_groups=1, fallback_on_stride=False, type='DCNv2'),
+        depth=101,
+        frozen_stages=1,
+        init_cfg=dict(
+            checkpoint='open-mmlab://detectron2/resnet101_caffe',
+            type='Pretrained'),
+        norm_cfg=dict(requires_grad=False, type='BN'),
+        norm_eval=True,
+        num_stages=4,
+        out_indices=(
+            0,
+            1,
+            2,
+            3,
+        ),
+        stage_with_dcn=(
+            False,
+            False,
+            True,
+            True,
+        ),
+        style='caffe',
+        type='mmdet.ResNet'),
+    bbox_head=dict(
+        attr_branch=(256, ),
+        bbox_code_size=3,
+        bbox_coder=dict(code_size=3, type='FCOS3DGeoV3BBoxCoder'),
+        center_sampling=True,
+        centerness_on_reg=True,
+        cls_branch=(256, ),
+        conv_bias=True,
+        dcn_on_last_conv=True,
+        diff_rad_by_sin=True,
+        dir_branch=(256, ),
+        dir_limit_offset=0,
+        dir_offset=0.7854,
+        feat_channels=256,
+        geov3_base_dims=(
+            5.103683,
+            1.918924,
+            1.868429,
+        ),
+        geov3_base_y=0.4274145055,
+        geov3_depth_ref=5.331445990264416,
+        group_reg_dims=(
+            1,
+            1,
+            1,
+        ),
+        in_channels=256,
+        loss_attr=dict(
+            loss_weight=1.0, type='mmdet.CrossEntropyLoss', use_sigmoid=False),
+        loss_bbox=dict(
+            beta=0.1111111111111111,
+            loss_weight=1.0,
+            type='mmdet.SmoothL1Loss'),
+        loss_centerness=dict(
+            loss_weight=1.0, type='mmdet.CrossEntropyLoss', use_sigmoid=True),
+        loss_cls=dict(
+            alpha=0.25,
+            gamma=2.0,
+            loss_weight=1.0,
+            type='mmdet.FocalLoss',
+            use_sigmoid=True),
+        loss_dir=dict(
+            loss_weight=1.0, type='mmdet.CrossEntropyLoss', use_sigmoid=False),
+        norm_on_bbox=True,
+        num_classes=1,
+        pred_attrs=False,
+        pred_velo=False,
+        reg_branch=(
+            (256, ),
+            (256, ),
+            (256, ),
+        ),
+        stacked_convs=2,
+        strides=[
+            8,
+            16,
+            32,
+            64,
+            128,
+        ],
+        type='FCOSMono3DGeoV3Head',
+        use_direction_classifier=True),
+    data_preprocessor=dict(
+        bgr_to_rgb=False,
+        mean=[
+            103.53,
+            116.28,
+            123.675,
+        ],
+        pad_size_divisor=32,
+        std=[
+            1.0,
+            1.0,
+            1.0,
+        ],
+        type='Det3DDataPreprocessor'),
+    neck=dict(
+        add_extra_convs='on_output',
+        in_channels=[
+            256,
+            512,
+            1024,
+            2048,
+        ],
+        num_outs=5,
+        out_channels=256,
+        relu_before_extra_convs=True,
+        start_level=1,
+        type='mmdet.FPN'),
+    test_cfg=dict(
+        max_per_img=50,
+        min_bbox_size=0,
+        nms_across_levels=False,
+        nms_pre=1000,
+        nms_thr=0.8,
+        score_thr=0.05,
+        use_rotate_nms=True),
+    train_cfg=dict(
+        allowed_border=0,
+        code_weight=[
+            1.0,
+            1.0,
+            0.2,
+            1.0,
+            1.0,
+            1.0,
+            1.0,
+            0.05,
+            0.05,
+        ],
+        debug=False,
+        pos_weight=-1),
+    type='FCOSMono3D')
+optim_wrapper = dict(
+    clip_grad=dict(max_norm=35, norm_type=2),
+    optimizer=dict(lr=0.002, momentum=0.9, type='SGD', weight_decay=0.0001),
+    paramwise_cfg=dict(bias_decay_mult=0.0, bias_lr_mult=2.0),
+    type='OptimWrapper')
+param_scheduler = [
+    dict(
+        begin=0,
+        by_epoch=False,
+        end=500,
+        start_factor=0.3333333333333333,
+        type='LinearLR'),
+    dict(
+        begin=0,
+        by_epoch=True,
+        end=12,
+        gamma=0.1,
+        milestones=[
+            8,
+            11,
+        ],
+        type='MultiStepLR'),
+]
+resume = False
+test_cfg = dict(type='TestLoop')
+test_dataloader = dict(
+    batch_size=1,
+    dataset=dict(
+        ann_file='kitti_infos_val_explicit_known.pkl',
+        backend_args=None,
+        box_type_3d='Camera',
+        data_prefix=dict(img='training/image_2'),
+        data_root=
+        '/home/dy-jang/TruckDetection/fcos3d_server_bundle_20260410/datasets/v3/kitti_smoke_1280x384_lb/',
+        load_type='fov_image_based',
+        metainfo=dict(classes=[
+            'Car',
+        ]),
+        modality=dict(use_camera=True, use_lidar=False),
+        pipeline=[
+            dict(backend_args=None, type='LoadImageFromFileMono3D'),
+            dict(scale_factor=1.0, type='mmdet.Resize'),
+            dict(
+                expected_dims=(
+                    5.103683,
+                    1.918924,
+                    1.868429,
+                ),
+                type='LoadFCOS3DGeoV3Meta'),
+            dict(
+                keys=[
+                    'img',
+                ],
+                meta_keys=(
+                    'img_path',
+                    'ori_shape',
+                    'img_shape',
+                    'lidar2img',
+                    'depth2img',
+                    'cam2img',
+                    'pad_shape',
+                    'scale_factor',
+                    'flip',
+                    'pcd_horizontal_flip',
+                    'pcd_vertical_flip',
+                    'box_mode_3d',
+                    'box_type_3d',
+                    'img_norm_cfg',
+                    'num_pts_feats',
+                    'pcd_trans',
+                    'sample_idx',
+                    'pcd_scale_factor',
+                    'pcd_rotation',
+                    'pcd_rotation_angle',
+                    'lidar_path',
+                    'transformation_3d_flow',
+                    'trans_mat',
+                    'affine_aug',
+                    'sweep_img_metas',
+                    'ori_cam2img',
+                    'cam2global',
+                    'crop_offset',
+                    'img_crop_offset',
+                    'resize_img_shape',
+                    'lidar2cam',
+                    'ori_lidar2img',
+                    'num_ref_frames',
+                    'num_views',
+                    'ego2global',
+                    'axis_align_matrix',
+                    'known_dims',
+                    'known_gravity_y',
+                ),
+                type='Pack3DDetInputs'),
+        ],
+        test_mode=True,
+        type='KittiDataset'),
+    drop_last=False,
+    num_workers=2,
+    persistent_workers=True,
+    sampler=dict(shuffle=False, type='DefaultSampler'))
+test_evaluator = dict(
+    ann_file=
+    '/home/dy-jang/TruckDetection/fcos3d_server_bundle_20260410/datasets/v3/kitti_smoke_1280x384_lb/kitti_infos_val_explicit_known.pkl',
+    backend_args=None,
+    metric='bbox',
+    type='KittiMetric')
+test_pipeline = [
+    dict(backend_args=None, type='LoadImageFromFileMono3D'),
+    dict(scale_factor=1.0, type='mmdet.Resize'),
+    dict(
+        expected_dims=(
+            5.103683,
+            1.918924,
+            1.868429,
+        ),
+        type='LoadFCOS3DGeoV3Meta'),
+    dict(
+        keys=[
+            'img',
+        ],
+        meta_keys=(
+            'img_path',
+            'ori_shape',
+            'img_shape',
+            'lidar2img',
+            'depth2img',
+            'cam2img',
+            'pad_shape',
+            'scale_factor',
+            'flip',
+            'pcd_horizontal_flip',
+            'pcd_vertical_flip',
+            'box_mode_3d',
+            'box_type_3d',
+            'img_norm_cfg',
+            'num_pts_feats',
+            'pcd_trans',
+            'sample_idx',
+            'pcd_scale_factor',
+            'pcd_rotation',
+            'pcd_rotation_angle',
+            'lidar_path',
+            'transformation_3d_flow',
+            'trans_mat',
+            'affine_aug',
+            'sweep_img_metas',
+            'ori_cam2img',
+            'cam2global',
+            'crop_offset',
+            'img_crop_offset',
+            'resize_img_shape',
+            'lidar2cam',
+            'ori_lidar2img',
+            'num_ref_frames',
+            'num_views',
+            'ego2global',
+            'axis_align_matrix',
+            'known_dims',
+            'known_gravity_y',
+        ),
+        type='Pack3DDetInputs'),
+]
+train_cfg = dict(max_epochs=12, type='EpochBasedTrainLoop', val_interval=1)
+train_dataloader = dict(
+    batch_size=2,
+    dataset=dict(
+        ann_file='kitti_infos_train.pkl',
+        backend_args=None,
+        box_type_3d='Camera',
+        data_prefix=dict(img='training/image_2'),
+        data_root='data/kitti/',
+        load_type='fov_image_based',
+        metainfo=dict(classes=[
+            'Car',
+        ]),
+        modality=dict(use_camera=True, use_lidar=False),
+        pipeline=[
+            dict(backend_args=None, type='LoadImageFromFileMono3D'),
+            dict(
+                type='LoadAnnotations3D',
+                with_attr_label=False,
+                with_bbox=True,
+                with_bbox_3d=True,
+                with_bbox_depth=True,
+                with_label=True,
+                with_label_3d=True),
+            dict(keep_ratio=True, scale=(
+                1280,
+                384,
+            ), type='mmdet.Resize'),
+            dict(flip_ratio_bev_horizontal=0.5, type='RandomFlip3D'),
+            dict(
+                expected_dims=(
+                    5.103683,
+                    1.918924,
+                    1.868429,
+                ),
+                type='LoadFCOS3DGeoV3Meta'),
+            dict(
+                keys=[
+                    'img',
+                    'gt_bboxes',
+                    'gt_bboxes_labels',
+                    'gt_bboxes_3d',
+                    'gt_labels_3d',
+                    'centers_2d',
+                    'depths',
+                ],
+                meta_keys=(
+                    'img_path',
+                    'ori_shape',
+                    'img_shape',
+                    'lidar2img',
+                    'depth2img',
+                    'cam2img',
+                    'pad_shape',
+                    'scale_factor',
+                    'flip',
+                    'pcd_horizontal_flip',
+                    'pcd_vertical_flip',
+                    'box_mode_3d',
+                    'box_type_3d',
+                    'img_norm_cfg',
+                    'num_pts_feats',
+                    'pcd_trans',
+                    'sample_idx',
+                    'pcd_scale_factor',
+                    'pcd_rotation',
+                    'pcd_rotation_angle',
+                    'lidar_path',
+                    'transformation_3d_flow',
+                    'trans_mat',
+                    'affine_aug',
+                    'sweep_img_metas',
+                    'ori_cam2img',
+                    'cam2global',
+                    'crop_offset',
+                    'img_crop_offset',
+                    'resize_img_shape',
+                    'lidar2cam',
+                    'ori_lidar2img',
+                    'num_ref_frames',
+                    'num_views',
+                    'ego2global',
+                    'axis_align_matrix',
+                    'known_dims',
+                    'known_gravity_y',
+                ),
+                type='Pack3DDetInputs'),
+        ],
+        test_mode=False,
+        type='KittiDataset'),
+    num_workers=2,
+    persistent_workers=True,
+    sampler=dict(shuffle=True, type='DefaultSampler'))
+train_pipeline = [
+    dict(backend_args=None, type='LoadImageFromFileMono3D'),
+    dict(
+        type='LoadAnnotations3D',
+        with_attr_label=False,
+        with_bbox=True,
+        with_bbox_3d=True,
+        with_bbox_depth=True,
+        with_label=True,
+        with_label_3d=True),
+    dict(keep_ratio=True, scale=(
+        1280,
+        384,
+    ), type='mmdet.Resize'),
+    dict(flip_ratio_bev_horizontal=0.5, type='RandomFlip3D'),
+    dict(
+        expected_dims=(
+            5.103683,
+            1.918924,
+            1.868429,
+        ),
+        type='LoadFCOS3DGeoV3Meta'),
+    dict(
+        keys=[
+            'img',
+            'gt_bboxes',
+            'gt_bboxes_labels',
+            'gt_bboxes_3d',
+            'gt_labels_3d',
+            'centers_2d',
+            'depths',
+        ],
+        meta_keys=(
+            'img_path',
+            'ori_shape',
+            'img_shape',
+            'lidar2img',
+            'depth2img',
+            'cam2img',
+            'pad_shape',
+            'scale_factor',
+            'flip',
+            'pcd_horizontal_flip',
+            'pcd_vertical_flip',
+            'box_mode_3d',
+            'box_type_3d',
+            'img_norm_cfg',
+            'num_pts_feats',
+            'pcd_trans',
+            'sample_idx',
+            'pcd_scale_factor',
+            'pcd_rotation',
+            'pcd_rotation_angle',
+            'lidar_path',
+            'transformation_3d_flow',
+            'trans_mat',
+            'affine_aug',
+            'sweep_img_metas',
+            'ori_cam2img',
+            'cam2global',
+            'crop_offset',
+            'img_crop_offset',
+            'resize_img_shape',
+            'lidar2cam',
+            'ori_lidar2img',
+            'num_ref_frames',
+            'num_views',
+            'ego2global',
+            'axis_align_matrix',
+            'known_dims',
+            'known_gravity_y',
+        ),
+        type='Pack3DDetInputs'),
+]
+val_cfg = dict(type='ValLoop')
+val_dataloader = dict(
+    batch_size=1,
+    dataset=dict(
+        ann_file='kitti_infos_val.pkl',
+        backend_args=None,
+        box_type_3d='Camera',
+        data_prefix=dict(img='training/image_2'),
+        data_root='data/kitti/',
+        load_type='fov_image_based',
+        metainfo=dict(classes=[
+            'Car',
+        ]),
+        modality=dict(use_camera=True, use_lidar=False),
+        pipeline=[
+            dict(backend_args=None, type='LoadImageFromFileMono3D'),
+            dict(scale_factor=1.0, type='mmdet.Resize'),
+            dict(
+                expected_dims=(
+                    5.103683,
+                    1.918924,
+                    1.868429,
+                ),
+                type='LoadFCOS3DGeoV3Meta'),
+            dict(
+                keys=[
+                    'img',
+                ],
+                meta_keys=(
+                    'img_path',
+                    'ori_shape',
+                    'img_shape',
+                    'lidar2img',
+                    'depth2img',
+                    'cam2img',
+                    'pad_shape',
+                    'scale_factor',
+                    'flip',
+                    'pcd_horizontal_flip',
+                    'pcd_vertical_flip',
+                    'box_mode_3d',
+                    'box_type_3d',
+                    'img_norm_cfg',
+                    'num_pts_feats',
+                    'pcd_trans',
+                    'sample_idx',
+                    'pcd_scale_factor',
+                    'pcd_rotation',
+                    'pcd_rotation_angle',
+                    'lidar_path',
+                    'transformation_3d_flow',
+                    'trans_mat',
+                    'affine_aug',
+                    'sweep_img_metas',
+                    'ori_cam2img',
+                    'cam2global',
+                    'crop_offset',
+                    'img_crop_offset',
+                    'resize_img_shape',
+                    'lidar2cam',
+                    'ori_lidar2img',
+                    'num_ref_frames',
+                    'num_views',
+                    'ego2global',
+                    'axis_align_matrix',
+                    'known_dims',
+                    'known_gravity_y',
+                ),
+                type='Pack3DDetInputs'),
+        ],
+        test_mode=True,
+        type='KittiDataset'),
+    drop_last=False,
+    num_workers=2,
+    persistent_workers=True,
+    sampler=dict(shuffle=False, type='DefaultSampler'))
+val_evaluator = dict(
+    ann_file='data/kitti/kitti_infos_val.pkl',
+    backend_args=None,
+    metric='bbox',
+    type='KittiMetric')
+vis_backends = [
+    dict(type='LocalVisBackend'),
+]
+visualizer = dict(
+    name='visualizer',
+    type='Det3DLocalVisualizer',
+    vis_backends=[
+        dict(type='LocalVisBackend'),
+    ])
+work_dir = '/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/eval_geov3_12ep_seed3407_smoke_like_explicit_known'
+
+2026/04/11 16:03:11 - mmengine - INFO - Distributed training is not used, all SyncBatchNorm (SyncBN) layers in the model will be automatically reverted to BatchNormXd layers if they are used.
+2026/04/11 16:03:11 - mmengine - INFO - Hooks will be executed in the following order:
+before_run:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+before_train:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+before_train_epoch:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(NORMAL      ) DistSamplerSeedHook                
+ -------------------- 
+before_train_iter:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+after_train_iter:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(BELOW_NORMAL) LoggerHook                         
+(LOW         ) ParamSchedulerHook                 
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+after_train_epoch:
+(NORMAL      ) IterTimerHook                      
+(LOW         ) ParamSchedulerHook                 
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+before_val:
+(VERY_HIGH   ) RuntimeInfoHook                    
+ -------------------- 
+before_val_epoch:
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+before_val_iter:
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+after_val_iter:
+(NORMAL      ) IterTimerHook                      
+(NORMAL      ) Det3DVisualizationHook             
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+after_val_epoch:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(BELOW_NORMAL) LoggerHook                         
+(LOW         ) ParamSchedulerHook                 
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+after_val:
+(VERY_HIGH   ) RuntimeInfoHook                    
+ -------------------- 
+after_train:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(VERY_LOW    ) CheckpointHook                     
+ -------------------- 
+before_test:
+(VERY_HIGH   ) RuntimeInfoHook                    
+ -------------------- 
+before_test_epoch:
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+before_test_iter:
+(NORMAL      ) IterTimerHook                      
+ -------------------- 
+after_test_iter:
+(NORMAL      ) IterTimerHook                      
+(NORMAL      ) Det3DVisualizationHook             
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+after_test_epoch:
+(VERY_HIGH   ) RuntimeInfoHook                    
+(NORMAL      ) IterTimerHook                      
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+after_test:
+(VERY_HIGH   ) RuntimeInfoHook                    
+ -------------------- 
+after_run:
+(BELOW_NORMAL) LoggerHook                         
+ -------------------- 
+2026/04/11 16:03:12 - mmengine - INFO - ------------------------------
+2026/04/11 16:03:12 - mmengine - INFO - The length of test dataset: 1000
+2026/04/11 16:03:12 - mmengine - INFO - The number of instances per category in the dataset:
++----------+--------+
+| category | number |
++----------+--------+
+| Car      | 1000   |
++----------+--------+
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.0.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.1.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.2.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.3.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.4.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.5.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.6.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.7.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.8.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.9.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.10.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.11.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.12.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.13.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.14.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.15.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.16.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.17.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.18.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.19.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.20.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.21.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer3.22.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer4.0.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer4.1.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack backbone.layer4.2.conv2 is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack bbox_head.cls_convs.1.conv is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - ModulatedDeformConvPack bbox_head.reg_convs.1.conv is upgraded to version 2.
+2026/04/11 16:03:12 - mmengine - INFO - Load checkpoint from /home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/compare_geov3_12ep_seed3407/epoch_12.pth
+2026/04/11 16:03:13 - mmengine - INFO - Epoch(test) [  50/1000]    eta: 0:00:22  time: 0.0233  data_time: 0.0020  memory: 426  
+2026/04/11 16:03:14 - mmengine - INFO - Epoch(test) [ 100/1000]    eta: 0:00:17  time: 0.0153  data_time: 0.0010  memory: 426  
+2026/04/11 16:03:15 - mmengine - INFO - Epoch(test) [ 150/1000]    eta: 0:00:15  time: 0.0151  data_time: 0.0007  memory: 426  
+2026/04/11 16:03:16 - mmengine - INFO - Epoch(test) [ 200/1000]    eta: 0:00:13  time: 0.0152  data_time: 0.0007  memory: 426  
+2026/04/11 16:03:16 - mmengine - INFO - Epoch(test) [ 250/1000]    eta: 0:00:12  time: 0.0151  data_time: 0.0007  memory: 426  
+2026/04/11 16:03:17 - mmengine - INFO - Epoch(test) [ 300/1000]    eta: 0:00:11  time: 0.0151  data_time: 0.0008  memory: 426  
+2026/04/11 16:03:18 - mmengine - INFO - Epoch(test) [ 350/1000]    eta: 0:00:10  time: 0.0152  data_time: 0.0008  memory: 426  
+2026/04/11 16:03:19 - mmengine - INFO - Epoch(test) [ 400/1000]    eta: 0:00:09  time: 0.0154  data_time: 0.0008  memory: 426  
+2026/04/11 16:03:19 - mmengine - INFO - Epoch(test) [ 450/1000]    eta: 0:00:08  time: 0.0156  data_time: 0.0011  memory: 426  
+2026/04/11 16:03:20 - mmengine - INFO - Epoch(test) [ 500/1000]    eta: 0:00:08  time: 0.0156  data_time: 0.0012  memory: 426  
+2026/04/11 16:03:21 - mmengine - INFO - Epoch(test) [ 550/1000]    eta: 0:00:07  time: 0.0151  data_time: 0.0008  memory: 426  
+2026/04/11 16:03:22 - mmengine - INFO - Epoch(test) [ 600/1000]    eta: 0:00:06  time: 0.0151  data_time: 0.0007  memory: 426  
+2026/04/11 16:03:22 - mmengine - INFO - Epoch(test) [ 650/1000]    eta: 0:00:05  time: 0.0156  data_time: 0.0012  memory: 426  
+2026/04/11 16:03:23 - mmengine - INFO - Epoch(test) [ 700/1000]    eta: 0:00:04  time: 0.0151  data_time: 0.0007  memory: 426  
+2026/04/11 16:03:24 - mmengine - INFO - Epoch(test) [ 750/1000]    eta: 0:00:03  time: 0.0153  data_time: 0.0008  memory: 426  
+2026/04/11 16:03:25 - mmengine - INFO - Epoch(test) [ 800/1000]    eta: 0:00:03  time: 0.0153  data_time: 0.0008  memory: 426  
+2026/04/11 16:03:26 - mmengine - INFO - Epoch(test) [ 850/1000]    eta: 0:00:02  time: 0.0153  data_time: 0.0008  memory: 426  
+2026/04/11 16:03:26 - mmengine - INFO - Epoch(test) [ 900/1000]    eta: 0:00:01  time: 0.0179  data_time: 0.0008  memory: 426  
+2026/04/11 16:03:27 - mmengine - INFO - Epoch(test) [ 950/1000]    eta: 0:00:00  time: 0.0155  data_time: 0.0008  memory: 426  
+2026/04/11 16:03:28 - mmengine - INFO - Epoch(test) [1000/1000]    eta: 0:00:00  time: 0.0158  data_time: 0.0011  memory: 426  
+2026/04/11 16:03:35 - mmengine - INFO - Results of pred_instances_3d:
+
+----------- AP11 Results ------------
+
+Car AP11@0.70, 0.70, 0.70:
+bbox AP11:0.0000, 0.0000, 0.0000
+bev  AP11:0.0000, 0.0000, 0.0000
+3d   AP11:0.0000, 0.0000, 0.0000
+aos  AP11:0.00, 0.00, 0.00
+Car AP11@0.70, 0.50, 0.50:
+bbox AP11:0.0000, 0.0000, 0.0000
+bev  AP11:0.0000, 0.0000, 0.0000
+3d   AP11:0.0000, 0.0000, 0.0000
+aos  AP11:0.00, 0.00, 0.00
+
+----------- AP40 Results ------------
+
+Car AP40@0.70, 0.70, 0.70:
+bbox AP40:0.0000, 0.0000, 0.0000
+bev  AP40:0.0000, 0.0000, 0.0000
+3d   AP40:0.0000, 0.0000, 0.0000
+aos  AP40:0.00, 0.00, 0.00
+Car AP40@0.70, 0.50, 0.50:
+bbox AP40:0.0000, 0.0000, 0.0000
+bev  AP40:0.0000, 0.0000, 0.0000
+3d   AP40:0.0000, 0.0000, 0.0000
+aos  AP40:0.00, 0.00, 0.00
+
+2026/04/11 16:03:35 - mmengine - INFO - Epoch(test) [1000/1000]    Kitti metric/pred_instances_3d/KITTI/Car_3D_AP11_easy_strict: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_BEV_AP11_easy_strict: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_2D_AP11_easy_strict: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_3D_AP11_moderate_strict: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_BEV_AP11_moderate_strict: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_2D_AP11_moderate_strict: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_3D_AP11_hard_strict: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_BEV_AP11_hard_strict: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_2D_AP11_hard_strict: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_3D_AP11_easy_loose: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_BEV_AP11_easy_loose: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_2D_AP11_easy_loose: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_3D_AP11_moderate_loose: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_BEV_AP11_moderate_loose: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_2D_AP11_moderate_loose: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_3D_AP11_hard_loose: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_BEV_AP11_hard_loose: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_2D_AP11_hard_loose: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_3D_AP40_easy_strict: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_BEV_AP40_easy_strict: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_2D_AP40_easy_strict: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_3D_AP40_moderate_strict: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_BEV_AP40_moderate_strict: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_2D_AP40_moderate_strict: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_3D_AP40_hard_strict: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_BEV_AP40_hard_strict: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_2D_AP40_hard_strict: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_3D_AP40_easy_loose: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_BEV_AP40_easy_loose: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_2D_AP40_easy_loose: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_3D_AP40_moderate_loose: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_BEV_AP40_moderate_loose: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_2D_AP40_moderate_loose: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_3D_AP40_hard_loose: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_BEV_AP40_hard_loose: 0.0000  Kitti metric/pred_instances_3d/KITTI/Car_2D_AP40_hard_loose: 0.0000  data_time: 0.0009  time: 0.0158
