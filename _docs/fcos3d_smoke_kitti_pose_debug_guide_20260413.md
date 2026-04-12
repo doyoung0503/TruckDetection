@@ -71,6 +71,7 @@ To compare exported `label_2` pose values directly against the original `v3`
 labels, use:
 
 - `train/check_kitti_pose_against_v3.py`
+- `train/build_v3_pose_compare_subset.py`
 
 It regenerates the expected KITTI line from:
 
@@ -80,6 +81,9 @@ It regenerates the expected KITTI line from:
 and compares it with:
 
 - `datasets/v3/kitti_smoke_1280x384_lb/training/label_2/<id>.txt`
+
+If the server does not have the raw `v3` source tree, first build a minimal
+subset locally and copy only that subset to the server.
 
 It reports:
 
@@ -91,12 +95,26 @@ It reports:
 
 ## Reference Command
 
+### A. Local machine: build the minimal raw-v3 subset
+
+```bash
+python train/build_v3_pose_compare_subset.py \
+  --source-root datasets/v3 \
+  --output-root results/v3_pose_compare_subset_20260413 \
+  --sample-ids 000000 000007 000008 000043 000120 \
+  --force
+```
+
+Copy `results/v3_pose_compare_subset_20260413` to the server.
+
+### B. Server: run the pose comparison
+
 Run this from the repo root:
 
 ```bash
 python train/check_kitti_pose_against_v3.py \
   --dataset-root datasets/v3/kitti_smoke_1280x384_lb \
-  --source-root datasets/v3 \
+  --source-root <path-to-uploaded-v3-pose-subset> \
   --sample-ids 000000 000007 000008 000043 000120 \
   --output-json results/kitti_pose_compare_v3_reference_20260413.json
 ```
@@ -163,10 +181,11 @@ For each sample:
 ## Practical server workflow
 
 1. Pull the latest repo.
-2. Run the pose comparison helper.
-3. Compare the new JSON against:
+2. Upload the minimal subset built by `train/build_v3_pose_compare_subset.py`.
+3. Run the pose comparison helper.
+4. Compare the new JSON against:
    - `results/kitti_pose_compare_v3_reference_20260413.json`
-4. If the diff is large, stop and fix export/pose conventions before debugging
+5. If the diff is large, stop and fix export/pose conventions before debugging
    the model.
-5. Only after the `label_2` pose matches the source `v3` geometry should we
+6. Only after the `label_2` pose matches the source `v3` geometry should we
    trust repeated yaw error patterns as model-side issues.
