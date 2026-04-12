@@ -74,6 +74,7 @@ labels, use:
 - `train/build_v3_pose_compare_subset.py`
 - `train/run_clean_kitti_pose_export_check.py`
 - `train/debug_kitti_export_selfcheck.py`
+- `train/debug_kitti_export_refinement_gap.py`
 
 It regenerates the expected KITTI line from:
 
@@ -120,6 +121,21 @@ This makes it much easier to answer whether the failure is caused by:
 - the initial yaw/position recovery
 - the bbox refinement stage
 - or a mismatch between the final exported line and its own reprojection
+
+If you want to go one step further and quantify whether the current refinement
+search is too weak, use `train/debug_kitti_export_refinement_gap.py`. It
+compares the same sample under:
+
+1. initial pose
+2. yaw-only global search
+3. x/z-only coarse search
+4. current `refine_pose_to_bbox()`
+5. a much wider joint search
+
+This tells us whether the current exporter is failing because:
+
+- `build_exact_kitti_pose()` starts from a bad state
+- or `refine_pose_to_bbox()` simply does not search enough
 
 ## Reference Command
 
@@ -210,6 +226,29 @@ Look at:
 - `final_export.bbox_iou`
 - `diff.init_to_refined_ry_deg`
 - `diff.final_bbox_max_abs_diff_px`
+
+To measure whether the current refinement stage is leaving a lot of IoU on the
+table, run:
+
+```bash
+python train/debug_kitti_export_refinement_gap.py \
+  --source-root results/v3_pose_compare_subset_20260413_rawstyle \
+  --sample-ids 000000 000008 \
+  --output-json results/kitti_export_refinement_gap_000000_000008.json
+```
+
+Look at:
+
+- `candidates.initial.bbox_iou`
+- `candidates.current_refine_pose_to_bbox.bbox_iou`
+- `candidates.wide_joint_refine_pose_to_bbox.bbox_iou`
+- `gaps.wide_minus_current_joint`
+
+Interpretation:
+
+- if `yaw_only_global` already jumps close to 1.0: initial yaw recovery is the main issue
+- if `wide_joint_refine_pose_to_bbox` is much better than `current_refine_pose_to_bbox`: the current search budget is too weak
+- if even `wide_joint_refine_pose_to_bbox` stays low: the deeper pose geometry itself is inconsistent
 
 ## Included Reference Output
 
