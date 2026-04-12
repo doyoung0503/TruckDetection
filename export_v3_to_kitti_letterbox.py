@@ -215,6 +215,51 @@ def refine_rotation_y_to_bbox(
     return normalize_angle_rad(best_ry), float(best_iou)
 
 
+def refine_translation_to_bbox(
+    *,
+    k3: np.ndarray,
+    bbox_xyxy: np.ndarray,
+    dims_lhw: np.ndarray,
+    loc_xyz: np.ndarray,
+    ry: float,
+    out_w: int,
+    out_h: int,
+    dx_radius: float = 3.0,
+    dz_radius: float = 3.0,
+    nx: int = 21,
+    nz: int = 21,
+) -> tuple[np.ndarray, float]:
+    """Refine x/z for a fixed rotation_y to better match the 2D bbox."""
+    label_box = clamp_xyxy(np.asarray(bbox_xyxy, dtype=np.float32), out_w, out_h)
+    init_loc = np.asarray(loc_xyz, dtype=np.float32).copy()
+    best_loc = init_loc.copy()
+    best_box = clamp_xyxy(project_box2d_numpy(k3, encode_kitti_box3d_numpy(dims_lhw=dims_lhw, loc_xyz=best_loc, ry=ry)), out_w, out_h)
+    best_iou = bbox_iou_xyxy(label_box, best_box)
+    best_penalty = 0.0
+
+    xs = np.linspace(float(init_loc[0]) - dx_radius, float(init_loc[0]) + dx_radius, nx)
+    zs = np.linspace(max(0.5, float(init_loc[2]) - dz_radius), float(init_loc[2]) + dz_radius, nz)
+    for x in xs:
+        for z in zs:
+            loc = init_loc.copy()
+            loc[0] = float(x)
+            loc[2] = float(z)
+            corners_3d = encode_kitti_box3d_numpy(dims_lhw=dims_lhw, loc_xyz=loc, ry=ry)
+            reproj_box = clamp_xyxy(project_box2d_numpy(k3, corners_3d), out_w, out_h)
+            iou = bbox_iou_xyxy(label_box, reproj_box)
+            penalty = (loc[0] - init_loc[0]) ** 2 + (loc[2] - init_loc[2]) ** 2
+            if iou > best_iou + 1e-9:
+                best_loc = loc
+                best_iou = iou
+                best_penalty = penalty
+                continue
+            if abs(iou - best_iou) <= 1e-9 and penalty < best_penalty:
+                best_loc = loc
+                best_penalty = penalty
+
+    return best_loc.astype(np.float32), float(best_iou)
+
+
 def refine_pose_to_bbox(
     *,
     k3: np.ndarray,
@@ -239,9 +284,9 @@ def refine_pose_to_bbox(
 
     if stages is None:
         stages = [
-            (0.90, 1.20, math.radians(25.0), 7, 7, 11),
-            (0.30, 0.45, math.radians(8.0), 7, 7, 9),
-            (0.08, 0.12, math.radians(2.5), 7, 7, 7),
+            (1.25, 1.50, math.radians(70.0), 13, 13, 37),
+            (0.45, 0.55, math.radians(18.0), 11, 11, 25),
+            (0.12, 0.16, math.radians(4.5), 9, 9, 15),
         ]
 
     def _eval(x: float, z: float, ry: float) -> tuple[float, float]:
@@ -258,9 +303,61 @@ def refine_pose_to_bbox(
         )
         return iou, penalty
 
+    def _consider(loc_xyz: np.ndarray, ry: float, iou: float) -> None:
+        nonlocal best_loc, best_ry, best_iou, best_penalty
+        penalty = (
+            (float(loc_xyz[0]) - float(init_loc[0])) ** 2
+            + (float(loc_xyz[2]) - float(init_loc[2])) ** 2
+            + 0.25 * normalize_angle_rad(float(ry) - float(ry_init)) ** 2
+        )
+        if iou > best_iou + 1e-9:
+            best_loc = np.asarray(loc_xyz, dtype=np.float32).copy()
+            best_ry = normalize_angle_rad(float(ry))
+            best_iou = float(iou)
+            best_penalty = float(penalty)
+            return
+        if abs(iou - best_iou) <= 1e-9 and penalty < best_penalty:
+            best_loc = np.asarray(loc_xyz, dtype=np.float32).copy()
+            best_ry = normalize_angle_rad(float(ry))
+            best_penalty = float(penalty)
+
     base_iou, base_penalty = _eval(float(best_loc[0]), float(best_loc[2]), best_ry)
     best_iou = base_iou
     best_penalty = base_penalty
+
+    global_ry, global_ry_iou = refine_rotation_y_to_bbox(
+        k3=k3,
+        bbox_xyxy=label_box,
+        dims_lhw=dims_lhw,
+        loc_xyz=init_loc,
+        ry_init=ry_init,
+        out_w=out_w,
+        out_h=out_h,
+        num_steps=181,
+    )
+    _consider(init_loc, global_ry, global_ry_iou)
+
+    xz_init_loc, xz_init_iou = refine_translation_to_bbox(
+        k3=k3,
+        bbox_xyxy=label_box,
+        dims_lhw=dims_lhw,
+        loc_xyz=init_loc,
+        ry=ry_init,
+        out_w=out_w,
+        out_h=out_h,
+    )
+    _consider(xz_init_loc, ry_init, xz_init_iou)
+
+    xz_global_loc, xz_global_iou = refine_translation_to_bbox(
+        k3=k3,
+        bbox_xyxy=label_box,
+        dims_lhw=dims_lhw,
+        loc_xyz=init_loc,
+        ry=global_ry,
+        out_w=out_w,
+        out_h=out_h,
+    )
+    _consider(xz_global_loc, global_ry, xz_global_iou)
 
     for dx_radius, dz_radius, ry_radius, nx, nz, nr in stages:
         xs = np.linspace(float(best_loc[0]) - dx_radius, float(best_loc[0]) + dx_radius, nx)

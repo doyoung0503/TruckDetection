@@ -219,6 +219,21 @@ python train/debug_kitti_export_selfcheck.py \
   --output-json results/kitti_export_selfcheck_debug_000000_000008.json
 ```
 
+After the refinement-search patch, the same check can be rerun to verify that
+the hard samples now converge to near-perfect export IoU:
+
+```bash
+python train/debug_kitti_export_selfcheck.py \
+  --source-root datasets/v3 \
+  --sample-ids 000000 000008 \
+  --output-json results/kitti_export_selfcheck_after_refine_patch_000000_000008.json
+```
+
+Expected ballpark after the patch:
+
+- `000000`: final IoU about `0.99`
+- `000008`: final IoU about `0.995`
+
 Look at:
 
 - `init_pose.bbox_iou`
