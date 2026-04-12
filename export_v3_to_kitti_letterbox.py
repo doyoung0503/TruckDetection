@@ -123,7 +123,9 @@ def recover_camera_forward_yaw(
     dx = float(center_world[0] - cam_pos[0])
     dy = float(center_world[1] - cam_pos[1])
     ray = math.atan2(float(center_2d[0]) - float(k_new[0, 2]), float(k_new[0, 0]))
-    return math.atan2(dy, dx) + ray
+    # World bearing to the truck center equals camera yaw plus image-plane ray angle.
+    # Therefore the camera forward yaw is recovered by subtracting the ray angle.
+    return math.atan2(dy, dx) - ray
 
 
 def world_points_to_kitti_camera(
@@ -170,9 +172,129 @@ def build_exact_kitti_pose(
     front_center = camera_corners[list(FRONT_FACE_IDX)].mean(axis=0)
     rear_center = camera_corners[list(REAR_FACE_IDX)].mean(axis=0)
     front_dir = front_center - rear_center
-    ry = normalize_angle_rad(math.atan2(float(-front_dir[2]), float(front_dir[0])))
+    # KITTI rotation_y should align the cuboid's length axis with camera +Z when
+    # the truck is driving away from the camera. The raw forward vector stored in
+    # the Blender labels therefore maps to atan2(x, z), not atan2(-z, x).
+    ry = normalize_angle_rad(math.atan2(float(front_dir[0]), float(front_dir[2])))
     alpha = normalize_angle_rad(ry - math.atan2(float(bottom_center[0]), float(bottom_center[2])))
     return camera_corners, ry, alpha
+
+
+def refine_rotation_y_to_bbox(
+    *,
+    k3: np.ndarray,
+    bbox_xyxy: np.ndarray,
+    dims_lhw: np.ndarray,
+    loc_xyz: np.ndarray,
+    ry_init: float,
+    out_w: int,
+    out_h: int,
+    num_steps: int = 720,
+) -> tuple[float, float]:
+    """Refine rotation_y so the projected 3D box matches the exported 2D bbox."""
+    label_box = clamp_xyxy(np.asarray(bbox_xyxy, dtype=np.float32), out_w, out_h)
+    best_ry = normalize_angle_rad(float(ry_init))
+    best_iou = -1.0
+
+    for idx in range(num_steps):
+        ry = -math.pi + idx * (2.0 * math.pi / num_steps)
+        corners_3d = encode_kitti_box3d_numpy(dims_lhw=dims_lhw, loc_xyz=loc_xyz, ry=ry)
+        reproj_box = clamp_xyxy(project_box2d_numpy(k3, corners_3d), out_w, out_h)
+        iou = bbox_iou_xyxy(label_box, reproj_box)
+        if iou > best_iou:
+            best_iou = iou
+            best_ry = ry
+            continue
+        if abs(iou - best_iou) <= 1e-9:
+            cur_delta = abs(normalize_angle_rad(ry - best_ry))
+            init_delta = abs(normalize_angle_rad(ry - ry_init))
+            best_init_delta = abs(normalize_angle_rad(best_ry - ry_init))
+            if init_delta < best_init_delta or (abs(init_delta - best_init_delta) <= 1e-9 and cur_delta < abs(normalize_angle_rad(best_ry - ry))):
+                best_ry = ry
+
+    return normalize_angle_rad(best_ry), float(best_iou)
+
+
+def refine_pose_to_bbox(
+    *,
+    k3: np.ndarray,
+    bbox_xyxy: np.ndarray,
+    dims_lhw: np.ndarray,
+    loc_xyz: np.ndarray,
+    ry_init: float,
+    out_w: int,
+    out_h: int,
+    stages: list[tuple[float, float, float, int, int, int]] | None = None,
+) -> tuple[np.ndarray, float, float]:
+    """Jointly refine x/z/rotation_y so the projected 3D box better matches the 2D bbox.
+
+    `y` is kept fixed because it is tied to the known camera/box height assumption.
+    """
+    label_box = clamp_xyxy(np.asarray(bbox_xyxy, dtype=np.float32), out_w, out_h)
+    init_loc = np.asarray(loc_xyz, dtype=np.float32).copy()
+    best_loc = init_loc.copy()
+    best_ry = normalize_angle_rad(float(ry_init))
+    best_iou = -1.0
+    best_penalty = float("inf")
+
+    if stages is None:
+        stages = [
+            (0.90, 1.20, math.radians(25.0), 7, 7, 11),
+            (0.30, 0.45, math.radians(8.0), 7, 7, 9),
+            (0.08, 0.12, math.radians(2.5), 7, 7, 7),
+        ]
+
+    def _eval(x: float, z: float, ry: float) -> tuple[float, float]:
+        loc = best_loc.copy()
+        loc[0] = x
+        loc[2] = z
+        corners_3d = encode_kitti_box3d_numpy(dims_lhw=dims_lhw, loc_xyz=loc, ry=ry)
+        reproj_box = clamp_xyxy(project_box2d_numpy(k3, corners_3d), out_w, out_h)
+        iou = bbox_iou_xyxy(label_box, reproj_box)
+        penalty = (
+            (x - float(init_loc[0])) ** 2
+            + (z - float(init_loc[2])) ** 2
+            + 0.25 * normalize_angle_rad(ry - float(ry_init)) ** 2
+        )
+        return iou, penalty
+
+    base_iou, base_penalty = _eval(float(best_loc[0]), float(best_loc[2]), best_ry)
+    best_iou = base_iou
+    best_penalty = base_penalty
+
+    for dx_radius, dz_radius, ry_radius, nx, nz, nr in stages:
+        xs = np.linspace(float(best_loc[0]) - dx_radius, float(best_loc[0]) + dx_radius, nx)
+        zs = np.linspace(max(0.5, float(best_loc[2]) - dz_radius), float(best_loc[2]) + dz_radius, nz)
+        rys = [
+            normalize_angle_rad(float(val))
+            for val in np.linspace(best_ry - ry_radius, best_ry + ry_radius, nr)
+        ]
+        stage_best_loc = best_loc.copy()
+        stage_best_ry = best_ry
+        stage_best_iou = best_iou
+        stage_best_penalty = best_penalty
+        for x in xs:
+            for z in zs:
+                for ry in rys:
+                    iou, penalty = _eval(float(x), float(z), float(ry))
+                    if iou > stage_best_iou + 1e-9:
+                        stage_best_loc[0] = float(x)
+                        stage_best_loc[2] = float(z)
+                        stage_best_ry = normalize_angle_rad(float(ry))
+                        stage_best_iou = iou
+                        stage_best_penalty = penalty
+                        continue
+                    if abs(iou - stage_best_iou) <= 1e-9 and penalty < stage_best_penalty:
+                        stage_best_loc[0] = float(x)
+                        stage_best_loc[2] = float(z)
+                        stage_best_ry = normalize_angle_rad(float(ry))
+                        stage_best_penalty = penalty
+        best_loc = stage_best_loc
+        best_ry = stage_best_ry
+        best_iou = stage_best_iou
+        best_penalty = stage_best_penalty
+
+    return best_loc.astype(np.float32), normalize_angle_rad(best_ry), float(best_iou)
 
 
 def build_kitti_label_from_json(
@@ -217,6 +339,20 @@ def build_kitti_label_from_json(
     h = float(td["height"])
     w = float(td["width"])
     l = float(td["length"])
+    dims_lhw = np.array([l, h, w], dtype=np.float32)
+    loc_xyz = np.array([x, y, z], dtype=np.float32)
+
+    loc_xyz, ry, selfcheck_iou = refine_pose_to_bbox(
+        k3=k_new,
+        bbox_xyxy=np.array([xmin, ymin, xmax, ymax], dtype=np.float32),
+        dims_lhw=dims_lhw,
+        loc_xyz=loc_xyz,
+        ry_init=ry,
+        out_w=out_w,
+        out_h=out_h,
+    )
+    x, y, z = (float(v) for v in loc_xyz)
+    alpha = normalize_angle_rad(ry - math.atan2(float(x), float(z)))
 
     line = (
         f"Car {truncated:.6f} {occluded:d} {alpha:.6f} "
@@ -235,6 +371,7 @@ def build_kitti_label_from_json(
         "location_xyz": [x, y, z],
         "rotation_y": ry,
         "alpha": alpha,
+        "selfcheck_iou": selfcheck_iou,
         "keypoints": keypoints,
         "calib_p2": [
             float(k_new[0, 0]), 0.0, float(k_new[0, 2]), 0.0,
