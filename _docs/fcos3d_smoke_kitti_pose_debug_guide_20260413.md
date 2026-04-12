@@ -107,6 +107,14 @@ python train/build_v3_pose_compare_subset.py \
 
 Copy `results/v3_pose_compare_subset_20260413` to the server.
 
+This repository now also includes a ready-made copy:
+
+- `results/v3_pose_compare_subset_20260413/`
+- `results/v3_pose_compare_subset_20260413.tar.gz`
+
+So after pulling the latest branch, the server can use that folder directly or
+extract the bundled archive without rebuilding the subset.
+
 ### B. Server: run the pose comparison
 
 Run this from the repo root:

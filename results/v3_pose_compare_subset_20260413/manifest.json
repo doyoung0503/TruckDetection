@@ -1,0 +1,38 @@
+{
+  "source_root": "/Users/doyoung/Documents/Blender/datasets/v3",
+  "output_root": "/private/tmp/blender_pose_upload_clean/results/v3_pose_compare_subset_20260413",
+  "sample_ids": [
+    "000000",
+    "000007",
+    "000008",
+    "000043",
+    "000120"
+  ],
+  "files": [
+    {
+      "sample_id": "000000",
+      "label": "label_0000.json",
+      "image": "image_0000.png"
+    },
+    {
+      "sample_id": "000007",
+      "label": "label_0007.json",
+      "image": "image_0007.png"
+    },
+    {
+      "sample_id": "000008",
+      "label": "label_0008.json",
+      "image": "image_0008.png"
+    },
+    {
+      "sample_id": "000043",
+      "label": "label_0043.json",
+      "image": "image_0043.png"
+    },
+    {
+      "sample_id": "000120",
+      "label": "label_0120.json",
+      "image": "image_0120.png"
+    }
+  ]
+}
