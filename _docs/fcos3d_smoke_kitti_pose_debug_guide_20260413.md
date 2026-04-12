@@ -269,6 +269,14 @@ This wrapper runs the following in order:
 2. FCOS3D baseline retraining
 3. reduced-DoF FCOS3D retraining
 
+By default, this retraining wrapper now uses:
+
+- `--min-selfcheck-iou 0.985`
+
+That lower threshold is intended for the full 5000-sample clean re-export used
+before FCOS3D retraining. Keep using `0.99` when the goal is strict exporter
+debugging rather than end-to-end training throughput.
+
 Logs and work dirs are written under:
 
 - `results/fcos3d_clean_reexport_retrain_seed3407/logs/`

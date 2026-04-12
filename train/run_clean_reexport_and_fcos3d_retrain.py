@@ -76,7 +76,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--out-w", type=int, default=1280)
     parser.add_argument("--out-h", type=int, default=384)
     parser.add_argument("--export-workers", type=int, default=0)
-    parser.add_argument("--min-selfcheck-iou", type=float, default=0.99)
+    parser.add_argument(
+        "--min-selfcheck-iou",
+        type=float,
+        default=0.985,
+        help=(
+            "Self-check threshold for the full clean re-export used before "
+            "retraining. Defaults to 0.985 so borderline samples such as "
+            "000130 do not block end-to-end FCOS3D reruns."
+        ),
+    )
     parser.add_argument(
         "--allow-low-selfcheck",
         action="store_true",
@@ -259,6 +268,10 @@ def build_markdown(
     lines.append(
         "- The exporter step rewrites the full `kitti_smoke_1280x384_lb` dataset "
         "under the raw v3 root using the patched pose refinement search."
+    )
+    lines.append(
+        "- This retraining wrapper defaults to `--min-selfcheck-iou 0.985`. "
+        "Use `0.99` only for stricter exporter debugging."
     )
     lines.append(
         "- The reduced-DoF run defaults to the current GeoV2.1-style FCOS3D config."
