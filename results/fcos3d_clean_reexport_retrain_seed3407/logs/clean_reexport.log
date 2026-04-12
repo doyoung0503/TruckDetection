@@ -1,0 +1,37 @@
+$ /home/dy-jang/anaconda3/envs/sam/bin/python /home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/export_v3_to_kitti_letterbox.py --root datasets/v3 --out-w 1280 --out-h 384 --overwrite --workers 0 --min-selfcheck-iou 0.99 --strict-selfcheck
+
+[convert] total samples to export: 5000
+[convert] workers: 20
+[convert] self-check min IoU: 0.9900 (strict=True)
+concurrent.futures.process._RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/home/dy-jang/anaconda3/envs/sam/lib/python3.10/concurrent/futures/process.py", line 246, in _process_worker
+    r = call_item.fn(*call_item.args, **call_item.kwargs)
+  File "/home/dy-jang/anaconda3/envs/sam/lib/python3.10/concurrent/futures/process.py", line 205, in _process_chunk
+    return [fn(*args) for args in chunk]
+  File "/home/dy-jang/anaconda3/envs/sam/lib/python3.10/concurrent/futures/process.py", line 205, in <listcomp>
+    return [fn(*args) for args in chunk]
+  File "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/export_v3_to_kitti_letterbox.py", line 683, in export_one_sample
+    raise RuntimeError(
+RuntimeError: [selfcheck] 000130 reprojection IoU 0.9865 is below threshold 0.9900
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/export_v3_to_kitti_letterbox.py", line 904, in <module>
+    main()
+  File "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/export_v3_to_kitti_letterbox.py", line 805, in main
+    for i, result in enumerate(iterator, start=1):
+  File "/home/dy-jang/anaconda3/envs/sam/lib/python3.10/concurrent/futures/process.py", line 575, in _chain_from_iterable_of_lists
+    for element in iterable:
+  File "/home/dy-jang/anaconda3/envs/sam/lib/python3.10/concurrent/futures/_base.py", line 621, in result_iterator
+    yield _result_or_cancel(fs.pop())
+  File "/home/dy-jang/anaconda3/envs/sam/lib/python3.10/concurrent/futures/_base.py", line 319, in _result_or_cancel
+    return fut.result(timeout)
+  File "/home/dy-jang/anaconda3/envs/sam/lib/python3.10/concurrent/futures/_base.py", line 451, in result
+    return self.__get_result()
+  File "/home/dy-jang/anaconda3/envs/sam/lib/python3.10/concurrent/futures/_base.py", line 403, in __get_result
+    raise self._exception
+RuntimeError: [selfcheck] 000130 reprojection IoU 0.9865 is below threshold 0.9900

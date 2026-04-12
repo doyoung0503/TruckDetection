@@ -1,0 +1,36 @@
+{
+  "source_root": "datasets/v3",
+  "dataset_root": "datasets/v3/kitti_smoke_1280x384_lb",
+  "output_root": "results/fcos3d_clean_reexport_retrain_seed3407",
+  "baseline_config": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/external/mmdetection3d/configs/fcos3d/fcos3d_r101-caffe-dcn_fpn_head-gn_2xb2-12e_kitti-mono3d_car.py",
+  "reduced_config": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/external/mmdetection3d/configs/fcos3d/fcos3d_geov2_r101-caffe-dcn_fpn_head-gn_2xb2-12e_kitti-mono3d_car.py",
+  "baseline_work_dir": "results/fcos3d_clean_reexport_retrain_seed3407/baseline_seed3407",
+  "reduced_work_dir": "results/fcos3d_clean_reexport_retrain_seed3407/reduced_seed3407",
+  "steps": [
+    {
+      "name": "clean_reexport",
+      "command": [
+        "/home/dy-jang/anaconda3/envs/sam/bin/python",
+        "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/export_v3_to_kitti_letterbox.py",
+        "--root",
+        "datasets/v3",
+        "--out-w",
+        "1280",
+        "--out-h",
+        "384",
+        "--overwrite",
+        "--workers",
+        "0",
+        "--min-selfcheck-iou",
+        "0.99",
+        "--strict-selfcheck"
+      ],
+      "cwd": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration",
+      "log_path": "results/fcos3d_clean_reexport_retrain_seed3407/logs/clean_reexport.log",
+      "ok": false,
+      "returncode": 1,
+      "duration_sec": 783.1071081161499,
+      "dry_run": false
+    }
+  ]
+}
