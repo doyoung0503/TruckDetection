@@ -1,0 +1,197 @@
+{
+  "source_root": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/v3_pose_compare_subset_20260413_rawstyle",
+  "sample_ids": [
+    "000000",
+    "000008"
+  ],
+  "rows": [
+    {
+      "sample_id": "000000",
+      "source_label_path": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/v3_pose_compare_subset_20260413_rawstyle/labels/label_0000.json",
+      "source_image_path": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/v3_pose_compare_subset_20260413_rawstyle/images/image_0000.png",
+      "expected": {
+        "bbox_xyxy": [
+          391.525390625,
+          173.23658752441406,
+          667.7229614257812,
+          383.0
+        ],
+        "center_2d": [
+          494.9173787434896,
+          262.86677169799805
+        ],
+        "dims_lhw": [
+          5.103682994842529,
+          1.91892409324646,
+          1.86842942237854
+        ]
+      },
+      "init_pose": {
+        "loc_xyz": [
+          1.6693129539489746,
+          1.7786142826080322,
+          7.671792984008789
+        ],
+        "rotation_y_rad": 3.1390372930418637,
+        "rotation_y_deg": 179.8535886254694,
+        "alpha_rad": 2.92478595233977,
+        "alpha_deg": 167.57789104821998,
+        "bbox_reprojected_xyxy": [
+          552.5494384765625,
+          178.16500854492188,
+          1054.981689453125,
+          367.376953125
+        ],
+        "bbox_iou": 0.16608631953676567
+      },
+      "refined_pose": {
+        "loc_xyz": [
+          0.41597962379455566,
+          1.7786142826080322,
+          6.591793060302734
+        ],
+        "rotation_y_rad": 2.5194454085838767,
+        "rotation_y_deg": 144.3535886254694,
+        "alpha_rad": 2.4564232920515603,
+        "alpha_deg": 140.74268733218602,
+        "bbox_reprojected_xyxy": [
+          390.0777282714844,
+          170.56976318359375,
+          914.4448852539062,
+          384.0
+        ],
+        "bbox_iou": 0.5176761601767305
+      },
+      "final_export": {
+        "line": "Car 0.182580 1 2.456423 391.525401 173.236588 667.722941 383.000000 1.918924 1.868429 5.103683 0.415980 1.778614 6.591793 2.519445",
+        "bbox_xyxy": [
+          391.525390625,
+          173.23658752441406,
+          667.7229614257812,
+          383.0
+        ],
+        "loc_xyz": [
+          0.41597962379455566,
+          1.7786142826080322,
+          6.591793060302734
+        ],
+        "rotation_y_rad": 2.5194454085838767,
+        "rotation_y_deg": 144.3535886254694,
+        "alpha_rad": 2.4564232920515603,
+        "alpha_deg": 140.74268733218602,
+        "bbox_reprojected_xyxy": [
+          390.0777282714844,
+          170.56976318359375,
+          914.4448852539062,
+          384.0
+        ],
+        "bbox_iou": 0.5176761601767305
+      },
+      "diff": {
+        "init_to_refined_loc_abs_max_m": 1.253333330154419,
+        "init_to_refined_ry_deg": -35.50000000000001,
+        "init_bbox_max_abs_diff_px": 387.25872802734375,
+        "refined_bbox_max_abs_diff_px": 246.721923828125,
+        "final_bbox_max_abs_diff_px": 246.721923828125
+      },
+      "source_metadata": {
+        "truck_yaw_world": 356.1924725756674,
+        "yaw_theta": 155.30219187307947
+      }
+    },
+    {
+      "sample_id": "000008",
+      "source_label_path": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/v3_pose_compare_subset_20260413_rawstyle/labels/label_0008.json",
+      "source_image_path": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/v3_pose_compare_subset_20260413_rawstyle/images/image_0008.png",
+      "expected": {
+        "bbox_xyxy": [
+          497.9264221191406,
+          0.0,
+          1073.844482421875,
+          383.0
+        ],
+        "center_2d": [
+          859.6619059244792,
+          223.96563720703125
+        ],
+        "dims_lhw": [
+          5.103682994842529,
+          1.91892409324646,
+          1.86842942237854
+        ]
+      },
+      "init_pose": {
+        "loc_xyz": [
+          -1.6303437948226929,
+          1.195994257926941,
+          4.911142826080322
+        ],
+        "rotation_y_rad": 0.09740766749006952,
+        "rotation_y_deg": 5.58104823939466,
+        "alpha_rad": 0.41792920017029034,
+        "alpha_deg": 23.945579305035803,
+        "bbox_reprojected_xyxy": [
+          0.0,
+          63.47388458251953,
+          784.8583984375,
+          384.0
+        ],
+        "bbox_iou": 0.2409761468692619
+      },
+      "refined_pose": {
+        "loc_xyz": [
+          -0.3770104646682739,
+          1.195994257926941,
+          4.131142616271973
+        ],
+        "rotation_y_rad": 0.6297330893483399,
+        "rotation_y_deg": 36.081048239394654,
+        "alpha_rad": 0.7207415719464176,
+        "alpha_deg": 41.295450192154306,
+        "bbox_reprojected_xyxy": [
+          232.65406799316406,
+          0.0,
+          1077.87841796875,
+          384.0
+        ],
+        "bbox_iou": 0.6796045022885989
+      },
+      "final_export": {
+        "line": "Car 0.279719 2 0.720742 497.926412 0.000000 1073.844482 383.000000 1.918924 1.868429 5.103683 -0.377010 1.195994 4.131143 0.629733",
+        "bbox_xyxy": [
+          497.9264221191406,
+          0.0,
+          1073.844482421875,
+          383.0
+        ],
+        "loc_xyz": [
+          -0.3770104646682739,
+          1.195994257926941,
+          4.131142616271973
+        ],
+        "rotation_y_rad": 0.6297330893483399,
+        "rotation_y_deg": 36.081048239394654,
+        "alpha_rad": 0.7207415719464176,
+        "alpha_deg": 41.295450192154306,
+        "bbox_reprojected_xyxy": [
+          232.65406799316406,
+          0.0,
+          1077.87841796875,
+          384.0
+        ],
+        "bbox_iou": 0.6796045022885989
+      },
+      "diff": {
+        "init_to_refined_loc_abs_max_m": 1.253333330154419,
+        "init_to_refined_ry_deg": 30.5,
+        "init_bbox_max_abs_diff_px": 497.9264221191406,
+        "refined_bbox_max_abs_diff_px": 265.2723388671875,
+        "final_bbox_max_abs_diff_px": 265.2723388671875
+      },
+      "source_metadata": {
+        "truck_yaw_world": 230.90521023770333,
+        "yaw_theta": 42.31010809668729
+      }
+    }
+  ]
+}
