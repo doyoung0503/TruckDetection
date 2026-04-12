@@ -73,6 +73,7 @@ labels, use:
 - `train/check_kitti_pose_against_v3.py`
 - `train/build_v3_pose_compare_subset.py`
 - `train/run_clean_kitti_pose_export_check.py`
+- `train/debug_kitti_export_selfcheck.py`
 
 It regenerates the expected KITTI line from:
 
@@ -106,6 +107,19 @@ wraps all the useful steps in order:
 This wrapper intentionally does **not** call
 `train/repair_kitti_rotation_y_axis_mismatch.py`, so the export stays
 "repair-free" for root-cause checking.
+
+When the clean export fails its own strict self-check, use
+`train/debug_kitti_export_selfcheck.py` on the failing sample ids to compare:
+
+1. the pose returned by `build_exact_kitti_pose()`
+2. the pose after `refine_pose_to_bbox()`
+3. the final pose emitted by `build_kitti_label_from_json()`
+
+This makes it much easier to answer whether the failure is caused by:
+
+- the initial yaw/position recovery
+- the bbox refinement stage
+- or a mismatch between the final exported line and its own reprojection
 
 ## Reference Command
 
@@ -178,6 +192,24 @@ python train/debug_geometry_gt_reconstruction.py \
   --split val \
   --output-json results/geometry_gt_reconstruction_debug_20260413.json
 ```
+
+If the clean export fails strict self-check on specific samples, inspect them
+directly with:
+
+```bash
+python train/debug_kitti_export_selfcheck.py \
+  --source-root results/v3_pose_compare_subset_20260413_rawstyle \
+  --sample-ids 000000 000008 \
+  --output-json results/kitti_export_selfcheck_debug_000000_000008.json
+```
+
+Look at:
+
+- `init_pose.bbox_iou`
+- `refined_pose.bbox_iou`
+- `final_export.bbox_iou`
+- `diff.init_to_refined_ry_deg`
+- `diff.final_bbox_max_abs_diff_px`
 
 ## Included Reference Output
 
