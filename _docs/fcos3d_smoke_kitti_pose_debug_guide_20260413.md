@@ -234,6 +234,31 @@ Expected ballpark after the patch:
 - `000000`: final IoU about `0.99`
 - `000008`: final IoU about `0.995`
 
+## Full Clean Re-export + FCOS3D Retraining
+
+If you want to move directly from the patched exporter to model retraining on
+the regenerated full `kitti_smoke_1280x384_lb`, use:
+
+```bash
+python train/run_clean_reexport_and_fcos3d_retrain.py \
+  --source-root datasets/v3 \
+  --output-root results/fcos3d_clean_reexport_retrain_seed3407 \
+  --seed 3407 \
+  --amp
+```
+
+This wrapper runs the following in order:
+
+1. full clean re-export with the patched exporter
+2. FCOS3D baseline retraining
+3. reduced-DoF FCOS3D retraining
+
+Logs and work dirs are written under:
+
+- `results/fcos3d_clean_reexport_retrain_seed3407/logs/`
+- `results/fcos3d_clean_reexport_retrain_seed3407/baseline_seed3407/`
+- `results/fcos3d_clean_reexport_retrain_seed3407/reduced_seed3407/`
+
 Look at:
 
 - `init_pose.bbox_iou`
