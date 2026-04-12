@@ -1,0 +1,474 @@
+{
+  "repo_root": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration",
+  "source_root": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/v3_pose_compare_subset_20260413_rawstyle",
+  "pose_source_root": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/v3_pose_compare_subset_20260413",
+  "output_root": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/clean_kitti_pose_export_check_server_subset",
+  "staging_root": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/clean_kitti_pose_export_check_server_subset/staging_v3_root",
+  "converted_root": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/clean_kitti_pose_export_check_server_subset/staging_v3_root/kitti_smoke_1280x384_lb",
+  "repair_script_used": false,
+  "steps": [
+    {
+      "name": "clean_export",
+      "command": [
+        "/home/dy-jang/anaconda3/envs/sam/bin/python",
+        "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/export_v3_to_kitti_letterbox.py",
+        "--root",
+        "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/clean_kitti_pose_export_check_server_subset/staging_v3_root",
+        "--out-w",
+        "1280",
+        "--out-h",
+        "384",
+        "--workers",
+        "0",
+        "--overwrite",
+        "--min-selfcheck-iou",
+        "0.99",
+        "--strict-selfcheck"
+      ],
+      "cwd": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration",
+      "log_path": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/clean_kitti_pose_export_check_server_subset/logs/clean_export.log",
+      "returncode": 1,
+      "duration_sec": 0.37028980255126953,
+      "ok": false
+    },
+    {
+      "name": "validate_conversion",
+      "command": [
+        "/home/dy-jang/anaconda3/envs/sam/bin/python",
+        "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/train/validate_kitti_conversion.py",
+        "--source-root",
+        "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/v3_pose_compare_subset_20260413_rawstyle",
+        "--dataset-root",
+        "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/clean_kitti_pose_export_check_server_subset/staging_v3_root/kitti_smoke_1280x384_lb",
+        "--split",
+        "train",
+        "--max-samples",
+        "0",
+        "--workers",
+        "0",
+        "--output-json",
+        "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/clean_kitti_pose_export_check_server_subset/validate_kitti_conversion.json",
+        "--strict"
+      ],
+      "cwd": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration",
+      "log_path": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/clean_kitti_pose_export_check_server_subset/logs/validate_kitti_conversion.log",
+      "returncode": 1,
+      "duration_sec": 0.11722707748413086,
+      "ok": false
+    },
+    {
+      "name": "pose_compare",
+      "command": [
+        "/home/dy-jang/anaconda3/envs/sam/bin/python",
+        "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/train/check_kitti_pose_against_v3.py",
+        "--dataset-root",
+        "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/clean_kitti_pose_export_check_server_subset/staging_v3_root/kitti_smoke_1280x384_lb",
+        "--source-root",
+        "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/v3_pose_compare_subset_20260413",
+        "--sample-ids",
+        "000000",
+        "000007",
+        "000008",
+        "000043",
+        "000120",
+        "--output-json",
+        "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/clean_kitti_pose_export_check_server_subset/kitti_pose_compare_v3.json"
+      ],
+      "cwd": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration",
+      "log_path": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/clean_kitti_pose_export_check_server_subset/logs/check_kitti_pose_against_v3.log",
+      "returncode": 0,
+      "duration_sec": 0.19674992561340332,
+      "ok": true
+    },
+    {
+      "name": "geometry_debug",
+      "command": [
+        "/home/dy-jang/anaconda3/envs/sam/bin/python",
+        "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/train/debug_geometry_gt_reconstruction.py",
+        "--dataset-root",
+        "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/clean_kitti_pose_export_check_server_subset/staging_v3_root/kitti_smoke_1280x384_lb",
+        "--split",
+        "val",
+        "--batch-size",
+        "8",
+        "--num-workers",
+        "0",
+        "--max-batches",
+        "0",
+        "--output-json",
+        "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/clean_kitti_pose_export_check_server_subset/geometry_gt_reconstruction.json"
+      ],
+      "cwd": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration",
+      "log_path": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/clean_kitti_pose_export_check_server_subset/logs/debug_geometry_gt_reconstruction.log",
+      "returncode": 1,
+      "duration_sec": 1.1839303970336914,
+      "ok": false
+    }
+  ],
+  "artifacts": {
+    "validate_conversion_json": null,
+    "pose_compare_json": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/clean_kitti_pose_export_check_server_subset/kitti_pose_compare_v3.json",
+    "geometry_debug_json": null
+  },
+  "validate_conversion": null,
+  "pose_compare": {
+    "dataset_root": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/clean_kitti_pose_export_check_server_subset/staging_v3_root/kitti_smoke_1280x384_lb",
+    "source_root": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/v3_pose_compare_subset_20260413",
+    "sample_ids": [
+      "000000",
+      "000007",
+      "000008",
+      "000043",
+      "000120"
+    ],
+    "all_pass_pose_check": true,
+    "samples": [
+      {
+        "sample_id": "000000",
+        "actual": {
+          "type": "Car",
+          "truncation": 0.18258,
+          "occlusion": 1,
+          "alpha": 2.456423,
+          "bbox_xyxy": [
+            391.525401,
+            173.236588,
+            667.722941,
+            383.0
+          ],
+          "dim_hwl": [
+            1.918924,
+            1.868429,
+            5.103683
+          ],
+          "loc_xyz": [
+            0.41598,
+            1.778614,
+            6.591793
+          ],
+          "rotation_y": 2.519445,
+          "score": null
+        },
+        "expected_from_v3": {
+          "type": "Car",
+          "truncation": 0.18258,
+          "occlusion": 1,
+          "alpha": 2.456423,
+          "bbox_xyxy": [
+            391.525401,
+            173.236588,
+            667.722941,
+            383.0
+          ],
+          "dim_hwl": [
+            1.918924,
+            1.868429,
+            5.103683
+          ],
+          "loc_xyz": [
+            0.41598,
+            1.778614,
+            6.591793
+          ],
+          "rotation_y": 2.519445,
+          "score": null
+        },
+        "source_metadata": {
+          "truck_yaw_world": 356.1924725756674,
+          "yaw_theta": 155.30219187307947,
+          "truck_dims": {
+            "width": 1.8684294819831848,
+            "length": 5.103682994842529,
+            "height": 1.9189241528511047
+          },
+          "selfcheck_iou": 0.5176761601767305
+        },
+        "diff": {
+          "alpha_diff_deg": 0.0,
+          "rotation_y_diff_deg": 0.0,
+          "bbox_max_abs_diff_px": 0.0,
+          "loc_max_abs_diff_m": 0.0,
+          "dims_max_abs_diff_m": 0.0
+        },
+        "pass_pose_check": true
+      },
+      {
+        "sample_id": "000007",
+        "actual": {
+          "type": "Car",
+          "truncation": 0.525783,
+          "occlusion": 1,
+          "alpha": -0.787365,
+          "bbox_xyxy": [
+            351.91183,
+            0.0,
+            1210.81722,
+            383.0
+          ],
+          "dim_hwl": [
+            1.918924,
+            1.868429,
+            5.103683
+          ],
+          "loc_xyz": [
+            1.139458,
+            0.653963,
+            4.003752
+          ],
+          "rotation_y": -0.510098,
+          "score": null
+        },
+        "expected_from_v3": {
+          "type": "Car",
+          "truncation": 0.525783,
+          "occlusion": 1,
+          "alpha": -0.787365,
+          "bbox_xyxy": [
+            351.91183,
+            0.0,
+            1210.81722,
+            383.0
+          ],
+          "dim_hwl": [
+            1.918924,
+            1.868429,
+            5.103683
+          ],
+          "loc_xyz": [
+            1.139458,
+            0.653963,
+            4.003752
+          ],
+          "rotation_y": -0.510098,
+          "score": null
+        },
+        "source_metadata": {
+          "truck_yaw_world": 352.51155336034543,
+          "yaw_theta": 318.8838256694519,
+          "truck_dims": {
+            "width": 1.8684294819831848,
+            "length": 5.103682994842529,
+            "height": 1.9189241528511047
+          },
+          "selfcheck_iou": 0.9958587229855369
+        },
+        "diff": {
+          "alpha_diff_deg": 0.0,
+          "rotation_y_diff_deg": 0.0,
+          "bbox_max_abs_diff_px": 0.0,
+          "loc_max_abs_diff_m": 0.0,
+          "dims_max_abs_diff_m": 0.0
+        },
+        "pass_pose_check": true
+      },
+      {
+        "sample_id": "000008",
+        "actual": {
+          "type": "Car",
+          "truncation": 0.279719,
+          "occlusion": 2,
+          "alpha": 0.720742,
+          "bbox_xyxy": [
+            497.926412,
+            0.0,
+            1073.844482,
+            383.0
+          ],
+          "dim_hwl": [
+            1.918924,
+            1.868429,
+            5.103683
+          ],
+          "loc_xyz": [
+            -0.37701,
+            1.195994,
+            4.131143
+          ],
+          "rotation_y": 0.629733,
+          "score": null
+        },
+        "expected_from_v3": {
+          "type": "Car",
+          "truncation": 0.279719,
+          "occlusion": 2,
+          "alpha": 0.720742,
+          "bbox_xyxy": [
+            497.926412,
+            0.0,
+            1073.844482,
+            383.0
+          ],
+          "dim_hwl": [
+            1.918924,
+            1.868429,
+            5.103683
+          ],
+          "loc_xyz": [
+            -0.37701,
+            1.195994,
+            4.131143
+          ],
+          "rotation_y": 0.629733,
+          "score": null
+        },
+        "source_metadata": {
+          "truck_yaw_world": 230.90521023770333,
+          "yaw_theta": 42.31010809668729,
+          "truck_dims": {
+            "width": 1.8684294819831848,
+            "length": 5.103682994842529,
+            "height": 1.9189241528511047
+          },
+          "selfcheck_iou": 0.6796045022885989
+        },
+        "diff": {
+          "alpha_diff_deg": 0.0,
+          "rotation_y_diff_deg": 0.0,
+          "bbox_max_abs_diff_px": 0.0,
+          "loc_max_abs_diff_m": 0.0,
+          "dims_max_abs_diff_m": 0.0
+        },
+        "pass_pose_check": true
+      },
+      {
+        "sample_id": "000043",
+        "actual": {
+          "type": "Car",
+          "truncation": 0.469103,
+          "occlusion": 1,
+          "alpha": -0.598263,
+          "bbox_xyxy": [
+            339.056984,
+            0.0,
+            1022.708252,
+            383.0
+          ],
+          "dim_hwl": [
+            1.918924,
+            1.868429,
+            5.103683
+          ],
+          "loc_xyz": [
+            0.524256,
+            0.960373,
+            5.165304
+          ],
+          "rotation_y": -0.497113,
+          "score": null
+        },
+        "expected_from_v3": {
+          "type": "Car",
+          "truncation": 0.469103,
+          "occlusion": 1,
+          "alpha": -0.598263,
+          "bbox_xyxy": [
+            339.056984,
+            0.0,
+            1022.708252,
+            383.0
+          ],
+          "dim_hwl": [
+            1.918924,
+            1.868429,
+            5.103683
+          ],
+          "loc_xyz": [
+            0.524256,
+            0.960373,
+            5.165304
+          ],
+          "rotation_y": -0.497113,
+          "score": null
+        },
+        "source_metadata": {
+          "truck_yaw_world": 330.03108435734623,
+          "yaw_theta": 3.1920596881570136,
+          "truck_dims": {
+            "width": 1.8684294819831848,
+            "length": 5.103682994842529,
+            "height": 1.9189241528511047
+          },
+          "selfcheck_iou": 0.9960150458119825
+        },
+        "diff": {
+          "alpha_diff_deg": 0.0,
+          "rotation_y_diff_deg": 0.0,
+          "bbox_max_abs_diff_px": 0.0,
+          "loc_max_abs_diff_m": 0.0,
+          "dims_max_abs_diff_m": 0.0
+        },
+        "pass_pose_check": true
+      },
+      {
+        "sample_id": "000120",
+        "actual": {
+          "type": "Car",
+          "truncation": 0.796884,
+          "occlusion": 2,
+          "alpha": 0.645734,
+          "bbox_xyxy": [
+            0.0,
+            0.0,
+            995.389486,
+            383.0
+          ],
+          "dim_hwl": [
+            1.918924,
+            1.868429,
+            5.103683
+          ],
+          "loc_xyz": [
+            -1.115849,
+            1.024969,
+            3.552229
+          ],
+          "rotation_y": 0.341368,
+          "score": null
+        },
+        "expected_from_v3": {
+          "type": "Car",
+          "truncation": 0.796884,
+          "occlusion": 2,
+          "alpha": 0.645734,
+          "bbox_xyxy": [
+            0.0,
+            0.0,
+            995.389486,
+            383.0
+          ],
+          "dim_hwl": [
+            1.918924,
+            1.868429,
+            5.103683
+          ],
+          "loc_xyz": [
+            -1.115849,
+            1.024969,
+            3.552229
+          ],
+          "rotation_y": 0.341368,
+          "score": null
+        },
+        "source_metadata": {
+          "truck_yaw_world": 173.20601623051292,
+          "yaw_theta": 40.57739076417232,
+          "truck_dims": {
+            "width": 1.8684294819831848,
+            "length": 5.103682994842529,
+            "height": 1.9189241528511047
+          },
+          "selfcheck_iou": 0.9970689277132088
+        },
+        "diff": {
+          "alpha_diff_deg": 0.0,
+          "rotation_y_diff_deg": 0.0,
+          "bbox_max_abs_diff_px": 0.0,
+          "loc_max_abs_diff_m": 0.0,
+          "dims_max_abs_diff_m": 0.0
+        },
+        "pass_pose_check": true
+      }
+    ]
+  },
+  "geometry_debug": null
+}

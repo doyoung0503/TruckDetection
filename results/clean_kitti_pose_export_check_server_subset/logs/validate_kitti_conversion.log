@@ -1,0 +1,12 @@
+$ /home/dy-jang/anaconda3/envs/sam/bin/python /home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/train/validate_kitti_conversion.py --source-root /home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/v3_pose_compare_subset_20260413_rawstyle --dataset-root /home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/clean_kitti_pose_export_check_server_subset/staging_v3_root/kitti_smoke_1280x384_lb --split train --max-samples 0 --workers 0 --output-json /home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/clean_kitti_pose_export_check_server_subset/validate_kitti_conversion.json --strict
+
+Traceback (most recent call last):
+  File "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/train/validate_kitti_conversion.py", line 393, in <module>
+    main()
+  File "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/train/validate_kitti_conversion.py", line 280, in main
+    sample_ids = [line.strip() for line in imageset_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+  File "/home/dy-jang/anaconda3/envs/sam/lib/python3.10/pathlib.py", line 1134, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+  File "/home/dy-jang/anaconda3/envs/sam/lib/python3.10/pathlib.py", line 1119, in open
+    return self._accessor.open(self, mode, buffering, encoding, errors,
+FileNotFoundError: [Errno 2] No such file or directory: '/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/clean_kitti_pose_export_check_server_subset/staging_v3_root/kitti_smoke_1280x384_lb/training/ImageSets/train.txt'

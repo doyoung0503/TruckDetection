@@ -1,0 +1,16 @@
+$ /home/dy-jang/anaconda3/envs/sam/bin/python /home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/train/debug_geometry_gt_reconstruction.py --dataset-root /home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/clean_kitti_pose_export_check_server_subset/staging_v3_root/kitti_smoke_1280x384_lb --split val --batch-size 8 --num-workers 0 --max-batches 0 --output-json /home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/clean_kitti_pose_export_check_server_subset/geometry_gt_reconstruction.json
+
+Traceback (most recent call last):
+  File "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/train/debug_geometry_gt_reconstruction.py", line 200, in <module>
+    main()
+  File "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/train/debug_geometry_gt_reconstruction.py", line 65, in main
+    train_loader, val_loader = make_dataloaders(
+  File "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/train/dataset.py", line 812, in make_dataloaders
+    train_ds = dataset_cls(
+  File "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/train/dataset.py", line 643, in __init__
+    ids = [line.strip() for line in split_file.read_text(encoding="utf-8").splitlines() if line.strip()]
+  File "/home/dy-jang/anaconda3/envs/sam/lib/python3.10/pathlib.py", line 1134, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+  File "/home/dy-jang/anaconda3/envs/sam/lib/python3.10/pathlib.py", line 1119, in open
+    return self._accessor.open(self, mode, buffering, encoding, errors,
+FileNotFoundError: [Errno 2] No such file or directory: '/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/results/clean_kitti_pose_export_check_server_subset/staging_v3_root/kitti_smoke_1280x384_lb/training/ImageSets/train.txt'
