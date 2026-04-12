@@ -72,6 +72,7 @@ labels, use:
 
 - `train/check_kitti_pose_against_v3.py`
 - `train/build_v3_pose_compare_subset.py`
+- `train/run_clean_kitti_pose_export_check.py`
 
 It regenerates the expected KITTI line from:
 
@@ -92,6 +93,19 @@ It reports:
 - `bbox_max_abs_diff_px`
 - `loc_max_abs_diff_m`
 - `dims_max_abs_diff_m`
+
+For the full server-side workflow, `train/run_clean_kitti_pose_export_check.py`
+wraps all the useful steps in order:
+
+1. create an isolated staging root that points at the raw `v3` source
+2. run a fresh clean export with the latest exporter
+3. run strict conversion validation against the raw `v3` source
+4. compare a few `label_2` rows against the raw `v3` labels
+5. optionally run geometry GT reconstruction debug
+
+This wrapper intentionally does **not** call
+`train/repair_kitti_rotation_y_axis_mismatch.py`, so the export stays
+"repair-free" for root-cause checking.
 
 ## Reference Command
 
@@ -125,6 +139,35 @@ python train/check_kitti_pose_against_v3.py \
   --source-root <path-to-uploaded-v3-pose-subset> \
   --sample-ids 000000 000007 000008 000043 000120 \
   --output-json results/kitti_pose_compare_v3_reference_20260413.json
+```
+
+### C. Server: run the full clean export workflow
+
+If the server has the full raw `v3` root available, this is the easiest path:
+
+```bash
+python train/run_clean_kitti_pose_export_check.py \
+  --source-root datasets/v3 \
+  --output-root results/clean_kitti_pose_export_check_server \
+  --sample-ids 000000 000007 000008 000043 000120 \
+  --force-output
+```
+
+This will create a separate staging export under:
+
+- `results/clean_kitti_pose_export_check_server/staging_v3_root/`
+
+and keep the server's existing converted dataset untouched.
+
+If you want a lighter pose-only run after a clean export already exists:
+
+```bash
+python train/run_clean_kitti_pose_export_check.py \
+  --source-root datasets/v3 \
+  --output-root results/clean_kitti_pose_export_check_server \
+  --skip-export \
+  --skip-geometry-debug \
+  --force-output
 ```
 
 If you also want to verify the geometry distance reconstruction path:
