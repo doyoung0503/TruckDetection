@@ -1,0 +1,172 @@
+# FCOS3D/SMOKE Pose Debug Guide for Server Comparison
+
+## Goal
+
+Make it easy to download the repository on the server and compare three things
+that are currently the most useful for yaw/root-cause debugging:
+
+1. the **trusted KITTI pose export path**
+2. the **trusted visualization path**
+3. the **trusted model distance reconstruction path**
+
+This guide also includes a small checklist for comparing a few `label_2`
+samples against the original `v3` JSON labels.
+
+## Trusted Code Paths
+
+### 1. KITTI pose export and pose self-check
+
+Use these as the reference path when checking `rotation_y` and `alpha`.
+
+- `export_v3_to_kitti_letterbox.py`
+  - `recover_camera_forward_yaw()`
+  - `build_exact_kitti_pose()`
+  - `refine_pose_to_bbox()`
+  - `build_kitti_label_from_json()`
+
+These are the current code paths that regenerate KITTI `label_2` values from
+the original `v3` annotation JSON and apply the pose refinement self-check.
+
+### 2. Visualization code that is useful for comparison
+
+- `train/visualize_kitti_mapping_and_predictions.py`
+  - renders GT, projected 3D boxes, overlay, and BEV panels
+- `train/visualize_smoke_checkpoint_predictions.py`
+  - loads a SMOKE checkpoint
+  - decodes local predictions into KITTI-style predictions
+  - writes `label_2`-like prediction text files
+  - produces side-by-side image panels for quick inspection
+
+These are the most practical scripts for checking whether the model output and
+the exported KITTI label agree in image space and BEV space.
+
+### 3. Model distance reconstruction code to compare against
+
+These are the main paths to inspect when yaw looks suspicious but the deeper
+problem may actually be in geometry reconstruction:
+
+- `train/smoke_loss.py`
+  - geometry GT reconstruction and training-side decode
+- `train/smoke_trainer.py`
+  - prediction decode used during evaluation/validation
+- `train/models.py`
+  - geometry/baseline output heads
+- `train/debug_geometry_gt_reconstruction.py`
+  - compares dataset-implied `z` against geometry-formula `z`
+  - useful for separating pose-export issues from model decode issues
+
+When comparing with server results, make sure the formulas for:
+
+- `h_ref`
+- `log_dv`
+- `pred_z`
+- `pred_yaw`
+
+match between the training code, the validator, and any standalone debug
+scripts.
+
+## New Comparison Helper
+
+To compare exported `label_2` pose values directly against the original `v3`
+labels, use:
+
+- `train/check_kitti_pose_against_v3.py`
+
+It regenerates the expected KITTI line from:
+
+- `datasets/v3/labels/label_<id>.json`
+- `datasets/v3/images/image_<id>.png`
+
+and compares it with:
+
+- `datasets/v3/kitti_smoke_1280x384_lb/training/label_2/<id>.txt`
+
+It reports:
+
+- `alpha_diff_deg`
+- `rotation_y_diff_deg`
+- `bbox_max_abs_diff_px`
+- `loc_max_abs_diff_m`
+- `dims_max_abs_diff_m`
+
+## Reference Command
+
+Run this from the repo root:
+
+```bash
+python train/check_kitti_pose_against_v3.py \
+  --dataset-root datasets/v3/kitti_smoke_1280x384_lb \
+  --source-root datasets/v3 \
+  --sample-ids 000000 000007 000008 000043 000120 \
+  --output-json results/kitti_pose_compare_v3_reference_20260413.json
+```
+
+If you also want to verify the geometry distance reconstruction path:
+
+```bash
+python train/debug_geometry_gt_reconstruction.py \
+  --dataset-root datasets/v3/kitti_smoke_1280x384_lb \
+  --split val \
+  --output-json results/geometry_gt_reconstruction_debug_20260413.json
+```
+
+## Included Reference Output
+
+The repository also includes a reference output generated from the current local
+dataset and exporter:
+
+- `results/kitti_pose_compare_v3_reference_20260413.json`
+- `results/kitti_pose_compare_v3_reference_20260413.md`
+
+This reference is intentionally diagnostic, not a guaranteed all-pass golden
+file. On the current local tree it already catches non-trivial
+`rotation_y/alpha` mismatches on the sampled `label_2` rows.
+
+If the server output differs noticeably from this file, the first thing to
+suspect is:
+
+- a different KITTI export version
+- a different `label_2` repair state
+- or a `rotation_y/alpha` convention mismatch
+
+## Checklist: compare a few `label_2` samples against original `v3`
+
+Use at least these sample ids first:
+
+- `000000`
+- `000007`
+- `000008`
+- `000043`
+- `000120`
+
+For each sample:
+
+1. Open `datasets/v3/labels/label_<id>.json`
+2. Open `datasets/v3/kitti_smoke_1280x384_lb/training/label_2/<id>.txt`
+3. Run `train/check_kitti_pose_against_v3.py`
+4. Check whether:
+   - `rotation_y_diff_deg` is close to `0`
+   - `alpha_diff_deg` is close to `0`
+   - `bbox_max_abs_diff_px` is small
+5. If `rotation_y_diff_deg` is consistently near:
+   - `+90 deg` or `-90 deg`: suspect axis convention mismatch
+   - `+45 deg` or `-45 deg`: suspect mixed world/camera bearing recovery or an extra half-axis offset
+6. If bbox reprojection is good but `rotation_y` is shifted, suspect:
+   - `recover_camera_forward_yaw()`
+   - `build_exact_kitti_pose()`
+   - any post-export `label_2` repair script
+7. If both bbox and pose disagree, suspect:
+   - incorrect source/converted dataset pairing
+   - stale exported `label_2`
+   - or a mismatch between the image letterbox path and the label path
+
+## Practical server workflow
+
+1. Pull the latest repo.
+2. Run the pose comparison helper.
+3. Compare the new JSON against:
+   - `results/kitti_pose_compare_v3_reference_20260413.json`
+4. If the diff is large, stop and fix export/pose conventions before debugging
+   the model.
+5. Only after the `label_2` pose matches the source `v3` geometry should we
+   trust repeated yaw error patterns as model-side issues.
