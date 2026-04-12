@@ -32,6 +32,7 @@ from smoke.modeling.make_layers import _fill_fc_weights
 
 from train.smoke_loss import (
     _SMOKE_CODER,
+    _decode_orientation_official,
     _build_trans_mats,
     DEPTH_MEAN,
     DEPTH_STD,
@@ -260,6 +261,7 @@ def decode_predictions(
     K: torch.Tensor,
     h_cam: torch.Tensor,
     model_type: ModelType,
+    z_ref: torch.Tensor | None = None,
     stride: int = FEAT_STRIDE,
     topk: int = 1,
     depth_mean: float = DEPTH_MEAN,
@@ -286,6 +288,8 @@ def decode_predictions(
     cx = K[:, 0, 2].unsqueeze(1)
     cy = K[:, 1, 2].unsqueeze(1)
     h_ref = (h_cam - TRUCK_H / 2).unsqueeze(1)
+    if z_ref is not None:
+        z_ref = z_ref.to(device=K.device, dtype=K.dtype)
 
     is_geometry = model_type in ("geometry", "geometry_aux")
 
@@ -296,7 +300,11 @@ def decode_predictions(
 
         log_dv_map = outputs["log_dv"].view(b, 1, -1)
         log_dv_delta = log_dv_map[:, 0].gather(1, inds)
-        log_dv_ref = geometry_log_dv_reference(K, h_cam, depth_ref_m=depth_mean).unsqueeze(1)
+        log_dv_ref = geometry_log_dv_reference(
+            K,
+            h_cam,
+            depth_ref_m=z_ref if z_ref is not None else depth_mean,
+        ).unsqueeze(1)
         log_dv = (log_dv_ref + log_dv_delta).clamp(-4.0, 8.0)
         Z = (fy * h_ref.abs() * torch.exp(-log_dv)).clamp(min=0.5, max=30.0)
         v_c = cy + torch.sign(h_ref) * torch.exp(log_dv)
@@ -311,7 +319,8 @@ def decode_predictions(
             dim=1,
         )
         X = ((u_c - cx) * Z / fx).squeeze(1)
-        _, yaw = _SMOKE_CODER.decode_orientation(ori, X, Z.squeeze(1))
+        pred_loc_bottom = torch.stack([X, h_cam, Z.squeeze(1)], dim=-1)
+        yaw, _ = _decode_orientation_official(ori, pred_loc_bottom)
         X = X.unsqueeze(1)
         Y = h_ref
         yaw = yaw.unsqueeze(1)

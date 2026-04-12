@@ -47,11 +47,13 @@ from train.smoke_loss import (
     _build_corners_baseline_3d,
     _build_corners_from_center_location,
     _build_corners_geometry_3d,
+    _decode_orientation_official,
     _build_gt_corners_baseline,
     _build_gt_corners_geometry,
     _build_trans_mats,
     _extract_at,
     _SMOKE_CODER,
+    DEPTH_MEAN,
     TRUCK_H, FEAT_STRIDE, EPS,
     decode_baseline_official,
     geometry_log_dv_reference,
@@ -93,11 +95,12 @@ def decode_predictions(
       독립 변수 3개: u_c, log_dv, yaw
       1) heatmap NMS → Top-1 피크 (ix, iy)
       2) offset 1ch → ox → u_c = (ix + ox) * stride
-      3) log_dv_c = log_dv.clamp(-4, 8)
+      3) log_dv_c = (log_dv_ref + log_dv_delta).clamp(-4, 8)
+         where log_dv_ref comes from the explicit known depth prior if available
          h_ref = h_cam − H/2
          Z   = fy · |h_ref| · exp(−log_dv_c)
-      4) alpha_z = atan2(sin, cos),  X_pred = (u_c−cx)·Z/fx
-         pred_yaw = alpha_z + atan2(X_pred, Z)
+      4) official SMOKE orientation decode, X_pred = (u_c−cx)·Z/fx
+         pred_yaw = decode_orientation(ori_vec, [X_pred, h_cam, Z])
       5) Y = h_ref (기하 상수),  W/H/L = 상수
       6) _build_corners_geometry_3d(Y_center=h_ref) → (B, 8, 3)
 
@@ -115,6 +118,9 @@ def decode_predictions(
     dev   = next(iter(outputs.values())).device
     K     = batch["K"].to(dev)
     h_cam = batch["h_cam"].to(dev)
+    z_ref = batch.get("z_ref")
+    if z_ref is not None:
+        z_ref = z_ref.to(dev)
     B     = h_cam.shape[0]
 
     heatmap = outputs["heatmap"]
@@ -143,15 +149,19 @@ def decode_predictions(
 
         h_ref  = h_cam - TRUCK_H / 2
         fy_k   = K[:, 1, 1]
-        log_dv_ref = geometry_log_dv_reference(K, h_cam)
+        log_dv_ref = geometry_log_dv_reference(
+            K,
+            h_cam,
+            depth_ref_m=z_ref if z_ref is not None else DEPTH_MEAN,
+        )
         log_dv_c = (log_dv_ref + log_dv_delta).clamp(-4.0, 8.0)
 
         pred_z = (fy_k * h_ref.abs() * torch.exp(-log_dv_c)).clamp(min=0.5, max=30.0)
 
         yaw_raw  = _extract_at(outputs["yaw"], ix, iy)          # (B, 2)
-        alpha_z  = torch.atan2(yaw_raw[:, 0], yaw_raw[:, 1])
         X_pred   = (u_c - K[:, 0, 2]) * pred_z / (K[:, 0, 0] + EPS)
-        pred_yaw = alpha_z + torch.atan2(X_pred, pred_z)
+        pred_loc_bottom = torch.stack([X_pred, h_cam, pred_z], dim=-1)
+        pred_yaw, _ = _decode_orientation_official(yaw_raw, pred_loc_bottom)
 
         # Y = h_ref (기하 상수): v_c 역투영 사용 금지
         pred_corners = _build_corners_geometry_3d(
@@ -420,12 +430,12 @@ def run_single(
         # ── 로깅 ─────────────────────────────────────────────────────────
         train_str = " ".join(
             f"{k}={v:.3f}" for k, v in train_ld.items()
-            if k in ("total", "l_heat", "l_off", "l_3d")
+            if k in ("total", "l_heat", "l_off", "l_3d", "l_alpha")
         )
         if ran_val:
             val_str = " ".join(
                 f"{k}={v:.3f}" for k, v in val_ld.items()
-                if k in ("total", "l_heat", "l_3d")
+                if k in ("total", "l_heat", "l_3d", "l_alpha")
             )
             met_str = (
                 f"Z={z_err:.2f}m  "

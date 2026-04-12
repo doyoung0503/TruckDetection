@@ -28,13 +28,16 @@ SMOKE-style ablation framework 손실 함수 (4종 절제 모델 공용).
   L_ground: MonoGround dense ground supervision (depth aux 모델 전용)
 
 ── 관측각 (αz) 파라미터화 ────────────────────────────────────────────────────
-  네트워크 출력: (sin αz, cos αz)  (F.normalize 적용)
+  네트워크 출력: official SMOKE orientation vector  (F.normalize 적용)
+    GT 벡터는 [cos αz, -sin αz] 와 동치
   αz = θ − arctan(X_center / Z_center)   ← 기하학적 중심 기준 view-invariant
-  디코딩: θ = αz + arctan(X / Z)
+  디코딩: official SMOKE 식으로 αz / θ 복원
 
 ── 깊이 인코딩 ────────────────────────────────────────────────────────────────
   baseline 계열: Z = depth_mean + δz × depth_std  (데이터셋 통계 선형 디코딩)
-  geometry 계열: Z = fy · |h_cam−H/2| · exp(−log_dv)  (pinhole + 기하학적 중심)
+  geometry 계열: Z = Z_ref · exp(−log_dv_delta)
+                  where Z_ref = known per-sample pinhole depth if available,
+                  else the global mean-depth prior
 """
 
 from __future__ import annotations
@@ -68,17 +71,19 @@ from smoke.structures.params_3d import ParamsList
 
 # ── 상수 ──────────────────────────────────────────────────────────────────────
 
-TRUCK_W: float = 2.5
-TRUCK_L: float = 9.8
-TRUCK_H: float = 3.3
+# Dataset-wide truck dimensions from the converted KITTI labels.
+# Order here follows the local SMOKE helper conventions: W, L, H.
+TRUCK_W: float = 1.868429
+TRUCK_L: float = 5.103683
+TRUCK_H: float = 1.918924
 EPS: float = 1e-6
 PI: float = math.pi
 
 FEAT_STRIDE: int = 4
 
-# 데이터셋 깊이 통계 (train split 3999개 기준, m 단위)
-DEPTH_MEAN: float = 6.15
-DEPTH_STD:  float = 2.48
+# 데이터셋 깊이 통계 (train split 4000개 기준, m 단위)
+DEPTH_MEAN: float = 5.331445990264416
+DEPTH_STD:  float = 2.6893772919824164
 OFFICIAL_REG_LOSS_WEIGHT: float = float(_OFFICIAL_SMOKE_DEFAULTS.MODEL.SMOKE_HEAD.LOSS_WEIGHT[1])
 OFFICIAL_MAX_OBJECTS: int = int(_OFFICIAL_SMOKE_DEFAULTS.DATASETS.MAX_OBJECTS)
 
@@ -86,17 +91,23 @@ OFFICIAL_MAX_OBJECTS: int = int(_OFFICIAL_SMOKE_DEFAULTS.DATASETS.MAX_OBJECTS)
 def geometry_log_dv_reference(
     K: torch.Tensor,
     h_cam: torch.Tensor,
-    depth_ref_m: float = DEPTH_MEAN,
+    depth_ref_m: float | torch.Tensor = DEPTH_MEAN,
 ) -> torch.Tensor:
     """
     Dynamic prior for geometry depth parameterization.
     For each sample:
       log_dv_ref = log(fy * |h_cam - H/2| / Z_ref)
-    where Z_ref is the global mean depth prior.
+    where Z_ref is either:
+      - an explicit per-sample known depth prior, or
+      - the fallback global mean depth prior.
     """
     fy = K[:, 1, 1]
     h_ref = h_cam - TRUCK_H / 2.0
-    return torch.log((fy * h_ref.abs()).clamp(min=EPS) / max(depth_ref_m, EPS))
+    if isinstance(depth_ref_m, torch.Tensor):
+        depth_ref = depth_ref_m.to(device=fy.device, dtype=fy.dtype).clamp(min=EPS)
+    else:
+        depth_ref = torch.full_like(fy, float(depth_ref_m)).clamp(min=EPS)
+    return torch.log((fy * h_ref.abs()).clamp(min=EPS) / depth_ref)
 
 
 def build_official_smoke_cfg(device: str = "cpu"):
@@ -499,13 +510,12 @@ class SMOKECoder:
 
     def decode_orientation(
         self,
-        ori_vec: torch.Tensor,   # (B, 2) unit vector [sin_αz, cos_αz]
+        ori_vec: torch.Tensor,   # (B, 2) official SMOKE orientation vector
         X:       torch.Tensor,   # (B,) 카메라 X 좌표
         Z:       torch.Tensor,   # (B,) 깊이
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
-        αz → global yaw θ.  (SMOKE Eq. 3)
-        [deviation] atan2(sin, cos) — atan(a/b)±π/2 와 수학적으로 동일.
+        official SMOKE orientation vector → αz → global yaw θ.  (SMOKE Eq. 3)
         """
         alpha_z = torch.atan(ori_vec[:, 0] / (ori_vec[:, 1] + EPS))
         alpha_z = torch.where(
@@ -596,21 +606,21 @@ def _apply_center_offsets(
     L: float | torch.Tensor,
     device:  torch.device,
 ) -> torch.Tensor:
-    """기하학적 중심 기준 ±W/2, ±H/2, ±L/2 오프셋 적용 → (B, 8, 3)."""
+    """KITTI/SMOKE 축 정의에 맞춰 ±L/2, ±H/2, ±W/2 오프셋 적용 → (B, 8, 3)."""
     signs = _CENTER_SIGNS.to(device)
     if isinstance(W, torch.Tensor):
-        xo = signs[None, :, 0] * (W[:, None] / 2)   # (B, 8)
+        xo = signs[None, :, 0] * (L[:, None] / 2)   # local x-axis = length
         yo = signs[None, :, 1] * (H[:, None] / 2)
-        zo = signs[None, :, 2] * (L[:, None] / 2)
+        zo = signs[None, :, 2] * (W[:, None] / 2)   # local z-axis = width
         offsets = (
               xo[:, :, None] * right[:, None, :]
             + yo[:, :, None] * up_cam[:, None, :]
             + zo[:, :, None] * forward[:, None, :]
         )                                             # (B, 8, 3)
     else:
-        xo = signs[:, 0] * (W / 2)   # (8,)
+        xo = signs[:, 0] * (L / 2)   # (8,)
         yo = signs[:, 1] * (H / 2)
-        zo = signs[:, 2] * (L / 2)
+        zo = signs[:, 2] * (W / 2)
         offsets = (
               xo[None, :, None] * right[:, None, :]
             + yo[None, :, None] * up_cam[:, None, :]
@@ -897,6 +907,7 @@ class SmokeLoss(nn.Module):
         lambda_heat:     float = 1.0,
         lambda_off:      float = 1.0,
         lambda_3d:       float = 1.0,
+        lambda_alpha:    float = 100.0,
         lambda_depth:    float = 0.1,
         lambda_ground:   float = 0.1,
         n_ground_samples: int  = 512,
@@ -910,6 +921,7 @@ class SmokeLoss(nn.Module):
         self.lambda_heat       = lambda_heat
         self.lambda_off        = lambda_off
         self.lambda_3d         = lambda_3d
+        self.lambda_alpha      = lambda_alpha
         self.lambda_depth      = lambda_depth
         self.lambda_ground     = lambda_ground
         self.n_ground_samples  = n_ground_samples
@@ -1052,17 +1064,19 @@ class SmokeLoss(nn.Module):
         # ════════════════════════════════════════════════════════════════
         if self.is_geometry:
             log_dv_delta = _extract_at(outputs["log_dv"].to(dev), ix, iy)[:, 0]
-            log_dv_ref = geometry_log_dv_reference(K, h_cam, depth_ref_m=self.depth_mean)
+            if "z_ref" in batch:
+                depth_ref = batch["z_ref"].to(dev)
+            else:
+                depth_ref = self.depth_mean
+            log_dv_ref = geometry_log_dv_reference(K, h_cam, depth_ref_m=depth_ref)
             log_dv_pred = log_dv_ref + log_dv_delta
             log_dv_pred_c = log_dv_pred.clamp(-4.0, 8.0)
             Z_pred_geom   = (
                 fy_k * h_ref.abs() * torch.exp(-log_dv_pred_c)
             ).clamp(min=0.5, max=30.0)
 
-            raw          = _extract_at(outputs["yaw"].to(dev), ix, iy)   # (B, 2)
-            sin_a, cos_a = raw[:, 0], raw[:, 1]
-            alpha_z      = torch.atan2(sin_a, cos_a)
-            theta_orient = alpha_z + torch.atan2(X_gt, Z_gt)
+            raw = _extract_at(outputs["yaw"].to(dev), ix, iy)   # (B, 2)
+            _, theta_orient = self._coder.decode_orientation(raw, X_gt, Z_gt)
 
             # L_orient: GT 위치 + pred θ (Y 고정)
             c_orient = _build_corners_geometry_3d(
@@ -1085,8 +1099,11 @@ class SmokeLoss(nn.Module):
             # L_log_dv: log_dv 직접 지도 [DoF restriction]
             # baseline에는 없는 항목.
             # Z = fy|h_ref|exp(−log_dv) 관계에서 GT log_dv가 명확히 존재.
-            dv_abs = (v_gt - cy_k).abs().clamp(min=EPS)
-            log_dv_gt = torch.log(dv_abs)
+            # When explicit z_ref is provided, the target delta should become
+            # log(z_ref / Z_gt), i.e. zero if the known depth is exact.
+            log_dv_gt = torch.log(
+                (fy_k * h_ref.abs()).clamp(min=EPS) / Z_gt.clamp(min=EPS)
+            )
             log_dv_delta_gt = log_dv_gt - log_dv_ref
             if valid.any():
                 total = total + F.l1_loss(
@@ -1138,6 +1155,59 @@ class SmokeLoss(nn.Module):
                 )
 
         return total
+
+    def _alpha_loss_geometry(
+        self,
+        outputs: dict,
+        batch: dict,
+        geo_center: torch.Tensor,
+        stride: int,
+        reduction: str = "mean",
+    ) -> torch.Tensor:
+        """
+        Direct alpha supervision for the reduced-DoF geometry yaw branch.
+
+        The geometry head predicts the same 2D orientation vector convention
+        used by official SMOKE. For a target alpha, the matching unit vector is
+        [cos(alpha), -sin(alpha)].
+        """
+        dev = geo_center.device
+        yaw_gt = batch["yaw_theta"].to(dev)
+        K = batch["K"].to(dev)
+        center = batch["center_2d"].to(dev)
+        h_cam = batch["h_cam"].to(dev)
+
+        center_feat = geo_center / stride
+        ix = center_feat[:, 0].long()
+        iy = center_feat[:, 1].long()
+        pred_vec = _extract_at(outputs["yaw"].to(dev), ix, iy)
+
+        u_gt = center[:, 0]
+        if "z_ref" in batch:
+            Z_gt = batch["z_ref"].to(dev).clamp(min=EPS)
+        else:
+            v_gt = center[:, 1]
+            fx = K[:, 0, 0]
+            fy = K[:, 1, 1]
+            cy = K[:, 1, 2]
+            h_ref = h_cam - TRUCK_H / 2
+            dv_abs = (v_gt - cy).abs().clamp(min=EPS)
+            Z_gt = fy * h_ref.abs() / dv_abs
+
+        fx = K[:, 0, 0]
+        cx = K[:, 0, 2]
+        X_gt = (u_gt - cx) * Z_gt / fx.clamp(min=EPS)
+
+        beta_gt = torch.atan2(X_gt, Z_gt)
+        alpha_gt = torch.atan2(torch.sin(yaw_gt - beta_gt), torch.cos(yaw_gt - beta_gt))
+        gt_vec = torch.stack([torch.cos(alpha_gt), -torch.sin(alpha_gt)], dim=-1)
+
+        loss_vec = 1.0 - (pred_vec * gt_vec).sum(dim=-1)
+        if reduction == "sum":
+            return loss_vec.sum()
+        if reduction == "mean":
+            return loss_vec.mean()
+        raise ValueError(f"Unsupported reduction: {reduction!r}")
 
     # ── L_depth ─────────────────────────────────────────────────────────────
 
@@ -1266,9 +1336,16 @@ class SmokeLoss(nn.Module):
             l_heat = self._heat_loss_official(outputs["heatmap"], batch)
             l_off = self._off_loss(outputs["offset"], geo_center, stride, reduction="sum")
             l_3d  = self._corner_loss(outputs, batch, geo_center, stride, reduction="sum")
+            l_alpha = self._alpha_loss_geometry(
+                outputs, batch, geo_center, stride, reduction="sum"
+            )
 
             hm_term = self.lambda_heat * l_heat
-            reg_term_raw = self.lambda_off * l_off + self.lambda_3d * l_3d
+            reg_term_raw = (
+                self.lambda_off * l_off
+                + self.lambda_3d * l_3d
+                + self.lambda_alpha * l_alpha
+            )
             reg_term = reg_term_raw / self.geometry_reg_normalizer
             total = hm_term + reg_term
             tensor_terms = {
@@ -1279,6 +1356,7 @@ class SmokeLoss(nn.Module):
                 "l_heat": l_heat.item(),
                 "l_off" : l_off.item(),
                 "l_3d"  : l_3d.item(),
+                "l_alpha": l_alpha.item(),
                 "l_reg_raw": reg_term_raw.item(),
             }
         else:

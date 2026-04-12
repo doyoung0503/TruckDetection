@@ -7,6 +7,7 @@ Server-side sanity checker for the current SMOKE-style training/eval path.
 Why this exists:
   - confirm that a checkpoint is actually compatible with the current code
   - run the exact current validation decode/metric path
+  - report both reconstructed-canonical GT metrics and actual GT metrics
   - dump pred_z / gt_z statistics so impossible summaries are easy to catch
 
 Typical usage:
@@ -178,6 +179,21 @@ def _default_output_path(checkpoint: Path, model_type: str, split: str) -> Path:
     return checkpoint.parent / f"{stem}_{model_type}_{split}_verify.json"
 
 
+def _build_actual_gt_for_metrics(
+    batch: dict[str, Any],
+    dev: str | torch.device,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    if "gt_corners_3d" not in batch:
+        raise KeyError(
+            "'gt_corners_3d' not in batch. "
+            "dataset.py must provide actual 3D GT corners for actual-GT verification."
+        )
+    gt_corners = batch["gt_corners_3d"].to(dev)
+    gt_yaw = batch["yaw_theta"].to(dev)
+    gt_z = gt_corners.mean(dim=1)[:, 2]
+    return gt_corners, gt_yaw, gt_z
+
+
 def main() -> None:
     args = parse_args()
     checkpoint_path = args.checkpoint.resolve()
@@ -224,9 +240,11 @@ def main() -> None:
     )
     loader = train_loader if args.split == "train" else val_loader
 
-    metric_rows: list[dict[str, float]] = []
+    metric_rows_canonical: list[dict[str, float]] = []
+    metric_rows_actual: list[dict[str, float]] = []
     pred_z_rows: list[torch.Tensor] = []
-    gt_z_rows: list[torch.Tensor] = []
+    gt_z_rows_canonical: list[torch.Tensor] = []
+    gt_z_rows_actual: list[torch.Tensor] = []
     sample_rows: list[dict[str, Any]] = []
 
     with torch.no_grad():
@@ -240,13 +258,36 @@ def main() -> None:
             pred_corners, pred_yaw, pred_z = decode_predictions(
                 outputs, batch, args.model_type
             )
-            gt_corners, gt_yaw, gt_z = _build_gt_for_metrics(batch, device, args.model_type)
+            gt_corners_canonical, gt_yaw_canonical, gt_z_canonical = _build_gt_for_metrics(
+                batch, device, args.model_type
+            )
+            gt_corners_actual, gt_yaw_actual, gt_z_actual = _build_actual_gt_for_metrics(
+                batch, device
+            )
 
-            metric_rows.append(
-                calculate_metrics(pred_corners, gt_corners, pred_yaw, gt_yaw, pred_z, gt_z)
+            metric_rows_canonical.append(
+                calculate_metrics(
+                    pred_corners,
+                    gt_corners_canonical,
+                    pred_yaw,
+                    gt_yaw_canonical,
+                    pred_z,
+                    gt_z_canonical,
+                )
+            )
+            metric_rows_actual.append(
+                calculate_metrics(
+                    pred_corners,
+                    gt_corners_actual,
+                    pred_yaw,
+                    gt_yaw_actual,
+                    pred_z,
+                    gt_z_actual,
+                )
             )
             pred_z_rows.append(pred_z.detach().cpu())
-            gt_z_rows.append(gt_z.detach().cpu())
+            gt_z_rows_canonical.append(gt_z_canonical.detach().cpu())
+            gt_z_rows_actual.append(gt_z_actual.detach().cpu())
 
             frame_ids = batch.get("frame_id", [])
             for i in range(pred_z.shape[0]):
@@ -257,10 +298,17 @@ def main() -> None:
                     {
                         "frame_id": int(frame_id),
                         "pred_z": float(pred_z[i].item()),
-                        "gt_z": float(gt_z[i].item()),
-                        "abs_z_error": float((pred_z[i] - gt_z[i]).abs().item()),
+                        "canonical_gt_z": float(gt_z_canonical[i].item()),
+                        "actual_gt_z": float(gt_z_actual[i].item()),
+                        "abs_z_error_canonical_gt": float(
+                            (pred_z[i] - gt_z_canonical[i]).abs().item()
+                        ),
+                        "abs_z_error_actual_gt": float(
+                            (pred_z[i] - gt_z_actual[i]).abs().item()
+                        ),
                         "pred_yaw": float(pred_yaw[i].item()),
-                        "gt_yaw": float(gt_yaw[i].item()),
+                        "canonical_gt_yaw": float(gt_yaw_canonical[i].item()),
+                        "actual_gt_yaw": float(gt_yaw_actual[i].item()),
                     }
                 )
 
@@ -268,17 +316,43 @@ def main() -> None:
                 break
 
     pred_z_all = torch.cat(pred_z_rows, dim=0)
-    gt_z_all = torch.cat(gt_z_rows, dim=0)
-    abs_z = (pred_z_all - gt_z_all).abs()
+    gt_z_all_canonical = torch.cat(gt_z_rows_canonical, dim=0)
+    gt_z_all_actual = torch.cat(gt_z_rows_actual, dim=0)
+    abs_z_canonical = (pred_z_all - gt_z_all_canonical).abs()
+    abs_z_actual = (pred_z_all - gt_z_all_actual).abs()
+
+    canonical_metrics = aggregate_metrics(metric_rows_canonical)
+    actual_metrics = aggregate_metrics(metric_rows_actual)
 
     report.update(
         {
-            "num_batches": len(metric_rows),
+            "num_batches": len(metric_rows_canonical),
             "num_samples": int(pred_z_all.numel()),
-            "metrics": aggregate_metrics(metric_rows),
+            # Backward-compatible alias: the historical verifier reported only
+            # reconstructed canonical-GT metrics.
+            "metrics": canonical_metrics,
+            "metrics_note": (
+                "'metrics' is kept as the reconstructed canonical-GT result for "
+                "backward compatibility. Use 'metrics_actual_gt' for direct "
+                "comparison against dataset gt_corners_3d."
+            ),
+            "metrics_canonical_gt": canonical_metrics,
+            "metrics_actual_gt": actual_metrics,
             "pred_z_stats": _tensor_stats(pred_z_all),
-            "gt_z_stats": _tensor_stats(gt_z_all),
-            "abs_z_error_stats": _tensor_stats(abs_z),
+            "gt_z_stats": _tensor_stats(gt_z_all_canonical),
+            "gt_z_stats_note": (
+                "'gt_z_stats' is kept as the reconstructed canonical-GT depth "
+                "distribution for backward compatibility."
+            ),
+            "canonical_gt_z_stats": _tensor_stats(gt_z_all_canonical),
+            "actual_gt_z_stats": _tensor_stats(gt_z_all_actual),
+            "abs_z_error_stats": _tensor_stats(abs_z_canonical),
+            "abs_z_error_stats_note": (
+                "'abs_z_error_stats' is kept as the canonical-GT error summary "
+                "for backward compatibility."
+            ),
+            "abs_z_error_stats_canonical_gt": _tensor_stats(abs_z_canonical),
+            "abs_z_error_stats_actual_gt": _tensor_stats(abs_z_actual),
             "sample_rows": sample_rows,
         }
     )
@@ -288,10 +362,20 @@ def main() -> None:
 
     print(f"[verify-smoke] checkpoint={checkpoint_path}")
     print(f"[verify-smoke] output_json={output_path}")
-    print(json.dumps(report["metrics"], indent=2, ensure_ascii=False))
+    print("[verify-smoke] metrics_canonical_gt")
+    print(json.dumps(report["metrics_canonical_gt"], indent=2, ensure_ascii=False))
+    print("[verify-smoke] metrics_actual_gt")
+    print(json.dumps(report["metrics_actual_gt"], indent=2, ensure_ascii=False))
+    print("[verify-smoke] pred_z_stats")
     print(json.dumps(report["pred_z_stats"], indent=2, ensure_ascii=False))
-    print(json.dumps(report["gt_z_stats"], indent=2, ensure_ascii=False))
-    print(json.dumps(report["abs_z_error_stats"], indent=2, ensure_ascii=False))
+    print("[verify-smoke] canonical_gt_z_stats")
+    print(json.dumps(report["canonical_gt_z_stats"], indent=2, ensure_ascii=False))
+    print("[verify-smoke] actual_gt_z_stats")
+    print(json.dumps(report["actual_gt_z_stats"], indent=2, ensure_ascii=False))
+    print("[verify-smoke] abs_z_error_stats_canonical_gt")
+    print(json.dumps(report["abs_z_error_stats_canonical_gt"], indent=2, ensure_ascii=False))
+    print("[verify-smoke] abs_z_error_stats_actual_gt")
+    print(json.dumps(report["abs_z_error_stats_actual_gt"], indent=2, ensure_ascii=False))
 
 
 if __name__ == "__main__":

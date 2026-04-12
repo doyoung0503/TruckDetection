@@ -21,6 +21,7 @@ TruckPoseDataset: 윙바디 트럭 3D 바운딩 박스 추정을 위한 PyTorch 
 │ K               │ (3, 3) float32      │ letterbox 해상도 기준 카메라 내부 파라미터 │
 │ yaw_theta       │ scalar float32      │ 트럭 yaw 각도 (라디안, 카메라 기준)      │
 │ center_2d       │ (2,) float32        │ 트럭 중심 2D 픽셀 (letterbox 기준)     │
+│ z_ref           │ scalar float32      │ known depth prior (핀홀 복원 Z)         │
 │ frame_id        │ int                 │ 프레임 번호                             │
 │ view_category   │ str                 │ "rear"/"front"/"left"/"right"          │
 │ distance        │ scalar float32      │ 카메라-트럭 거리 (m)                   │
@@ -162,6 +163,29 @@ def _parse_kitti_label(label_path: Path) -> dict:
         "z": float(parts[13]),
         "ry": float(parts[14]),
     }
+
+
+def _compute_known_z_ref(
+    center_v: float,
+    fy: float,
+    cy: float,
+    h_cam: float,
+    truck_h: float,
+) -> float:
+    """
+    Reconstruct optical-axis depth from known geometry.
+
+    The reduced-DoF geometry model assumes:
+      - bottom-center Y is known (`h_cam`)
+      - truck height is known (`truck_h`)
+      - the projected 3D geometric center v is known (`center_v`)
+
+    Under that setup, the geometric-center depth is:
+      Z = fy * |h_cam - truck_h / 2| / |center_v - cy|
+    """
+    h_ref = h_cam - truck_h * 0.5
+    dv = center_v - cy
+    return float(fy * abs(h_ref) / max(abs(dv), 1e-6))
 
 
 def _make_seg_mask_from_corners(
@@ -466,6 +490,13 @@ class TruckPoseDataset(Dataset):
         center_2d[0] = center_2d_raw[0] * scale + pad_x
         center_2d[1] = center_2d_raw[1] * scale + pad_y
         center_2d    = center_2d.astype(np.float32)
+        z_ref = _compute_known_z_ref(
+            center_v=float(center_2d[1]),
+            fy=float(K_scaled[1, 1]),
+            cy=float(K_scaled[1, 2]),
+            h_cam=h_cam,
+            truck_h=float(dims["height"]),
+        )
 
         # ── 5. 수평 반전 증강 ────────────────────────────────────────────
         if self.augment and random.random() < 0.5:
@@ -489,6 +520,7 @@ class TruckPoseDataset(Dataset):
             # JSON GT는 도(degrees) 단위 → 라디안 변환 (모델 출력 tanh*π 와 단위 통일)
             "yaw_theta": torch.tensor(math.radians(yaw_theta), dtype=torch.float32),
             "center_2d": torch.from_numpy(center_2d),                           # (2,)
+            "z_ref": torch.tensor(z_ref, dtype=torch.float32),
             "distance":  torch.tensor(distance,  dtype=torch.float32),
             # 식별자
             "frame_id":     frame_id,
@@ -639,6 +671,13 @@ class KITTILetterboxDataset(Dataset):
         center_3d = np.array([[ann["x"], ann["y"] - ann["h"] / 2.0, ann["z"]]], dtype=np.float32)
         center_2d = _project_points(K, center_3d)[0]
         h_cam = float(ann["y"])
+        z_ref = _compute_known_z_ref(
+            center_v=float(center_2d[1]),
+            fy=float(K[1, 1]),
+            cy=float(K[1, 2]),
+            h_cam=h_cam,
+            truck_h=float(ann["h"]),
+        )
         distance = float(np.linalg.norm([ann["x"], ann["z"]]))
 
         if self.augment and random.random() < 0.5:
@@ -667,6 +706,7 @@ class KITTILetterboxDataset(Dataset):
             "yaw_theta": torch.tensor(yaw_theta, dtype=torch.float32),
             "center_2d": torch.from_numpy(center_2d.astype(np.float32)),
             "bbox_2d": torch.from_numpy(bbox_2d.astype(np.float32)),
+            "z_ref": torch.tensor(z_ref, dtype=torch.float32),
             "distance": torch.tensor(distance, dtype=torch.float32),
             "frame_id": int(sid),
             "view_category": "",
@@ -690,7 +730,7 @@ def _apply_hflip(
     변환 규칙:
         u_new     = (W - 1) - u         (픽셀 좌표 반전)
         cx_new    = (W - 1) - cx        (K 행렬 주점 반전)
-        yaw_new   = 180° - yaw_theta    (반전된 방향각)
+        yaw_new   = -yaw_theta          (official SMOKE / KITTI flip 규칙)
     """
     img_t       = TF.hflip(img_t)
 
@@ -704,7 +744,7 @@ def _apply_hflip(
     K           = K.copy()
     K[0, 2]     = (img_w - 1) - K[0, 2]   # cx 반전
 
-    yaw_theta   = 180.0 - yaw_theta
+    yaw_theta   = -yaw_theta
 
     return img_t, corners_uv, center_2d, K, yaw_theta
 
