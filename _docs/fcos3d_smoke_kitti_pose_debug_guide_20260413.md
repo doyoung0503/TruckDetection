@@ -226,6 +226,7 @@ the hard samples now converge to near-perfect export IoU:
 python train/debug_kitti_export_selfcheck.py \
   --source-root datasets/v3 \
   --sample-ids 000000 000008 \
+  --min-selfcheck-iou 0.99 \
   --output-json results/kitti_export_selfcheck_after_refine_patch_000000_000008.json
 ```
 
@@ -233,6 +234,21 @@ Expected ballpark after the patch:
 
 - `000000`: final IoU about `0.99`
 - `000008`: final IoU about `0.995`
+
+For strict-export blockers such as `000004`, you can now reproduce the actual
+threshold-aware exporter path with:
+
+```bash
+python train/debug_kitti_export_selfcheck.py \
+  --source-root datasets/v3 \
+  --sample-ids 000004 \
+  --min-selfcheck-iou 0.99 \
+  --output-json results/kitti_export_selfcheck_000004_after_fallback_patch.json
+```
+
+Expected ballpark after the fallback patch:
+
+- `000004`: final IoU about `0.9916`
 
 ## Full Clean Re-export + FCOS3D Retraining
 

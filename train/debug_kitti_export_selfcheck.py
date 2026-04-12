@@ -59,7 +59,13 @@ def _angle_deg(rad: float) -> float:
     return math.degrees(float(rad))
 
 
-def analyze_sample(source_root: Path, sample_id: str, out_w: int, out_h: int) -> dict[str, Any]:
+def analyze_sample(
+    source_root: Path,
+    sample_id: str,
+    out_w: int,
+    out_h: int,
+    min_selfcheck_iou: float | None,
+) -> dict[str, Any]:
     label_path, label = _load_source_label(source_root, sample_id)
     image_path, src_img = _load_source_image(source_root, sample_id)
     with src_img:
@@ -114,6 +120,7 @@ def analyze_sample(source_root: Path, sample_id: str, out_w: int, out_h: int) ->
         pad_y=pad_y,
         out_w=out_w,
         out_h=out_h,
+        min_selfcheck_iou=min_selfcheck_iou,
     )
     final_box = np.asarray(final_ann["bbox_xyxy"], dtype=np.float32)
     final_dims_lhw = np.array(
@@ -189,6 +196,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sample-ids", nargs="+", default=["000000", "000008"], help="Sample ids to inspect.")
     parser.add_argument("--out-w", type=int, default=1280)
     parser.add_argument("--out-h", type=int, default=384)
+    parser.add_argument(
+        "--min-selfcheck-iou",
+        type=float,
+        default=None,
+        help="Optional exporter threshold to reproduce threshold-aware fallback refinement.",
+    )
     parser.add_argument("--output-json", type=Path, default=None)
     return parser.parse_args()
 
@@ -196,7 +209,16 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     source_root = args.source_root.resolve()
-    rows = [analyze_sample(source_root, sample_id, args.out_w, args.out_h) for sample_id in args.sample_ids]
+    rows = [
+        analyze_sample(
+            source_root,
+            sample_id,
+            args.out_w,
+            args.out_h,
+            args.min_selfcheck_iou,
+        )
+        for sample_id in args.sample_ids
+    ]
     summary = {
         "source_root": str(source_root),
         "sample_ids": args.sample_ids,

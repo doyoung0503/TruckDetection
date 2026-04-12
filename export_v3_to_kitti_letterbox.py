@@ -401,6 +401,7 @@ def build_kitti_label_from_json(
     pad_y: int,
     out_w: int,
     out_h: int,
+    min_selfcheck_iou: float | None = None,
 ) -> tuple[str, dict[str, Any]]:
     gt = label["ground_truth"]
     td = label["truck_dims"]
@@ -448,6 +449,25 @@ def build_kitti_label_from_json(
         out_w=out_w,
         out_h=out_h,
     )
+    if min_selfcheck_iou is not None and selfcheck_iou + 1e-9 < float(min_selfcheck_iou):
+        wide_loc_xyz, wide_ry, wide_iou = refine_pose_to_bbox(
+            k3=k_new,
+            bbox_xyxy=np.array([xmin, ymin, xmax, ymax], dtype=np.float32),
+            dims_lhw=dims_lhw,
+            loc_xyz=np.asarray(loc_xyz, dtype=np.float32),
+            ry_init=ry,
+            out_w=out_w,
+            out_h=out_h,
+            stages=[
+                (3.0, 3.0, math.pi, 25, 25, 181),
+                (1.0, 1.0, math.radians(25.0), 21, 21, 61),
+                (0.25, 0.25, math.radians(6.0), 11, 11, 31),
+            ],
+        )
+        if wide_iou > selfcheck_iou + 1e-9:
+            loc_xyz = np.asarray(wide_loc_xyz, dtype=np.float32)
+            ry = normalize_angle_rad(float(wide_ry))
+            selfcheck_iou = float(wide_iou)
     x, y, z = (float(v) for v in loc_xyz)
     alpha = normalize_angle_rad(ry - math.atan2(float(x), float(z)))
 
@@ -638,6 +658,7 @@ def export_one_sample(job: tuple[str, bool, bool], cfg: dict[str, Any]) -> tuple
         pad_y=pad_y,
         out_w=cfg["out_w"],
         out_h=cfg["out_h"],
+        min_selfcheck_iou=cfg["min_selfcheck_iou"],
     )
     selfcheck_iou = compute_selfcheck_iou(ann, cfg["out_w"], cfg["out_h"])
     write_text(Path(cfg["smoke_lbl"]) / f"{kitti_id}.txt", line + "\n")
