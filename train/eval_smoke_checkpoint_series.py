@@ -192,6 +192,12 @@ def center_error_m(pred_corners: np.ndarray, gt_corners: np.ndarray) -> float:
     return float(np.linalg.norm(pred_center - gt_center))
 
 
+def adds_m(pred_corners: np.ndarray, gt_corners: np.ndarray) -> float:
+    diff = pred_corners[:, None, :] - gt_corners[None, :, :]
+    dist = np.linalg.norm(diff, axis=2)
+    return float(np.mean(np.min(dist, axis=1)))
+
+
 def symmetric_yaw_error_deg(pred_yaw: float, gt_yaw: float) -> float:
     delta = pred_yaw - gt_yaw
     diff_rad = abs(math.atan2(math.sin(delta), math.cos(delta)))
@@ -419,6 +425,10 @@ def compute_checkpoint_metrics(
             "bbox_iou_2d": float(best_iou),
             "matched": best_pred is not None,
             "score": float(best_pred.score) if best_pred is not None and best_pred.score is not None else None,
+            "z_error_m": None,
+            "center_error_m": None,
+            "yaw_error_deg": None,
+            "adds_m": None,
             "ate_m": None,
             "aoe_deg": None,
             "bev_iou": 0.0,
@@ -432,6 +442,10 @@ def compute_checkpoint_metrics(
             bev_iou, iou_3d = bev_and_3d_iou(pred_corners, gt_corners)
             row.update(
                 {
+                    "z_error_m": float(abs(float(best_pred.loc_xyz[2]) - float(gt_obj.loc_xyz[2]))),
+                    "center_error_m": center_error_m(pred_corners, gt_corners),
+                    "yaw_error_deg": symmetric_yaw_error_deg(best_pred.ry, gt_obj.ry),
+                    "adds_m": adds_m(pred_corners, gt_corners),
                     "ate_m": center_error_m(pred_corners, gt_corners),
                     "aoe_deg": symmetric_yaw_error_deg(best_pred.ry, gt_obj.ry),
                     "bev_iou": float(bev_iou),
@@ -445,6 +459,10 @@ def compute_checkpoint_metrics(
     bbox_ious = [float(row["bbox_iou_2d"]) for row in rows]
     bev_ious = [float(row["bev_iou"]) for row in rows]
     iou3ds = [float(row["iou_3d"]) for row in rows]
+    z_vals = [float(row["z_error_m"]) for row in rows if row["z_error_m"] is not None]
+    center_vals = [float(row["center_error_m"]) for row in rows if row["center_error_m"] is not None]
+    yaw_vals = [float(row["yaw_error_deg"]) for row in rows if row["yaw_error_deg"] is not None]
+    adds_vals = [float(row["adds_m"]) for row in rows if row["adds_m"] is not None]
     ate_vals = [float(row["ate_m"]) for row in rows if row["ate_m"] is not None]
     aoe_vals = [float(row["aoe_deg"]) for row in rows if row["aoe_deg"] is not None]
     matched_count = len(ate_vals)
@@ -457,6 +475,10 @@ def compute_checkpoint_metrics(
         "mean_bbox_iou_2d": float(np.mean(bbox_ious)) if bbox_ious else None,
         "mean_bev_iou": float(np.mean(bev_ious)) if bev_ious else None,
         "mean_3d_iou": float(np.mean(iou3ds)) if iou3ds else None,
+        "mean_z_error_m": float(np.mean(z_vals)) if z_vals else None,
+        "mean_center_error_m": float(np.mean(center_vals)) if center_vals else None,
+        "mean_yaw_error_deg": float(np.mean(yaw_vals)) if yaw_vals else None,
+        "mean_adds_m": float(np.mean(adds_vals)) if adds_vals else None,
         "mean_ate_m": float(np.mean(ate_vals)) if ate_vals else None,
         "median_ate_m": float(np.median(ate_vals)) if ate_vals else None,
         "mean_aoe_deg": float(np.mean(aoe_vals)) if aoe_vals else None,
@@ -484,6 +506,10 @@ def write_summary_csv(path: Path, summaries: list[dict[str, object]]) -> None:
         "missing_prediction_count",
         "detection_rate",
         "mean_bbox_iou_2d",
+        "mean_z_error_m",
+        "mean_center_error_m",
+        "mean_yaw_error_deg",
+        "mean_adds_m",
         "mean_ate_m",
         "median_ate_m",
         "mean_aoe_deg",
@@ -508,6 +534,10 @@ def write_per_sample_csv(path: Path, rows: list[dict[str, object]]) -> None:
         "matched",
         "score",
         "bbox_iou_2d",
+        "z_error_m",
+        "center_error_m",
+        "yaw_error_deg",
+        "adds_m",
         "ate_m",
         "aoe_deg",
         "bev_iou",
