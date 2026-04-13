@@ -1,0 +1,359 @@
+{
+  "dataset_root": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/projects/fcos3d_5sample_starter/datasets/v3/kitti_smoke_1280x384_lb",
+  "source_root": "/home/dy-jang/TruckDetection_github_codex_fcos3d_geov2_integration/projects/fcos3d_5sample_starter/datasets/v3",
+  "sample_ids": [
+    "000000",
+    "000007",
+    "000008",
+    "000043",
+    "000120"
+  ],
+  "all_pass_pose_check": true,
+  "samples": [
+    {
+      "sample_id": "000000",
+      "actual": {
+        "type": "Car",
+        "truncation": 0.18258,
+        "occlusion": 1,
+        "alpha": 1.774352,
+        "bbox_xyxy": [
+          391.525401,
+          173.236588,
+          667.722941,
+          383.0
+        ],
+        "dim_hwl": [
+          1.918924,
+          1.868429,
+          5.103683
+        ],
+        "loc_xyz": [
+          -0.757354,
+          1.778614,
+          7.681793
+        ],
+        "rotation_y": 1.676079,
+        "score": null
+      },
+      "expected_from_v3": {
+        "type": "Car",
+        "truncation": 0.18258,
+        "occlusion": 1,
+        "alpha": 1.774352,
+        "bbox_xyxy": [
+          391.525401,
+          173.236588,
+          667.722941,
+          383.0
+        ],
+        "dim_hwl": [
+          1.918924,
+          1.868429,
+          5.103683
+        ],
+        "loc_xyz": [
+          -0.757354,
+          1.778614,
+          7.681793
+        ],
+        "rotation_y": 1.676079,
+        "score": null
+      },
+      "source_metadata": {
+        "truck_yaw_world": 356.1924725756674,
+        "yaw_theta": 155.30219187307947,
+        "truck_dims": {
+          "width": 1.8684294819831848,
+          "length": 5.103682994842529,
+          "height": 1.9189241528511047
+        },
+        "selfcheck_iou": 0.9909237914486966
+      },
+      "diff": {
+        "alpha_diff_deg": 0.0,
+        "rotation_y_diff_deg": 0.0,
+        "bbox_max_abs_diff_px": 0.0,
+        "loc_max_abs_diff_m": 0.0,
+        "dims_max_abs_diff_m": 0.0
+      },
+      "pass_pose_check": true
+    },
+    {
+      "sample_id": "000007",
+      "actual": {
+        "type": "Car",
+        "truncation": 0.525783,
+        "occlusion": 1,
+        "alpha": 0.728,
+        "bbox_xyxy": [
+          351.91183,
+          0.0,
+          1210.81722,
+          383.0
+        ],
+        "dim_hwl": [
+          1.918924,
+          1.868429,
+          5.103683
+        ],
+        "loc_xyz": [
+          0.177791,
+          0.653963,
+          4.193752
+        ],
+        "rotation_y": 0.770369,
+        "score": null
+      },
+      "expected_from_v3": {
+        "type": "Car",
+        "truncation": 0.525783,
+        "occlusion": 1,
+        "alpha": 0.728,
+        "bbox_xyxy": [
+          351.91183,
+          0.0,
+          1210.81722,
+          383.0
+        ],
+        "dim_hwl": [
+          1.918924,
+          1.868429,
+          5.103683
+        ],
+        "loc_xyz": [
+          0.177791,
+          0.653963,
+          4.193752
+        ],
+        "rotation_y": 0.770369,
+        "score": null
+      },
+      "source_metadata": {
+        "truck_yaw_world": 352.51155336034543,
+        "yaw_theta": 318.8838256694519,
+        "truck_dims": {
+          "width": 1.8684294819831848,
+          "length": 5.103682994842529,
+          "height": 1.9189241528511047
+        },
+        "selfcheck_iou": 0.9957342839309474
+      },
+      "diff": {
+        "alpha_diff_deg": 0.0,
+        "rotation_y_diff_deg": 0.0,
+        "bbox_max_abs_diff_px": 0.0,
+        "loc_max_abs_diff_m": 0.0,
+        "dims_max_abs_diff_m": 0.0
+      },
+      "pass_pose_check": true
+    },
+    {
+      "sample_id": "000008",
+      "actual": {
+        "type": "Car",
+        "truncation": 0.279719,
+        "occlusion": 2,
+        "alpha": 1.319226,
+        "bbox_xyxy": [
+          497.926412,
+          0.0,
+          1073.844482,
+          383.0
+        ],
+        "dim_hwl": [
+          1.918924,
+          1.868429,
+          5.103683
+        ],
+        "loc_xyz": [
+          0.054656,
+          1.195994,
+          4.651143
+        ],
+        "rotation_y": 1.330976,
+        "score": null
+      },
+      "expected_from_v3": {
+        "type": "Car",
+        "truncation": 0.279719,
+        "occlusion": 2,
+        "alpha": 1.319226,
+        "bbox_xyxy": [
+          497.926412,
+          0.0,
+          1073.844482,
+          383.0
+        ],
+        "dim_hwl": [
+          1.918924,
+          1.868429,
+          5.103683
+        ],
+        "loc_xyz": [
+          0.054656,
+          1.195994,
+          4.651143
+        ],
+        "rotation_y": 1.330976,
+        "score": null
+      },
+      "source_metadata": {
+        "truck_yaw_world": 230.90521023770333,
+        "yaw_theta": 42.31010809668729,
+        "truck_dims": {
+          "width": 1.8684294819831848,
+          "length": 5.103682994842529,
+          "height": 1.9189241528511047
+        },
+        "selfcheck_iou": 0.9948706935074384
+      },
+      "diff": {
+        "alpha_diff_deg": 0.0,
+        "rotation_y_diff_deg": 0.0,
+        "bbox_max_abs_diff_px": 0.0,
+        "loc_max_abs_diff_m": 0.0,
+        "dims_max_abs_diff_m": 0.0
+      },
+      "pass_pose_check": true
+    },
+    {
+      "sample_id": "000043",
+      "actual": {
+        "type": "Car",
+        "truncation": 0.469103,
+        "occlusion": 1,
+        "alpha": -1.001868,
+        "bbox_xyxy": [
+          339.056984,
+          0.0,
+          1022.708252,
+          383.0
+        ],
+        "dim_hwl": [
+          1.918924,
+          1.868429,
+          5.103683
+        ],
+        "loc_xyz": [
+          0.904256,
+          0.960373,
+          4.595304
+        ],
+        "rotation_y": -0.807573,
+        "score": null
+      },
+      "expected_from_v3": {
+        "type": "Car",
+        "truncation": 0.469103,
+        "occlusion": 1,
+        "alpha": -1.001868,
+        "bbox_xyxy": [
+          339.056984,
+          0.0,
+          1022.708252,
+          383.0
+        ],
+        "dim_hwl": [
+          1.918924,
+          1.868429,
+          5.103683
+        ],
+        "loc_xyz": [
+          0.904256,
+          0.960373,
+          4.595304
+        ],
+        "rotation_y": -0.807573,
+        "score": null
+      },
+      "source_metadata": {
+        "truck_yaw_world": 330.03108435734623,
+        "yaw_theta": 3.1920596881570136,
+        "truck_dims": {
+          "width": 1.8684294819831848,
+          "length": 5.103682994842529,
+          "height": 1.9189241528511047
+        },
+        "selfcheck_iou": 0.9962532401704921
+      },
+      "diff": {
+        "alpha_diff_deg": 0.0,
+        "rotation_y_diff_deg": 0.0,
+        "bbox_max_abs_diff_px": 0.0,
+        "loc_max_abs_diff_m": 0.0,
+        "dims_max_abs_diff_m": 0.0
+      },
+      "pass_pose_check": true
+    },
+    {
+      "sample_id": "000120",
+      "actual": {
+        "type": "Car",
+        "truncation": 0.796884,
+        "occlusion": 2,
+        "alpha": -2.672516,
+        "bbox_xyxy": [
+          0.0,
+          0.0,
+          995.389486,
+          383.0
+        ],
+        "dim_hwl": [
+          1.918924,
+          1.868429,
+          5.103683
+        ],
+        "loc_xyz": [
+          -1.729183,
+          1.024969,
+          0.863408
+        ],
+        "rotation_y": 2.502973,
+        "score": null
+      },
+      "expected_from_v3": {
+        "type": "Car",
+        "truncation": 0.796884,
+        "occlusion": 2,
+        "alpha": -2.672516,
+        "bbox_xyxy": [
+          0.0,
+          0.0,
+          995.389486,
+          383.0
+        ],
+        "dim_hwl": [
+          1.918924,
+          1.868429,
+          5.103683
+        ],
+        "loc_xyz": [
+          -1.729183,
+          1.024969,
+          0.863408
+        ],
+        "rotation_y": 2.502973,
+        "score": null
+      },
+      "source_metadata": {
+        "truck_yaw_world": 173.20601623051292,
+        "yaw_theta": 40.57739076417232,
+        "truck_dims": {
+          "width": 1.8684294819831848,
+          "length": 5.103682994842529,
+          "height": 1.9189241528511047
+        },
+        "selfcheck_iou": 0.9973117158091627
+      },
+      "diff": {
+        "alpha_diff_deg": 0.0,
+        "rotation_y_diff_deg": 0.0,
+        "bbox_max_abs_diff_px": 0.0,
+        "loc_max_abs_diff_m": 0.0,
+        "dims_max_abs_diff_m": 0.0
+      },
+      "pass_pose_check": true
+    }
+  ]
+}

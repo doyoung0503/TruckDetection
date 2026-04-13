@@ -1,0 +1,5 @@
+__pycache__/
+datasets/v3/kitti_format_1280x384_lb/
+results/baseline_5sample/
+results/geometry_5sample/
+results/vis_5sample/
